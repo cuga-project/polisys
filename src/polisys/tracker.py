@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .followups import CHECK_HEADER, required_actions
+from .followups import CHECK_HEADER, LOOK_HEADER, required_actions
 from .requirements import compile_requirements, gate
 from .ruleset import is_write_tool
 
@@ -106,12 +106,13 @@ class RequirementsTracker(AgentHooks):
         wrong = [it for it in self.items if (status.get(it["id"]) or {}).get("status") == "wrong"]
         if self.wrong_mode == "off":
             wrong = []
-        left_out = []
+        left_out, look = [], []
         if self.evidence == "on" and missing:
             try:
-                keep, left_out = required_actions(
+                keep, to_look, left_out = required_actions(
                     self.model, [it["text"] for it in missing], self.request, self.policy, self._data(), answer
                 )
+                look = [missing[i] for i in to_look]
                 missing = [missing[i] for i in keep]
             except Exception as e:  # noqa: BLE001 - a failed check leaves the items as they are
                 self.records.append(
@@ -120,14 +121,14 @@ class RequirementsTracker(AgentHooks):
         rec = {
             "hook": "before_reply",
             "rule": "requirements",
-            "outcome": "followup" if missing or wrong else "complete",
+            "outcome": "followup" if missing or wrong or look else "complete",
             "round": self.rounds + 1,
             "status": status,
         }
         if left_out:
             rec["left_out"] = left_out
         self.records.append(rec)
-        if not missing and not wrong:
+        if not missing and not wrong and not look:
             return HookResult(details=[rec])
         self.rounds += 1
         if self.voice == "check":
@@ -156,4 +157,7 @@ class RequirementsTracker(AgentHooks):
                 f"- {it['text']} ({status[it['id']]['why']}) [source: \"{it['quote'][:120]}\"]"
                 for it in wrong
             ]
+        if look:
+            lines.append(LOOK_HEADER)
+            lines += [f"- {it['text']}" for it in look]
         return HookResult(message="\n".join(lines), details=[rec])

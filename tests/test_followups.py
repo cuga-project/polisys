@@ -2,7 +2,7 @@
 
 import json
 
-from polisys.followups import CHECK_HEADER, required_actions
+from polisys.followups import CHECK_HEADER, LOOK_HEADER, required_actions
 from polisys.tracker import RequirementsTracker
 
 ITEM = {"kind": "effect", "text": "Send the report to the team.", "quote": "send the report", "when": "", "check": {}}
@@ -49,6 +49,13 @@ def test_evidence_sends_only_an_action_found_required():
     assert t.records[-1]["left_out"][0]["required"] == "unclear"
     _, res = _reply(_model(required="yes"), evidence="on")
     assert "Send the report" in res.message
+    assert LOOK_HEADER not in res.message
+
+
+def test_missing_data_asks_the_agent_to_look_and_not_to_write():
+    _, res = _reply(_model(required="no_data"), evidence="on")
+    assert LOOK_HEADER in res.message and "Send the report" in res.message
+    assert "do these now" not in res.message
 
 
 def test_a_failed_evidence_check_leaves_the_items():
@@ -62,6 +69,20 @@ def test_a_failed_evidence_check_leaves_the_items():
     assert any(r["outcome"] == "evidence_error" for r in t.records)
 
 
-def test_required_actions_treats_no_answer_as_not_required():
-    keep, left_out = required_actions(lambda s, u: '{"items": []}', ["a"], "r", "", "", "")
-    assert keep == [] and left_out[0]["required"] == "no answer"
+def _verdict(**v):
+    return lambda s, u: json.dumps({"items": [{"n": 1, **v}]})
+
+
+def test_a_no_holds_only_with_its_condition_and_value_copied_from_what_was_read():
+    request, data = "Skip bills on hold.", "Status: On hold since March"
+    keep, look, out = required_actions(_verdict(required="no", condition="Skip bills on hold", value="On hold"), ["a"], request, "", data, "")
+    assert keep == [] and look == [] and out[0]["sent"] == "no"
+    keep, look, out = required_actions(_verdict(required="no", condition="Skip bills on hold", value="Paid"), ["a"], request, "", data, "")
+    assert look == [0] and out[0]["sent"] == "look"
+    keep, look, out = required_actions(_verdict(required="no"), ["a"], request, "", data, "")
+    assert look == [0]
+
+
+def test_required_actions_treats_no_answer_as_missing_data():
+    keep, look, left_out = required_actions(lambda s, u: '{"items": []}', ["a"], "r", "", "", "")
+    assert keep == [] and look == [0] and left_out[0]["required"] == "no answer"

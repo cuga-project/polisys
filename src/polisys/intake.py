@@ -24,7 +24,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .followups import CHECK_HEADER, REPLY_CHARS, REPLY_NOTE, required_actions
+from .followups import CHECK_HEADER, LOOK_HEADER, REPLY_CHARS, REPLY_NOTE, required_actions
 from .facts import FACTS_CHARS, TOKEN, FactStore, call_tokens  # noqa: F401 (re-exported)
 from .handlers.prose import prose_rules
 from .handlers.tables import table_rules
@@ -1233,10 +1233,10 @@ class OnlinePolicyIntake(AgentHooks):
             and 1 <= m["statement"] <= len(statements)
         ]
         by_statement = {s["n"]: s for s in statements}
-        left_out = []
+        left_out, look = [], []
         if self.evidence == "on" and missing:
             try:
-                keep, left_out = required_actions(
+                keep, to_look, left_out = required_actions(
                     self.model,
                     [str(m.get("action") or "") for m in missing],
                     self.request,
@@ -1244,18 +1244,19 @@ class OnlinePolicyIntake(AgentHooks):
                     self.facts,
                     answer,
                 )
+                look = [missing[i] for i in to_look]
                 missing = [missing[i] for i in keep]
             except Exception as e:  # noqa: BLE001 - a failed check leaves the actions as they are
                 self.records.append({"hook": "before_reply", "outcome": "evidence_error", "reason": str(e)[:200]})
         rec = {
             "hook": "before_reply",
-            "outcome": "followup" if missing else "complete",
+            "outcome": "followup" if missing or look else "complete",
             "missing": _with_statements(missing, by_statement),
         }
         if left_out:
             rec["left_out"] = left_out
         self.records.append(rec)
-        if not missing:
+        if not missing and not look:
             return HookResult(details=[rec])
         by_n = {s["n"]: s for s in statements}
         lines = (
@@ -1266,4 +1267,7 @@ class OnlinePolicyIntake(AgentHooks):
         for m in missing:
             s = by_n.get(m.get("statement"), {})
             lines.append(f"- [{s.get('source', 'policy')}] {m.get('action', '')}")
+        if look:
+            lines.append(LOOK_HEADER)
+            lines += [f"- {m.get('action', '')}" for m in look]
         return HookResult(message="\n".join(lines), details=[rec])
