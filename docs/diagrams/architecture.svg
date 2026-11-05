@@ -1,141 +1,136 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 950" width="1600" height="950">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 930" width="1600" height="930">
 <defs>
-<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker>
-<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#047857"/></marker>
+<marker id="mA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker><marker id="mS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker><marker id="mG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10b981"/></marker><marker id="mD" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker><marker id="mGs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#10b981"/></marker>
+<linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbeb"/><stop offset="1" stop-color="#fef3c7"/></linearGradient>
+<linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e1b4b"/><stop offset="1" stop-color="#0f172a"/></linearGradient>
+<linearGradient id="gC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ecfdf5"/><stop offset="1" stop-color="#d1fae5"/></linearGradient>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1f5f9"/></linearGradient>
+<filter id="sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity=".14"/></filter>
 </defs>
 <style>
 text{font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif}
-.h1{font-size:34px;font-weight:700;letter-spacing:-.02em;fill:#111827}
-.lead{font-size:19px;fill:#6b7280}
-.panel{font-size:17px;font-weight:700;letter-spacing:.12em}
-.sub{font-size:15px;fill:#6b7280}
-.title{font-size:19px;font-weight:700;fill:#111827}
-.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:17.5px}
-.body{font-size:15px;fill:#374151}
-.chip{font-size:15px;font-weight:700;fill:#111827}
-.chipd{font-size:13px;fill:#6b7280}
-.lbl{font-size:14.5px;fill:#6b7280}
+.h1{font-size:40px;font-weight:800;letter-spacing:-.02em;fill:#0f172a}
+.lead{font-size:20px;fill:#475569}
+.lane{font-size:16px;font-weight:800;letter-spacing:.14em}
+.sub{font-size:15px}
+.ph{font-size:12.5px;font-weight:700;letter-spacing:.16em;fill:#a5b4fc}
+.t{font-size:19px;font-weight:700;fill:#0f172a}
+.b{font-size:14.5px;fill:#475569}
+.m{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;fill:#047857;font-weight:600}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;font-weight:600}
+.chip{font-size:14px;font-weight:700;fill:#1e1b4b}
+.chipd{font-size:12px;fill:#6366f1}
+.pl{font-size:13px;font-weight:600}
 </style>
-<rect width="1600" height="950" fill="#ffffff"/>
-<text x="40" y="58" class="h1">polisys</text>
-<text x="40" y="88" class="lead">The enterprise's policies become checks that run inside any agent harness.</text>
-<rect x="40" y="116" width="400" height="700" rx="18" fill="#fffbeb" stroke="#b45309" stroke-opacity=".35" stroke-width="2"/>
-<text x="64" y="154" class="panel" fill="#b45309">ENTERPRISE</text>
-<text x="64" y="178" class="sub">what the company owns</text>
-<rect x="520" y="116" width="560" height="700" rx="18" fill="#eff6ff" stroke="#1d4ed8" stroke-opacity=".35" stroke-width="2"/>
-<text x="544" y="154" class="panel" fill="#1d4ed8">POLISYS</text>
-<text x="544" y="178" class="sub">compile once, check at every step</text>
-<rect x="1160" y="116" width="400" height="700" rx="18" fill="#ecfdf5" stroke="#047857" stroke-opacity=".35" stroke-width="2"/>
-<text x="1184" y="154" class="panel" fill="#047857">AGENT HARNESS</text>
-<text x="1184" y="178" class="sub">the host that runs the agent loop</text>
-<rect x="64" y="196" width="352" height="150" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M65,208 a11,11 0 0 1 11,-11 h0 v148 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="64" y="210" width="5" height="122" rx="2.5" fill="#b45309"/>
-<text x="86" y="228" class="title">Policy documents</text>
-<text x="86" y="254" class="body">Handbooks, SOPs, rule lists</text>
-<text x="86" y="275" class="body">PDF, Word, HTML, Markdown</text>
-<rect x="64" y="370" width="352" height="150" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M65,382 a11,11 0 0 1 11,-11 h0 v148 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="64" y="384" width="5" height="122" rx="2.5" fill="#b45309"/>
-<text x="86" y="402" class="title">Policy owner</text>
-<text x="86" y="428" class="body">Answers the open questions:</text>
-<text x="86" y="449" class="body">an ambiguity is asked,</text>
-<text x="86" y="470" class="body">never guessed</text>
-<rect x="64" y="544" width="352" height="150" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M65,556 a11,11 0 0 1 11,-11 h0 v148 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="64" y="558" width="5" height="122" rx="2.5" fill="#b45309"/>
-<text x="86" y="576" class="title">Systems and tools</text>
-<text x="86" y="602" class="body">Tickets, mail, sheets, records</text>
-<text x="86" y="623" class="body">described by tool schemas</text>
-<rect x="544" y="196" width="232" height="150" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M545,208 a11,11 0 0 1 11,-11 h0 v148 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="544" y="210" width="5" height="122" rx="2.5" fill="#1d4ed8"/>
-<text x="566" y="228" class="title">Compile</text>
-<text x="566" y="254" class="body">Reads the documents</text>
-<text x="566" y="275" class="body">and the tool schemas</text>
-<text x="566" y="296" class="body">Claude skill, or an</text>
-<text x="566" y="317" class="body">open-model pipeline</text>
-<rect x="824" y="196" width="232" height="150" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M825,208 a11,11 0 0 1 11,-11 h0 v148 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="824" y="210" width="5" height="122" rx="2.5" fill="#1d4ed8"/>
-<text x="846" y="228" class="title">Policy package</text>
-<text x="846" y="254" class="body">One JSON file with</text>
-<text x="846" y="275" class="body">rules, procedures,</text>
-<text x="846" y="296" class="body">obligations, questions</text>
-<text x="846" y="317" class="body">and tests</text>
-<rect x="544" y="372" width="232" height="90" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M545,384 a11,11 0 0 1 11,-11 h0 v88 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="544" y="386" width="5" height="62" rx="2.5" fill="#1d4ed8"/>
-<text x="566" y="404" class="title">Profile</text>
-<text x="566" y="430" class="body">One YAML file:</text>
-<text x="566" y="451" class="body">which checks run</text>
-<rect x="824" y="372" width="232" height="90" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M825,384 a11,11 0 0 1 11,-11 h0 v88 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="824" y="386" width="5" height="62" rx="2.5" fill="#1d4ed8"/>
-<text x="846" y="404" class="title mono">build_runtime</text>
-<text x="846" y="430" class="body">profile + package become</text>
-<text x="846" y="451" class="body">hooks and tools</text>
-<rect x="544" y="488" width="512" height="168" rx="12" fill="#fff" stroke="#1d4ed8" stroke-width="2"/>
-<text x="566" y="520" class="title">Checks</text>
-<rect x="562" y="534" width="238" height="50" rx="9" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
-<text x="576" y="555" class="chip">Typed rules</text>
-<text x="576" y="574" class="chipd">stop a wrong call</text>
-<rect x="810" y="534" width="238" height="50" rx="9" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
-<text x="824" y="555" class="chip">Procedure gate</text>
-<text x="824" y="574" class="chipd">guide the case</text>
-<rect x="562" y="592" width="238" height="50" rx="9" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
-<text x="576" y="613" class="chip">Obligation ledger</text>
-<text x="576" y="632" class="chipd">find missing work</text>
-<rect x="810" y="592" width="238" height="50" rx="9" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
-<text x="824" y="613" class="chip">Control levels</text>
-<text x="824" y="632" class="chipd">fewer checks for strong models</text>
-<rect x="544" y="680" width="198" height="110" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<rect x="544" y="694" width="5" height="82" rx="2.5" fill="#1d4ed8"/>
-<text x="566" y="712" class="title">Audit log</text>
-<text x="566" y="738" class="body">One line per</text>
-<text x="566" y="759" class="body">decision, and per</text>
-<text x="566" y="780" class="body">failed check</text>
-<rect x="770" y="680" width="286" height="110" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<rect x="770" y="694" width="5" height="82" rx="2.5" fill="#1d4ed8"/>
-<text x="792" y="712" class="title">Online intake</text>
-<text x="792" y="738" class="body">Finds rules in tool results</text>
-<text x="792" y="759" class="body">during a run. Session only;</text>
-<text x="792" y="780" class="body">a newer rule wins</text>
-<rect x="1184" y="196" width="352" height="180" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M1185,208 a11,11 0 0 1 11,-11 h0 v178 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="1184" y="210" width="5" height="152" rx="2.5" fill="#047857"/>
-<text x="1206" y="228" class="title">Nine lifecycle hooks</text>
-<text x="1206" y="254" class="body">polisys.hooks</text>
-<text x="1206" y="275" class="body"></text>
-<text x="1206" y="296" class="body">Receives a stop, a note</text>
-<text x="1206" y="317" class="body">or a follow-up at each</text>
-<text x="1206" y="338" class="body">call and reply</text>
-<rect x="1184" y="470" width="352" height="180" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M1185,482 a11,11 0 0 1 11,-11 h0 v178 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="1184" y="484" width="5" height="152" rx="2.5" fill="#047857"/>
-<text x="1206" y="502" class="title">Agent loop</text>
-<text x="1206" y="528" class="body">Model and tools</text>
-<text x="1206" y="549" class="body"></text>
-<text x="1206" y="570" class="body">Any harness that can</text>
-<text x="1206" y="591" class="body">call the hooks. Tested</text>
-<text x="1206" y="612" class="body">with the CUGA agent</text>
-<path d="M416,271 H544" fill="none" stroke="#b45309" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<path d="M544,326 L416,445" fill="none" stroke="#b45309" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#a)" stroke-linejoin="round"/>
-<path d="M940,346 V372" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<path d="M776,417 H824" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<path d="M940,462 V488" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<path d="M643,656 V680" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<path d="M1056,572 H1120 V286 H1184" fill="none" stroke="#047857" stroke-width="4" marker-end="url(#ag)" stroke-linejoin="round"/>
-<path d="M1360,376 V470" fill="none" stroke="#047857" stroke-width="2.5" marker-end="url(#ag)" marker-start="url(#ags)" stroke-linejoin="round"/>
-<path d="M913,680 V656" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<path d="M1184,620 H1120 V735 H1056" fill="none" stroke="#047857" stroke-width="2.5" marker-end="url(#ag)" stroke-linejoin="round"/>
-<text x="1120" y="762" class="lbl" text-anchor="middle" font-size="13">tool results</text>
-<path d="M1360,650 V860 H240 V694" fill="none" stroke="#111827" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<text x="800" y="846" class="lbl" text-anchor="middle">tool calls act on the enterprise's systems</text>
-<text x="1376" y="428" class="lbl">at every step</text>
-<text x="1074" y="598" class="lbl" text-anchor="end" transform="rotate(-90 1074 598)" visibility="hidden">x</text>
-<path d="M40,918 H84" stroke="#111827" stroke-width="2.5" marker-end="url(#a)"/><text x="96" y="923" class="lbl">policy and tool calls</text>
-<path d="M330,918 H374" stroke="#b45309" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#a)"/><text x="386" y="923" class="lbl">open question to the policy owner</text>
-<path d="M720,918 H764" stroke="#047857" stroke-width="4" marker-end="url(#ag)"/><text x="776" y="923" class="lbl">checks reach the agent through the hooks</text>
+<rect width="1600" height="930" fill="url(#bg)"/>
+<text x="40" y="62" class="h1">polisys</text>
+<text x="40" y="94" class="lead">Turns a company's policies into checks that run inside any agent harness.</text>
+<rect x="40" y="130" width="380" height="700" rx="28" fill="url(#gA)" stroke="#fcd34d" stroke-width="1.5"/>
+<text x="68" y="170" class="lane" fill="#d97706">ENTERPRISE</text>
+<text x="68" y="187" class="sub" fill="#92400e">what the company owns</text>
+<rect x="470" y="130" width="660" height="700" rx="28" fill="url(#gB)" stroke="#312e81" stroke-width="1.5"/>
+<text x="498" y="170" class="lane" fill="#fff">POLISYS</text>
+<text x="498" y="187" class="sub" fill="#a5b4fc">compile once, check at every step</text>
+<rect x="1180" y="130" width="380" height="700" rx="28" fill="url(#gC)" stroke="#6ee7b7" stroke-width="1.5"/>
+<text x="1208" y="170" class="lane" fill="#059669">AGENT HARNESS</text>
+<text x="1208" y="187" class="sub" fill="#065f46">the host that runs the agent loop</text>
+<rect x="70" y="215" width="320" height="150" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="88" y="231" width="40" height="40" rx="11" fill="#d97706"/>
+<path d="M7 3h7l4 4v14H7z M14 3v4h4 M9 12h6 M9 16h6" transform="translate(96,239)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="140" y="258" class="t">Policy documents</text>
+<text x="90" y="297" class="b">Handbooks, SOPs, rule lists</text>
+<text x="90" y="318" class="b">PDF, Word, HTML, Markdown</text>
+<rect x="70" y="435" width="320" height="150" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="88" y="451" width="40" height="40" rx="11" fill="#d97706"/>
+<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M4 21c0-4 4-6 8-6s8 2 8 6" transform="translate(96,459)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="140" y="478" class="t">Policy owner</text>
+<text x="90" y="517" class="b">Answers the open questions.</text>
+<text x="90" y="538" class="b">An ambiguity is asked,</text>
+<text x="90" y="559" class="b">never guessed.</text>
+<rect x="70" y="655" width="320" height="150" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="88" y="671" width="40" height="40" rx="11" fill="#d97706"/>
+<path d="M4 6c0-2.5 16-2.5 16 0s-16 2.5-16 0 M4 6v12c0 2.5 16 2.5 16 0V6 M4 12c0 2.5 16 2.5 16 0" transform="translate(96,679)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="140" y="698" class="t">Systems and tools</text>
+<text x="90" y="737" class="b">Tickets, mail, sheets, records,</text>
+<text x="90" y="758" class="b">described by tool schemas</text>
+<text x="500" y="216" class="ph">BEFORE THE RUN</text>
+<rect x="500" y="225" width="280" height="140" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="518" y="241" width="40" height="40" rx="11" fill="#4f46e5"/>
+<path d="M13 2L5 14h6l-1 8 8-12h-6z" transform="translate(526,249)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="570" y="268" class="t">Compile</text>
+<text x="520" y="307" class="b">Reads the documents and</text>
+<text x="520" y="328" class="b">the tool schemas. Claude skill</text>
+<text x="520" y="349" class="b">or open-model pipeline</text>
+<rect x="820" y="225" width="280" height="140" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="838" y="241" width="40" height="40" rx="11" fill="#4f46e5"/>
+<path d="M12 2l9 5v10l-9 5-9-5V7z M12 12l9-5 M12 12v10 M12 12L3 7" transform="translate(846,249)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="890" y="268" class="t">Policy package</text>
+<text x="840" y="307" class="b">One JSON file: rules,</text>
+<text x="840" y="328" class="b">procedures, obligations,</text>
+<text x="840" y="349" class="b">questions and tests</text>
+<rect x="560" y="395" width="480" height="40" rx="20" fill="#4f46e5"/>
+<text x="800" y="420" class="mono" text-anchor="middle" fill="#fff">build_runtime: package + YAML profile → hooks</text>
+<text x="500" y="478" class="ph">DURING THE RUN</text>
+<rect x="500" y="495" width="600" height="150" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="518" y="511" width="40" height="40" rx="11" fill="#4f46e5"/>
+<path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z M8.5 12l2.5 2.5 4.5-5" transform="translate(526,519)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="570" y="538" class="t">Checks</text>
+<rect x="518" y="567" width="133" height="62" rx="11" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.2"/>
+<text x="530" y="592" class="chip">Typed rules</text><text x="530" y="613" class="chipd">stop a wrong call</text>
+<rect x="661" y="567" width="133" height="62" rx="11" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.2"/>
+<text x="673" y="592" class="chip">Procedure gate</text><text x="673" y="613" class="chipd">guide the case</text>
+<rect x="804" y="567" width="133" height="62" rx="11" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.2"/>
+<text x="816" y="592" class="chip">Obligation ledger</text><text x="816" y="613" class="chipd">find missing work</text>
+<rect x="947" y="567" width="133" height="62" rx="11" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.2"/>
+<text x="959" y="592" class="chip">Control levels</text><text x="959" y="613" class="chipd">scale with the model</text>
+<rect x="500" y="675" width="280" height="120" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="518" y="691" width="40" height="40" rx="11" fill="#4f46e5"/>
+<path d="M4 6h16 M4 12h16 M4 18h10" transform="translate(526,699)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="570" y="718" class="t">Audit log</text>
+<text x="520" y="757" class="b">One line per decision</text>
+<text x="520" y="778" class="b">and per failed check</text>
+<rect x="820" y="675" width="280" height="120" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="838" y="691" width="40" height="40" rx="11" fill="#4f46e5"/>
+<path d="M10 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12z M15 15l6 6" transform="translate(846,699)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="890" y="718" class="t">Online intake</text>
+<text x="840" y="757" class="b">Finds rules in tool results</text>
+<text x="840" y="778" class="b">during a run. Newer rule wins.</text>
+<rect x="1210" y="215" width="320" height="190" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="1228" y="231" width="40" height="40" rx="11" fill="#059669"/>
+<path d="M9 3v6 M15 3v6 M6 9h12v3a6 6 0 0 1-12 0z M12 18v3" transform="translate(1236,239)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1280" y="258" class="t">Nine lifecycle hooks</text>
+<text x="1230" y="297" class="m">polisys.hooks</text>
+<text x="1230" y="318" class="b">At each call and reply the</text>
+<text x="1230" y="339" class="b">harness gets a stop, a note</text>
+<text x="1230" y="360" class="b">or a follow-up</text>
+<rect x="1210" y="465" width="320" height="190" rx="16" fill="#fff" filter="url(#sh)"/>
+<rect x="1228" y="481" width="40" height="40" rx="11" fill="#059669"/>
+<path d="M20 12a8 8 0 1 1-3-6.2 M20 4v5h-5" transform="translate(1236,489)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1280" y="508" class="t">Agent loop</text>
+<text x="1230" y="547" class="b">Model and tools.</text>
+<text x="1230" y="568" class="b">Any harness that can call</text>
+<text x="1230" y="589" class="b">the hooks. Tested with</text>
+<text x="1230" y="610" class="b">the CUGA agent</text>
+<path d="M390,290 H500" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mA)"/>
+<path d="M500,345 C455,345 455,510 390,510" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 7" marker-end="url(#mA)"/>
+<rect x="382.6" y="417" width="126.8" height="26" rx="13" fill="#fff" stroke="#d97706" stroke-opacity=".45" stroke-width="1.2"/>
+<text x="446" y="435" class="pl" text-anchor="middle" fill="#d97706">open questions</text>
+<path d="M780,295 H820" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mS)"/>
+<path d="M960,365 V395" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mS)"/>
+<path d="M800,435 V495" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mS)"/>
+<path d="M1100,570 C1155,570 1155,310 1210,310" fill="none" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mG)"/>
+<rect x="1055.6" y="427" width="198.8" height="26" rx="13" fill="#fff" stroke="#059669" stroke-opacity=".45" stroke-width="1.2"/>
+<text x="1155" y="445" class="pl" text-anchor="middle" fill="#059669">stops, notes, follow-ups</text>
+<path d="M1370,405 V465" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mG)" marker-start="url(#mGs)"/>
+<rect x="1390.2" y="422" width="119.60000000000001" height="26" rx="13" fill="#fff" stroke="#059669" stroke-opacity=".45" stroke-width="1.2"/>
+<text x="1450" y="440" class="pl" text-anchor="middle" fill="#059669">at every step</text>
+<path d="M1210,625 C1155,625 1155,735 1100,735" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mG)"/>
+<rect x="1098.8" y="669" width="112.4" height="26" rx="13" fill="#fff" stroke="#059669" stroke-opacity=".45" stroke-width="1.2"/>
+<text x="1155" y="687" class="pl" text-anchor="middle" fill="#059669">tool results</text>
+<path d="M640,645 V675" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mS)"/>
+<path d="M960,675 V645" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mS)"/>
+<path d="M1370,655 V880 H230 V805" fill="none" stroke="#475569" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mD)"/>
+<rect x="646.6" y="867" width="306.8" height="26" rx="13" fill="#fff" stroke="#475569" stroke-opacity=".45" stroke-width="1.2"/>
+<text x="800" y="885" class="pl" text-anchor="middle" fill="#475569">tool calls act on the company's systems</text>
 </svg>
