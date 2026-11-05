@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 
 from langchain_core.tools import BaseTool
 
-from polisys.hooks import HookRegistry, wrap_tools_with_hooks
+from polisys.hooks import HookRegistry, host_features_of, wrap_tools_with_hooks
 
 
 def wrap_provider_with_hooks(provider: Any, registry: HookRegistry) -> Any:
@@ -48,3 +48,13 @@ def wrap_provider_with_hooks(provider: Any, registry: HookRegistry) -> Any:
             return self._wrap(await self._inner.get_all_tools())
 
     return HookedToolProvider(provider)
+
+
+def host_features() -> frozenset:
+    """What the installed CUGA agent's hook registry offers, for ``RunContext(host_features=...)``. An agent with no hooks at
+    all gives the empty set, so a profile that needs ``tool_blocked`` is refused at build time instead of running without it."""
+    try:
+        from cuga.backend.hooks import HookRegistry as CugaHookRegistry
+    except ImportError:
+        return frozenset()
+    return host_features_of(CugaHookRegistry)

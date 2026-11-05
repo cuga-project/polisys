@@ -120,8 +120,15 @@ def _report_failure(hook: Any, name: str, args: tuple, exc: Exception) -> None:
         logger.warning("hook {}.{} failure not reported: {}", type(hook).__name__, name, second)
 
 
+# What a host's hook registry can offer beyond the nine lifecycle hooks. polisys needs the first for safety: without it the
+# obligation ledger cannot learn that another hook stopped a call, and a follow-up could ask for work that was blocked.
+HOST_FEATURES = ("tool_blocked", "failure_report")
+
+
 class HookRegistry:
     """Calls every hook in order and records one HookEvent per hook call."""
+
+    FEATURES = frozenset(HOST_FEATURES)  # a host registry that has these says so, see host_features_of
 
     def __init__(self, hooks: Optional[List[AgentHooks]] = None):
         self.hooks: List[AgentHooks] = list(hooks or [])
@@ -290,3 +297,14 @@ class HooksCallback(BaseCallbackHandler):
             return
         if isinstance(text, str) and text.strip():
             self.registry.after_llm_call(text)
+
+
+def host_features_of(registry: Any) -> frozenset:
+    """What a host's hook registry (the class or an object) offers, from ``HOST_FEATURES``.
+
+    A registry that lists ``FEATURES`` is believed. One that does not (an older host) offers only what can be seen: a
+    ``tool_blocked`` method. A feature that cannot be seen, such as ``failure_report``, is taken as missing."""
+    declared = getattr(registry, "FEATURES", None)
+    if declared is not None:
+        return frozenset(declared) & frozenset(HOST_FEATURES)
+    return frozenset({"tool_blocked"}) if callable(getattr(registry, "tool_blocked", None)) else frozenset()

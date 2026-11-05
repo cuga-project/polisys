@@ -24,16 +24,19 @@ rules; rules live in the policy **package**.
 
 ## How it fits together
 
-```
- policy documents ──► compile ──► package.json ──► build_runtime(profile, package, context)
- (PDF, Word, HTML,    skill or      one file:             │
-  Markdown)           pipeline      rules, procedures,    ▼
-                                    obligations,       hook objects, tools, brief
-                                    questions, tests      │
-                                                          ▼
-                                       agent host ◄── nine lifecycle hooks (polisys.hooks)
-                                       (tool calls, replies)
-```
+Three parties meet in polisys. The **enterprise** owns the policies and the systems the agent acts on. **polisys** compiles the
+policies into a package and turns it into checks. The **agent harness** (the host that runs the agent loop) calls those checks
+at its lifecycle hooks. Nothing in polisys contains an agent, and the harness needs nothing from polisys but the hook contract.
+
+![polisys architecture: the enterprise, polisys and the agent harness](docs/architecture.png)
+
+<sub>Source: [docs/diagrams/architecture.html](docs/diagrams/architecture.html), rendered with `docs/diagrams/render.sh`.</sub>
+
+| Party | Owns | Gives to polisys | Gets from polisys |
+|---|---|---|---|
+| **Enterprise** | Policies, systems, the answers to open questions | Documents and tool schemas | A package it can read and a list of questions |
+| **polisys** | The package, the profile, the checks, the audit log | Hook objects, tools and a brief | Calls from the harness |
+| **Harness** | The agent loop, the model, the tools | Nine hook calls (before a tool call, before a reply, and so on) | A stop, a note or a follow-up at each hook |
 
 - **Compile** reads documents into statements and writes the package. Two routes: a Claude **skill**
   ([`skill/SKILL.md`](src/polisys/skill/SKILL.md), the better route in every comparison so far) and an open-model
@@ -87,6 +90,17 @@ agent = MyAgent(tools=tools + parts.tools, hooks=parts.hooks)   # parts.hooks fo
 `parts` also carries the system note, a `run` replacement for loop-style SOP control, and `usage()` and `records()` for cost
 and audit. With the CUGA agent pass `parts.hooks` to `CugaAgent(hooks=[...])`. For other hosts, and for what a host must
 provide, read [docs/hooks.md](docs/hooks.md).
+
+If the harness can tell polisys what its hook registry offers, a profile that needs more than the harness has is refused at
+build time instead of running with a silent gap:
+
+```python
+from polisys.adapters.cuga import host_features        # or polisys.hooks.host_features_of(your_registry)
+ctx = RunContext(task_id="t1", tool_specs=tool_specs, host_features=host_features())
+```
+
+With the obligation ledger on, `host_features` must include `tool_blocked`; otherwise `build_runtime` raises. Leaving it out
+(`None`) skips the check.
 
 A profile is plain YAML; see [`examples/profiles/`](examples/profiles/) and the field list in
 [`policy_config.py`](src/polisys/policy_config.py). An unknown key is an error that names it.

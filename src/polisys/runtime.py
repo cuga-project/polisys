@@ -22,7 +22,9 @@ import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, FrozenSet, List, Optional, Tuple
+
+from loguru import logger
 
 from .levels import (
     Resolution,
@@ -57,6 +59,9 @@ class RunContext:
     # How the host agent can show a hook's before_llm_call text: "system" (in the system prompt) or "message" (as the
     # newest message). notes.brief: message needs a host that says "message".
     host_note_placement: str = "system"
+    # What the host's hook registry offers (``polisys.hooks.HOST_FEATURES``). None: not told, no check. A host that is told
+    # to the runtime and lacks ``tool_blocked`` cannot run the obligation ledger: ``build_runtime`` refuses it.
+    host_features: Optional[FrozenSet[str]] = None
     # Which package ran, as the result says (<version>+<file hash>). "": the version of the package.
     package_version: str = ""
     policy_text: str = ""  # the SOP text when it is not the system prompt
@@ -722,6 +727,18 @@ def _value(cfg: PolicyConfig, path: str) -> Any:
 
 def _check_settings(a: Assembly) -> None:
     cfg, checkers, organizers = a.cfg, a.cfg.checkers, a.cfg.organizers
+    features = a.ctx.host_features
+    if features is not None:
+        if _ledger_on(cfg) and "tool_blocked" not in features:
+            raise a.fail(
+                "obligations",
+                "needs a host whose hook registry tells every hook about a stopped call (tool_blocked), and RunContext."
+                "host_features says this host does not: a follow-up could ask for work that another hook blocked",
+            )
+        if "failure_report" not in features:
+            logger.warning(
+                "polisys: the host's hook registry does not report a hook that raises, so a failed check leaves no audit line"
+            )
     modes = {
         "checkers.rules": checkers.rules,
         "checkers.gate.mode": checkers.gate.mode,

@@ -40,11 +40,24 @@ message = registry.before_tool_call("create_ticket", {"priority": "urgent"})   #
 `HooksCallback(registry)` is a LangChain callback that reports model outputs to `after_llm_call`. For any other
 framework, call the registry methods at the matching points of its loop.
 
+## Checking a host
+
+A host may offer less than polisys needs. `polisys.hooks.HOST_FEATURES` names the two extras beyond the nine hooks:
+
+| Feature | What it does | Without it |
+|---|---|---|
+| `tool_blocked` | Tells every hook that another hook stopped a call | The obligation ledger cannot learn of the block, so a follow-up could ask for work that was blocked. `build_runtime` **refuses** the ledger |
+| `failure_report` | Lets a hook that raises leave an audit line | A failed check leaves no line. `build_runtime` **warns** |
+
+`host_features_of(registry)` reads them from a registry class or object (`HookRegistry.FEATURES`, or just a `tool_blocked`
+method for an older one). Pass the result as `RunContext(host_features=...)`; `None` means "not told" and skips the check. For
+the CUGA agent use `polisys.adapters.cuga.host_features()`, which gives the empty set when the installed agent has no hooks.
+
 ## Hosts
 
 | Host | State |
 |---|---|
-| CUGA agent | Used in every measurement of this system. Pass `parts.hooks` to `CugaAgent(hooks=[...])`. `polisys.adapters.cuga` wraps tools that come from a tool provider. `polisys.hooks` is a structural copy of `cuga.backend.hooks`. |
+| CUGA agent | Used in every measurement of this system. As of 2026-11-05 no released agent has hooks: they are in the open pull request cuga-project/cuga-agent#1103, which lacks `tool_blocked` and failure reporting. Pass `parts.hooks` to `CugaAgent(hooks=[...])`. `polisys.adapters.cuga` wraps tools that come from a tool provider. `polisys.hooks` is a structural copy of `cuga.backend.hooks`. |
 | Other agents | Not tried. Implement the nine calls above, and read the assumptions below. |
 
 Assumptions that are written for the CUGA host and that another host must meet or change:
