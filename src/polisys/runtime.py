@@ -448,6 +448,8 @@ def _build_intake(a: Assembly) -> Piece:
         cap_effect=decisions.after_repeated_denials,
         record_checks=decisions.record_checks,
         retry_effect=decisions.retry_effect,
+        voice=a.cfg.followups.voice,
+        evidence=a.cfg.followups.evidence,
     )
     return Piece(hooks=[hook])
 
@@ -460,7 +462,17 @@ def _build_requirements_tracker(a: Assembly) -> Piece:
     policy = a.ctx.system_prompt if cfg.read_system_prompt else ""
     if cfg.read_system_prompt and not policy:
         raise a.fail("requirements_tracker", "read_system_prompt is on, and the task gives no system prompt")
-    return Piece(hooks=[RequirementsTracker(model, policy=policy, wrong_mode=cfg.wrong_items)])
+    return Piece(
+        hooks=[
+            RequirementsTracker(
+                model,
+                policy=policy,
+                wrong_mode=cfg.wrong_items,
+                voice=a.cfg.followups.voice,
+                evidence=a.cfg.followups.evidence,
+            )
+        ]
+    )
 
 
 def _build_guide(a: Assembly) -> Piece:

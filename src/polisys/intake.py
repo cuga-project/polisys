@@ -24,6 +24,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
 
 from polisys.hooks import AgentHooks, HookResult
 
+from .followups import CHECK_HEADER, REPLY_CHARS, REPLY_NOTE, required_actions
 from .facts import FACTS_CHARS, TOKEN, FactStore, call_tokens  # noqa: F401 (re-exported)
 from .handlers.prose import prose_rules
 from .handlers.tables import table_rules
@@ -260,6 +261,8 @@ class OnlinePolicyIntake(AgentHooks):
         cap_effect: str = "allow",
         record_checks: bool = False,
         retry_effect: str = "allow",
+        voice: str = "order",
+        evidence: str = "off",
     ):
         """``tool_specs``: when given, trusted policies are also compiled (code for rule tables, the model for prose)
         and enforced by code; statements that do not compile stay with the verifier. ``method_choice``: as in
@@ -290,6 +293,7 @@ class OnlinePolicyIntake(AgentHooks):
         # What a model verdict does: "remind" = a note after the write (it runs); "block_once" = the write is
         # stopped once with the reason, and the same call repeated goes through.
         self.model_effect = model_effect
+        self.voice, self.evidence = voice, evidence  # followups.py
         # After the repeated-denial cap: "allow" lets the write through; "skip" keeps it blocked and tells the agent
         # to continue without it.
         self.cap_effect = cap_effect
@@ -1217,7 +1221,8 @@ class OnlinePolicyIntake(AgentHooks):
                     statements=self._fmt(statements),
                     facts=self.facts[-DONE_FACTS_CHARS:],
                     actions="\n".join(self.writes) or "(none)",
-                ),
+                )
+                + (REPLY_NOTE.format(answer=(answer or "")[:REPLY_CHARS]) if self.voice == "check" else ""),
             )
         )
         missing = [
@@ -1228,16 +1233,36 @@ class OnlinePolicyIntake(AgentHooks):
             and 1 <= m["statement"] <= len(statements)
         ]
         by_statement = {s["n"]: s for s in statements}
+        left_out = []
+        if self.evidence == "on" and missing:
+            try:
+                keep, left_out = required_actions(
+                    self.model,
+                    [str(m.get("action") or "") for m in missing],
+                    self.request,
+                    self._fmt(statements),
+                    self.facts,
+                    answer,
+                )
+                missing = [missing[i] for i in keep]
+            except Exception as e:  # noqa: BLE001 - a failed check leaves the actions as they are
+                self.records.append({"hook": "before_reply", "outcome": "evidence_error", "reason": str(e)[:200]})
         rec = {
             "hook": "before_reply",
             "outcome": "followup" if missing else "complete",
             "missing": _with_statements(missing, by_statement),
         }
+        if left_out:
+            rec["left_out"] = left_out
         self.records.append(rec)
         if not missing:
             return HookResult(details=[rec])
         by_n = {s["n"]: s for s in statements}
-        lines = ["POLICY: before you finish, these required actions look missing:"]
+        lines = (
+            [CHECK_HEADER, "These may be missing:"]
+            if self.voice == "check"
+            else ["POLICY: before you finish, these required actions look missing:"]
+        )
         for m in missing:
             s = by_n.get(m.get("statement"), {})
             lines.append(f"- [{s.get('source', 'policy')}] {m.get('action', '')}")

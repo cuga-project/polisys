@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional
 
+from .followups import REPLY_CHARS, REPLY_NOTE
 from .llm import parse_json
 from .validate import quote_ok
 
@@ -137,7 +138,7 @@ Changes the agent made (successful calls that change something, in order):
 For each checklist item, say whether the changes above do it: "done", "missing" (clearly not done at all), "wrong"
 (clearly done with a different recipient, record, value or format than the item says), "not_applicable" (its
 condition did not hold), or "unsure" (the changes do not show it either way, for example IDs you cannot map to the
-names in the item). Say "missing" or "wrong" only when the changes show it. A "guard" item is "done" when nothing
+names in the item).{reply} Say "missing" or "wrong" only when the changes show it. A "guard" item is "done" when nothing
 forbidden happened, "wrong" when it did. Return {{"items": [{{"id": "R1", "status": "done|missing|wrong|not_applicable", "why": "<short>"}}]}}"""
 
 
@@ -146,8 +147,10 @@ def gate(
     items: List[Dict[str, Any]],
     writes: List[Dict[str, Any]],
     max_chars: int = 60_000,
+    answer: str = "",
 ) -> Dict[str, Dict[str, str]]:
-    """Status per checklist item from the agent's successful writes: ``{id: {"status", "why"}}``."""
+    """Status per checklist item from the agent's successful writes: ``{id: {"status", "why"}}``. ``answer``: the agent's
+    reply; with it, an item the reply leaves out on purpose with a reason is "not_applicable"."""
     if not items:
         return {}
     lines = []
@@ -160,7 +163,11 @@ def gate(
     reply = parse_json(
         model(
             GATE_SYSTEM,
-            GATE_USER.format(checklist=render(items), writes="\n".join(lines)[:max_chars] or "(none)"),
+            GATE_USER.format(
+                checklist=render(items),
+                writes="\n".join(lines)[:max_chars] or "(none)",
+                reply=REPLY_NOTE.format(answer=answer[:REPLY_CHARS]) if answer else "",
+            ),
         )
     )
     out = {}
