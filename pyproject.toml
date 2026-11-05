@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "polisys"
+version = "0.1.0"
+description = "Policy and SOP adherence for tool-using agents: typed rules, procedures, obligations and a hook runtime."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary, all rights reserved until a license is chosen" }
+dependencies = [
+  "pydantic>=2",
+  "pyyaml>=6",
+  "loguru",
+  "langchain-core>=1.3.3",
+]
+
+[project.optional-dependencies]
+cedar = ["cedarpy"]            # compile hard rules to Cedar and check decisions with it
+llm = ["openai>=1.0"]          # model calls for compile, binding and judgement (any OpenAI-compatible gateway)
+documents = ["docling"]        # read PDF and Word policy documents (Markdown and HTML need nothing)
+all = ["cedarpy", "openai>=1.0", "docling"]
+dev = ["pytest", "pytest-asyncio", "ruff"]
+
+[project.scripts]
+polisys = "polisys.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/polisys"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

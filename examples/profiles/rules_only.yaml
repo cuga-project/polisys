@@ -1,0 +1,19 @@
+# The typed rules of a package, checked by code at every tool call. No model call.
+# A rule at level deny stops the call; at level remind the call runs and a note is added to its result.
+policy:
+  package: facilities_desk/package.json
+  sources: {data: false, discovery: false, request: false}
+  checkers:
+    rules: on
+    gate: {mode: off}
+    verifier: {mode: off}
+    write_checks: off
+  organizers:
+    procedure_tools: off
+    guide: off
+    loop: off
+    sop_tracker: off
+    navigator: off
+    requirements_tracker: off
+  obligations: {producers: []}
+  decisions: {mode: off}

@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+.env
+.env.*
+!.env.example
+# run output and scratch
+audit.jsonl
+.policy_cache/
+examples/**/package.unmarked.txt

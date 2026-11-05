@@ -1,0 +1,306 @@
+{
+  "modality": {
+    "policy:1:1": "must",
+    "policy:1:2": "must",
+    "policy:1:3": "must_not",
+    "policy:1:4": "should",
+    "policy:2:2": "must",
+    "policy:2:3": "must",
+    "policy:2:4": "must",
+    "policy:2:5": "must",
+    "policy:2:7": "must_not",
+    "policy:3:1": "must",
+    "policy:4:1": "must",
+    "policy:4:2": "must_not"
+  },
+  "rules": [
+    {
+      "id": "r_requester",
+      "class": "hard",
+      "level": "deny",
+      "statement_ids": [
+        "policy:1:1"
+      ],
+      "quote": "Every ticket must have a requester.",
+      "rule": {
+        "type": "required_args",
+        "tool": "create_ticket",
+        "args": [
+          "requester"
+        ]
+      }
+    },
+    {
+      "id": "r_priority",
+      "class": "hard",
+      "level": "deny",
+      "statement_ids": [
+        "policy:1:2"
+      ],
+      "quote": "Priority must be one of low, normal or urgent.",
+      "rule": {
+        "type": "allowed_values",
+        "tool": "create_ticket",
+        "arg": "priority",
+        "values": [
+          "low",
+          "normal",
+          "urgent"
+        ]
+      }
+    },
+    {
+      "id": "r_child",
+      "class": "judgment",
+      "level": "remind",
+      "statement_ids": [
+        "policy:1:3"
+      ],
+      "why": "Needs the child tickets of the ticket, which no argument of close_ticket carries.",
+      "rule": {
+        "type": "verify",
+        "tools": [
+          "close_ticket"
+        ],
+        "statement": "Do not close a ticket that has an open child ticket."
+      }
+    },
+    {
+      "id": "r_door",
+      "class": "judgment",
+      "level": "remind",
+      "statement_ids": [
+        "policy:4:2"
+      ],
+      "why": "Needs the meaning of the message body, which no typed rule can test.",
+      "rule": {
+        "type": "verify",
+        "tools": [
+          "send_message"
+        ],
+        "statement": "Never send a door code to a visitor."
+      }
+    },
+    {
+      "id": "r_upset",
+      "class": "guidance",
+      "level": "observe",
+      "statement_ids": [
+        "policy:1:4"
+      ],
+      "rule": {
+        "type": "guidance",
+        "text": "Use good judgment when a requester is upset."
+      }
+    },
+    {
+      "id": "r_security",
+      "class": "guidance",
+      "level": "observe",
+      "statement_ids": [
+        "policy:4:1"
+      ],
+      "rule": {
+        "type": "guidance",
+        "text": "If a visitor asks for a door code, tell the security lead."
+      }
+    }
+  ],
+  "procedures": [
+    {
+      "id": "2",
+      "name": "Moving an asset",
+      "category": "Assets",
+      "src": "§2",
+      "applies_when": "When an asset moves to another building.",
+      "inputs": [
+        {
+          "fact": "whether the asset is under audit hold",
+          "source": "the asset record (get_asset)"
+        }
+      ],
+      "decisions": [
+        {
+          "id": "audit_hold",
+          "rule": "an asset that is under audit hold",
+          "then": "Do not move an asset",
+          "else": "Update the asset record with the new building"
+        }
+      ],
+      "steps": [
+        {
+          "id": "policy:2:2",
+          "action": "get_asset"
+        },
+        {
+          "id": "policy:2:3",
+          "action": "update_asset"
+        },
+        {
+          "id": "policy:2:4",
+          "action": "update_asset"
+        },
+        {
+          "id": "policy:2:5",
+          "action": "send_message",
+          "text": "Send Template 1 to the old building manager. Subject: MOVE-[asset id]."
+        },
+        {
+          "id": "policy:2:7"
+        }
+      ],
+      "must_not": [
+        "Do not move an asset that is under audit hold."
+      ],
+      "templates": [
+        {
+          "step": 4,
+          "artifact": "subject of the move notice",
+          "template": "MOVE-[asset id]",
+          "quote": "Subject: MOVE-[asset id]."
+        }
+      ],
+      "links": []
+    }
+  ],
+  "obligations": [
+    {
+      "id": "ob_2_status",
+      "origin": "package",
+      "scope": {
+        "procedure": "2"
+      },
+      "effect": {
+        "kind": "write",
+        "tools": [
+          "update_asset"
+        ],
+        "match": {
+          "status": {
+            "pattern": "{status}"
+          }
+        }
+      },
+      "values": {
+        "status": {
+          "from": "literal",
+          "value": "in_transit"
+        }
+      },
+      "check": "code",
+      "level": "observe",
+      "source": {
+        "section": "2",
+        "quote": "Set the asset status to in_transit until the move is confirmed."
+      }
+    },
+    {
+      "id": "ob_2_notice",
+      "origin": "package",
+      "scope": {
+        "procedure": "2"
+      },
+      "effect": {
+        "kind": "message",
+        "tools": [
+          "send_message"
+        ],
+        "match": {
+          "subject": {
+            "pattern": "{subject}"
+          }
+        }
+      },
+      "values": {
+        "subject": {
+          "from": "template",
+          "pattern": "MOVE-{asset_id}"
+        },
+        "asset_id": {
+          "from": "case_fact",
+          "field": "asset_id",
+          "record": "the asset record"
+        }
+      },
+      "check": "code",
+      "level": "observe",
+      "source": {
+        "section": "2",
+        "quote": "Send Template 1 to the old building manager."
+      }
+    }
+  ],
+  "global": {
+    "global_rules": [
+      {
+        "id": "G-hold",
+        "src": "§3",
+        "rule": "An audit hold is a flag on the asset record that the audit team sets."
+      }
+    ],
+    "escalation": {
+      "id": "escalation",
+      "src": "§4",
+      "name": "Security",
+      "steps": [
+        "If a visitor asks for a door code, tell the security lead."
+      ],
+      "must_not": [
+        "Never send a door code to a visitor."
+      ]
+    },
+    "calendar": {
+      "workdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "holidays": [
+        "2026-12-25"
+      ]
+    },
+    "templates": {
+      "1": {
+        "number": "1",
+        "name": "Move notice",
+        "slots": [
+          "Manager",
+          "asset id",
+          "new building"
+        ],
+        "text": "Dear [Manager], the asset [asset id] is moving to [new building]."
+      }
+    },
+    "definitions": [
+      {
+        "term": "audit hold",
+        "meaning": "a flag on the asset record that the audit team sets",
+        "source": {
+          "statement": "policy:3:2"
+        }
+      }
+    ]
+  },
+  "links": [],
+  "coverage": [
+    {
+      "statement_id": "policy:3:1",
+      "kind": "out_of_scope",
+      "reason": "a behavior in the building: no tool call shows it"
+    }
+  ],
+  "policy_questions": [
+    {
+      "statement_ids": [
+        "policy:1:3"
+      ],
+      "rule_ids": [
+        "r_child"
+      ],
+      "question": "Does a child ticket that is on hold count as open?",
+      "default_level": "remind"
+    }
+  ]
+}

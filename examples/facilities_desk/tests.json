@@ -1,0 +1,4 @@
+[
+ {"tool":"create_ticket","args":{"title":"Leaking tap","priority":"normal"},"expected":"deny","why":"no requester","statement_id":"policy:1:1","by":"test-writer"},
+ {"tool":"create_ticket","args":{"title":"Leaking tap","priority":"normal","requester":"Ana"},"expected":"allow","why":"requester given","statement_id":"policy:1:1","by":"test-writer"}
+]

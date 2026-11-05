@@ -1,0 +1,7 @@
+[
+ {"name":"create_ticket","description":"Create a ticket","inputSchema":{"type":"object","properties":{"requester":{"type":"string"},"priority":{"type":"string","enum":["low","normal","urgent"]},"title":{"type":"string"}},"required":["title"]}},
+ {"name":"close_ticket","description":"Close a ticket","inputSchema":{"type":"object","properties":{"ticket_id":{"type":"string","description":"id of the ticket"}},"required":["ticket_id"]}},
+ {"name":"get_asset","description":"Read an asset record","inputSchema":{"type":"object","properties":{"asset_id":{"type":"string"}},"required":["asset_id"]}},
+ {"name":"update_asset","description":"Update an asset record","inputSchema":{"type":"object","properties":{"asset_id":{"type":"string"},"building":{"type":"string"},"status":{"type":"string","enum":["active","in_transit","retired"]}},"required":["asset_id"]}},
+ {"name":"send_message","description":"Send a message","inputSchema":{"type":"object","properties":{"to":{"type":"string"},"subject":{"type":"string"},"body":{"type":"string"}},"required":["to","subject"]}}
+]
