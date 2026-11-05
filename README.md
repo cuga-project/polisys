@@ -28,9 +28,9 @@ Three parties meet in polisys. The **enterprise** owns the policies and the syst
 policies into a package and turns it into checks. The **agent harness** (the host that runs the agent loop) calls those checks
 at its lifecycle hooks. Nothing in polisys contains an agent, and the harness needs nothing from polisys but the hook contract.
 
-![polisys architecture: the enterprise, polisys and the agent harness](docs/architecture.png)
+![polisys architecture: the enterprise, polisys and the agent harness](docs/diagrams/architecture.svg)
 
-<sub>Source: [docs/diagrams/architecture.html](docs/diagrams/architecture.html), rendered with `docs/diagrams/render.sh`.</sub>
+<sub>Source: [docs/diagrams/architecture.svg](docs/diagrams/architecture.svg); `docs/diagrams/render.sh` makes the PNG copy.</sub>
 
 | Party | Owns | Gives to polisys | Gets from polisys |
 |---|---|---|---|

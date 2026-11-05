@@ -1,8 +1,5 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>polisys architecture</title>
-<style>html,body{margin:0;background:#fff}svg{display:block}</style></head>
-<body>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 890" width="1600" height="890">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 950" width="1600" height="950">
 <defs>
 <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#111827"/></marker>
 <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#047857"/></marker>
@@ -20,16 +17,16 @@ text{font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif}
 .chipd{font-size:13px;fill:#6b7280}
 .lbl{font-size:14.5px;fill:#6b7280}
 </style>
-<rect width="1600" height="890" fill="#ffffff"/>
+<rect width="1600" height="950" fill="#ffffff"/>
 <text x="40" y="58" class="h1">polisys</text>
 <text x="40" y="88" class="lead">The enterprise's policies become checks that run inside any agent harness.</text>
-<rect x="40" y="116" width="400" height="640" rx="18" fill="#fffbeb" stroke="#b45309" stroke-opacity=".35" stroke-width="2"/>
+<rect x="40" y="116" width="400" height="700" rx="18" fill="#fffbeb" stroke="#b45309" stroke-opacity=".35" stroke-width="2"/>
 <text x="64" y="154" class="panel" fill="#b45309">ENTERPRISE</text>
 <text x="64" y="178" class="sub">what the company owns</text>
-<rect x="520" y="116" width="560" height="640" rx="18" fill="#eff6ff" stroke="#1d4ed8" stroke-opacity=".35" stroke-width="2"/>
+<rect x="520" y="116" width="560" height="700" rx="18" fill="#eff6ff" stroke="#1d4ed8" stroke-opacity=".35" stroke-width="2"/>
 <text x="544" y="154" class="panel" fill="#1d4ed8">POLISYS</text>
 <text x="544" y="178" class="sub">compile once, check at every step</text>
-<rect x="1160" y="116" width="400" height="640" rx="18" fill="#ecfdf5" stroke="#047857" stroke-opacity=".35" stroke-width="2"/>
+<rect x="1160" y="116" width="400" height="700" rx="18" fill="#ecfdf5" stroke="#047857" stroke-opacity=".35" stroke-width="2"/>
 <text x="1184" y="154" class="panel" fill="#047857">AGENT HARNESS</text>
 <text x="1184" y="178" class="sub">the host that runs the agent loop</text>
 <rect x="64" y="196" width="352" height="150" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
@@ -93,11 +90,18 @@ text{font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif}
 <rect x="810" y="592" width="238" height="50" rx="9" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
 <text x="824" y="613" class="chip">Control levels</text>
 <text x="824" y="632" class="chipd">fewer checks for strong models</text>
-<rect x="544" y="680" width="512" height="60" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
-<path d="M545,692 a11,11 0 0 1 11,-11 h0 v58 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
-<rect x="544" y="694" width="5" height="32" rx="2.5" fill="#1d4ed8"/>
+<rect x="544" y="680" width="198" height="110" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
+<rect x="544" y="694" width="5" height="82" rx="2.5" fill="#1d4ed8"/>
 <text x="566" y="712" class="title">Audit log</text>
-<text x="656" y="718" class="body">one line per decision, and per failed check</text>
+<text x="566" y="738" class="body">One line per</text>
+<text x="566" y="759" class="body">decision, and per</text>
+<text x="566" y="780" class="body">failed check</text>
+<rect x="770" y="680" width="286" height="110" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
+<rect x="770" y="694" width="5" height="82" rx="2.5" fill="#1d4ed8"/>
+<text x="792" y="712" class="title">Online intake</text>
+<text x="792" y="738" class="body">Finds rules in tool results</text>
+<text x="792" y="759" class="body">during a run. Session only;</text>
+<text x="792" y="780" class="body">a newer rule wins</text>
 <rect x="1184" y="196" width="352" height="180" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
 <path d="M1185,208 a11,11 0 0 1 11,-11 h0 v178 h0 a11,11 0 0 1 -11,-11 z" fill="none"/>
 <rect x="1184" y="210" width="5" height="152" rx="2.5" fill="#047857"/>
@@ -121,15 +125,17 @@ text{font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif}
 <path d="M940,346 V372" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
 <path d="M776,417 H824" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
 <path d="M940,462 V488" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<path d="M800,656 V680" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
+<path d="M643,656 V680" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
 <path d="M1056,572 H1120 V286 H1184" fill="none" stroke="#047857" stroke-width="4" marker-end="url(#ag)" stroke-linejoin="round"/>
 <path d="M1360,376 V470" fill="none" stroke="#047857" stroke-width="2.5" marker-end="url(#ag)" marker-start="url(#ags)" stroke-linejoin="round"/>
-<path d="M1360,650 V800 H240 V694" fill="none" stroke="#111827" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
-<text x="800" y="786" class="lbl" text-anchor="middle">tool calls act on the enterprise's systems</text>
+<path d="M913,680 V656" fill="none" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
+<path d="M1184,620 H1120 V735 H1056" fill="none" stroke="#047857" stroke-width="2.5" marker-end="url(#ag)" stroke-linejoin="round"/>
+<text x="1120" y="762" class="lbl" text-anchor="middle" font-size="13">tool results</text>
+<path d="M1360,650 V860 H240 V694" fill="none" stroke="#111827" stroke-width="2.5" marker-end="url(#a)" stroke-linejoin="round"/>
+<text x="800" y="846" class="lbl" text-anchor="middle">tool calls act on the enterprise's systems</text>
 <text x="1376" y="428" class="lbl">at every step</text>
 <text x="1074" y="598" class="lbl" text-anchor="end" transform="rotate(-90 1074 598)" visibility="hidden">x</text>
-<path d="M40,858 H84" stroke="#111827" stroke-width="2.5" marker-end="url(#a)"/><text x="96" y="863" class="lbl">policy and tool calls</text>
-<path d="M330,858 H374" stroke="#b45309" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#a)"/><text x="386" y="863" class="lbl">open question to the policy owner</text>
-<path d="M720,858 H764" stroke="#047857" stroke-width="4" marker-end="url(#ag)"/><text x="776" y="863" class="lbl">checks reach the agent through the hooks</text>
+<path d="M40,918 H84" stroke="#111827" stroke-width="2.5" marker-end="url(#a)"/><text x="96" y="923" class="lbl">policy and tool calls</text>
+<path d="M330,918 H374" stroke="#b45309" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#a)"/><text x="386" y="923" class="lbl">open question to the policy owner</text>
+<path d="M720,918 H764" stroke="#047857" stroke-width="4" marker-end="url(#ag)"/><text x="776" y="923" class="lbl">checks reach the agent through the hooks</text>
 </svg>
-</body></html>
