@@ -17,3 +17,28 @@ jobs:
       - run: pip install -e ".[dev,cedar,llm]"
       - run: pytest -q
       - run: ruff check .
+  package:
+    # The wheel must work on its own: build it, install it in an empty environment away from the source tree, and run
+    # the CLI, the validator and the quickstart against the installed copy.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - name: the wheel holds the files the package reads at run time
+        run: |
+          unzip -l dist/*.whl | grep -E "polisys/skill/SKILL.md|polisys/MODEL.md|licenses/LICENSE|polisys/hooks.py"
+      - name: install into an empty environment and run it
+        run: |
+          python -m venv /tmp/clean
+          /tmp/clean/bin/pip install dist/*.whl
+          cd /tmp
+          /tmp/clean/bin/python -c "import polisys, pathlib; assert 'site-packages' in polisys.__file__, polisys.__file__"
+          /tmp/clean/bin/polisys --help
+          /tmp/clean/bin/polisys validate "$GITHUB_WORKSPACE/examples/facilities_desk/package.json" --tools "$GITHUB_WORKSPACE/examples/facilities_desk/tools.json"
+          /tmp/clean/bin/python "$GITHUB_WORKSPACE/examples/quickstart.py" | tee /tmp/quickstart.out
+          test "$(grep -c BLOCKED /tmp/quickstart.out)" = "2"

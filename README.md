@@ -5,7 +5,7 @@ checks that run while an agent works: rules that stop a wrong tool call, procedu
 and obligations that find work the agent never did. It is a library with a hook interface, so it runs next to an agent
 and does not contain one.
 
-> **Status: experimental, private.** The code is stable and tested (the suite has more than 3,400 tests), and the measured
+> **Status: experimental, private repository, Apache-2.0.** The code is stable and tested (the suite has more than 3,400 tests), and the measured
 > results are on tuning or already-seen task sets only; nothing here is a held-out result. Read [Evidence](#evidence) before
 > you quote a number.
 
@@ -158,5 +158,5 @@ polisys is the policy layer of the CUGA agent project, extracted into its own re
 original history is entangled with the agent's. `polisys.hooks` is a structural copy of `cuga.backend.hooks`; keep the two
 in step until the agent depends on this package.
 
-No licence has been chosen. Until one is, the code is private and all rights are reserved. Do not add benchmark policy text or
+Licensed under the Apache License 2.0, see [LICENSE](LICENSE), the same licence as the CUGA agent. Do not add benchmark policy text or
 task data to this repo: the tests use made-up policies only.
