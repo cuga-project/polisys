@@ -174,6 +174,14 @@ def discovery_tools(tools: Sequence[Any]) -> List[str]:
     return out
 
 
+# What a POLICY CHECK block asks before the same call is sent again. "If the action is still right, call it again
+# unchanged" let the agent repeat a correctly warned call with no reason (marketing.app_review_triage).
+RETRY_RULE = (
+    "Read the rule and this record's data again. Call it again unchanged only if a value you read shows that the rule "
+    "does not apply to this record: first copy that value and where you read it into your reply. A belief that the "
+    "action is right is not enough."
+)
+
 VERIFY_SYSTEM = "You check one planned action against company policy statements. Output JSON only."
 VERIFY_USER = """User request: {request}
 
@@ -983,8 +991,7 @@ class OnlinePolicyIntake(AgentHooks):
         return HookResult(
             message=f"POLICY CHECK: `{tool}` was not called: "
             + "; ".join(why[h] for h in hits)
-            + ". Check the rules and this record's data. If the action is still right, call it again unchanged; "
-            "otherwise skip it and continue with the task.",
+            + ". " + RETRY_RULE + " Otherwise skip it and continue with the task.",
             details=[rec],
         )
 
@@ -1136,8 +1143,7 @@ class OnlinePolicyIntake(AgentHooks):
                         + (f" Do instead: {v.get('fix')}" if v.get("fix") else "")
                     )
                 lines.append(
-                    "Check the rule against the data. If the action is still right, call it again unchanged; "
-                    "otherwise change or skip it and continue with the task."
+                    RETRY_RULE + " Otherwise change or skip it and continue with the task."
                 )
                 return HookResult(message="\n".join(lines), details=[rec])
             if self.retry_effect == "hold":  # flagged again on the unchanged retry: keep it stopped
