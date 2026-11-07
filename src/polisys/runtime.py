@@ -425,7 +425,6 @@ def _build_intake(a: Assembly) -> Piece:
     if checkers.rules == "on" and not a.ctx.tool_specs:
         raise a.fail("intake", "checkers.rules is on, and the task gives no tool specs to compile rules for")
     detector = a.detector(checkers.detector) if checkers.detector else None
-    guard = checkers.guard_code != "off"
     hook = OnlinePolicyIntake(
         a.model("intake", checkers.compile),
         verify_writes=verify,
