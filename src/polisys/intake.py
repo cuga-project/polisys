@@ -855,15 +855,20 @@ class OnlinePolicyIntake(AgentHooks):
             lines.append(f"(Reading {len(self.pending)} more policy record(s).)")
         return HookResult(message="\n".join(lines) or None)
 
-    def _today(self) -> str:
-        m = re.search(r"\btoday is (\d{4}-\d{2}-\d{2})", self.request or "", re.IGNORECASE)
-        if m:
-            return m.group(1)
+    def _task_date(self) -> str:
+        """The task's own date: the run's world time first, then "today is YYYY-MM-DD" in the request; "" when the
+        task gives none. Model checks get only this, never the clock: a world with its own dates and the real date
+        disagree, and a wrong date in the prompt is worse than none."""
         if self.today:
             return str(self.today)[:10]
+        m = re.search(r"\btoday is (\d{4}-\d{2}-\d{2})", self.request or "", re.IGNORECASE)
+        return m.group(1) if m else ""
+
+    def _today(self) -> str:
+        """For guard code, which needs a date: the task's date, else the clock."""
         import datetime as _dt
 
-        return _dt.date.today().isoformat()
+        return self._task_date() or _dt.date.today().isoformat()
 
     def _guard_code(
         self, tool: str, args: Dict[str, Any], statements: List[Dict[str, Any]]
@@ -954,7 +959,7 @@ class OnlinePolicyIntake(AgentHooks):
             action_text(tool, args),
             with_limit,
             record_checks=self.record_checks,
-            today=self._today(),
+            today=self._task_date(),
         )
         if not ans:
             return None
@@ -1109,7 +1114,7 @@ class OnlinePolicyIntake(AgentHooks):
         data = _json(
             self.model(
                 VERIFY_SYSTEM,
-                today_line(self._today())
+                today_line(self._task_date())
                 + VERIFY_USER.format(
                     request=self.request,
                     statements=self._fmt(statements),
@@ -1225,7 +1230,7 @@ class OnlinePolicyIntake(AgentHooks):
         data = _json(
             self.model(
                 VERIFY_SYSTEM,
-                today_line(self._today())
+                today_line(self._task_date())
                 + DONE_USER.format(
                     request=self.request,
                     statements=self._fmt(statements),
@@ -1253,7 +1258,7 @@ class OnlinePolicyIntake(AgentHooks):
                     self._fmt(statements),
                     self.facts,
                     answer,
-                    today=self._today(),
+                    today=self._task_date(),
                 )
                 look = [missing[i] for i in to_look]
                 missing = [missing[i] for i in keep]
