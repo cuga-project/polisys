@@ -23,7 +23,7 @@ from __future__ import annotations
 from typing import Any, Callable, Dict, List, Optional
 
 from .followups import REPLY_CHARS, REPLY_NOTE
-from .llm import parse_json
+from .llm import parse_json, today_line
 from .validate import quote_ok
 
 KINDS = ("effect", "step", "guard", "format", "decision")
@@ -69,6 +69,7 @@ def compile_requirements(
     policy: str = "",
     tool_names: Optional[List[str]] = None,
     data: str = "",
+    today: str = "",
 ) -> Dict[str, Any]:
     """The checklist for one task: ``{"items": [...], "dropped": [...], "raw": n}``. ``data``: what the agent has
     read so far (emails, records, files); with it, per-record procedures are filled in per record."""
@@ -81,7 +82,8 @@ def compile_requirements(
     reply = parse_json(
         model(
             SYSTEM,
-            USER.format(
+            today_line(today)
+            + USER.format(
                 request=request[:20_000],
                 policy=(policy or "(none)")[:MAX_POLICY_CHARS],
                 tools=tools,

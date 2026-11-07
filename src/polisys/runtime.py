@@ -438,7 +438,7 @@ def _build_intake(a: Assembly) -> Piece:
         guard_code=checkers.guard_code,
         brief=a.brief(),
         note_channel=a.note_channel(),
-        today=(a.ctx.world_time[:10] or None) if guard else None,
+        today=a.ctx.world_time[:10] or None,  # every check judges dates against it, not only guard code
         track_supersedes=a.cfg.authority.supersedes,
         discover=a.ctx.data_search if a.cfg.sources.discovery else None,
         decisions=Decisions(a.questions("decisions", checkers.narrow_questions))
@@ -470,6 +470,7 @@ def _build_requirements_tracker(a: Assembly) -> Piece:
                 wrong_mode=cfg.wrong_items,
                 voice=a.cfg.followups.voice,
                 evidence=a.cfg.followups.evidence,
+                today=a.ctx.world_time[:10],
             )
         ]
     )

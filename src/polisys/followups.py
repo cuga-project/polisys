@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Tuple
 
-from .llm import parse_json
+from .llm import parse_json, today_line
 from .validate import quote_ok
 
 CHECK_HEADER = (
@@ -80,6 +80,7 @@ def required_actions(
     policy: str,
     data: str,
     answer: str,
+    today: str = "",
 ) -> Tuple[List[int], List[int], List[Dict[str, Any]]]:
     """Positions in ``actions`` to send as required, positions to send as "look for the data", and one record per action
     not sent as required."""
@@ -89,7 +90,8 @@ def required_actions(
     reply = parse_json(
         model(
             EVIDENCE_SYSTEM,
-            EVIDENCE_USER.format(
+            today_line(today)
+            + EVIDENCE_USER.format(
                 request=request[:20_000],
                 policy=(policy or "(none)")[:120_000],
                 data=(data or "(none)")[:160_000],

@@ -44,6 +44,7 @@ class RequirementsTracker(AgentHooks):
         wrong_mode: str = "off",
         voice: str = "order",
         evidence: str = "off",
+        today: str = "",
     ):
         self.model, self.policy, self.max_rounds, self.is_write = model, policy, max_rounds, is_write
         self.request = ""
@@ -56,6 +57,7 @@ class RequirementsTracker(AgentHooks):
         # led the agent to change correct records); "verify" = ask to check by a read first; "fix"
         self.wrong_mode = wrong_mode
         self.voice, self.evidence = voice, evidence  # followups.py
+        self.today = today  # the task's date: per-record decisions often depend on it
 
     def on_user_message(self, message: str, thread_id: Optional[str]) -> HookResult:
         if not self.request:  # later turns are this hook's own follow-ups
@@ -85,7 +87,7 @@ class RequirementsTracker(AgentHooks):
             return HookResult()
         try:
             if self.items is None:
-                cl = compile_requirements(self.model, self.request, self.policy, data=self._data())
+                cl = compile_requirements(self.model, self.request, self.policy, data=self._data(), today=self.today)
                 self.items = cl["items"]
                 self.records.append(
                     {
@@ -110,7 +112,13 @@ class RequirementsTracker(AgentHooks):
         if self.evidence == "on" and missing:
             try:
                 keep, to_look, left_out = required_actions(
-                    self.model, [it["text"] for it in missing], self.request, self.policy, self._data(), answer
+                    self.model,
+                    [it["text"] for it in missing],
+                    self.request,
+                    self.policy,
+                    self._data(),
+                    answer,
+                    today=self.today,
                 )
                 look = [missing[i] for i in to_look]
                 missing = [missing[i] for i in keep]

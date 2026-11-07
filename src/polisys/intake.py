@@ -33,6 +33,7 @@ from .decisions import Decisions, action_text, has_limit
 from .guard_code import GuardCode, flatten_records
 from .references import ReferenceLedger
 from .trace import audited_failure, emit, fresh
+from .llm import today_line
 from .ruleset import RuleSetHooks, _walk, is_write_tool
 
 _TYPE_VALUES = {t.value for t in StatementType}
@@ -945,6 +946,7 @@ class OnlinePolicyIntake(AgentHooks):
             action_text(tool, args),
             with_limit,
             record_checks=self.record_checks,
+            today=self._today(),
         )
         if not ans:
             return None
@@ -1100,7 +1102,8 @@ class OnlinePolicyIntake(AgentHooks):
         data = _json(
             self.model(
                 VERIFY_SYSTEM,
-                VERIFY_USER.format(
+                today_line(self._today())
+                + VERIFY_USER.format(
                     request=self.request,
                     statements=self._fmt(statements),
                     facts=self._facts_for(args),
@@ -1216,7 +1219,8 @@ class OnlinePolicyIntake(AgentHooks):
         data = _json(
             self.model(
                 VERIFY_SYSTEM,
-                DONE_USER.format(
+                today_line(self._today())
+                + DONE_USER.format(
                     request=self.request,
                     statements=self._fmt(statements),
                     facts=self.facts[-DONE_FACTS_CHARS:],
@@ -1243,6 +1247,7 @@ class OnlinePolicyIntake(AgentHooks):
                     self._fmt(statements),
                     self.facts,
                     answer,
+                    today=self._today(),
                 )
                 look = [missing[i] for i in to_look]
                 missing = [missing[i] for i in keep]
