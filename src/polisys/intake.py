@@ -24,6 +24,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
 
 from polisys.hooks import AgentHooks, HookResult
 
+from .followups import CHECK_HEADER, LOOK_HEADER, REPLY_CHARS, REPLY_NOTE, required_actions
 from .facts import FACTS_CHARS, TOKEN, FactStore, call_tokens  # noqa: F401 (re-exported)
 from .handlers.prose import prose_rules
 from .handlers.tables import table_rules
@@ -32,6 +33,7 @@ from .decisions import Decisions, action_text, has_limit
 from .guard_code import GuardCode, flatten_records
 from .references import ReferenceLedger
 from .trace import audited_failure, emit, fresh
+from .llm import today_line
 from .ruleset import RuleSetHooks, _walk, is_write_tool
 
 _TYPE_VALUES = {t.value for t in StatementType}
@@ -172,6 +174,14 @@ def discovery_tools(tools: Sequence[Any]) -> List[str]:
     return out
 
 
+# What a POLICY CHECK block asks before the same call is sent again. "If the action is still right, call it again
+# unchanged" let the agent repeat a correctly warned call with no reason (marketing.app_review_triage).
+RETRY_RULE = (
+    "Read the rule and this record's data again. Call it again unchanged only if a value you read shows that the rule "
+    "does not apply to this record: first copy that value and where you read it into your reply. A belief that the "
+    "action is right is not enough."
+)
+
 VERIFY_SYSTEM = "You check one planned action against company policy statements. Output JSON only."
 VERIFY_USER = """User request: {request}
 
@@ -260,6 +270,8 @@ class OnlinePolicyIntake(AgentHooks):
         cap_effect: str = "allow",
         record_checks: bool = False,
         retry_effect: str = "allow",
+        voice: str = "order",
+        evidence: str = "off",
     ):
         """``tool_specs``: when given, trusted policies are also compiled (code for rule tables, the model for prose)
         and enforced by code; statements that do not compile stay with the verifier. ``method_choice``: as in
@@ -290,6 +302,7 @@ class OnlinePolicyIntake(AgentHooks):
         # What a model verdict does: "remind" = a note after the write (it runs); "block_once" = the write is
         # stopped once with the reason, and the same call repeated goes through.
         self.model_effect = model_effect
+        self.voice, self.evidence = voice, evidence  # followups.py
         # After the repeated-denial cap: "allow" lets the write through; "skip" keeps it blocked and tells the agent
         # to continue without it.
         self.cap_effect = cap_effect
@@ -941,6 +954,7 @@ class OnlinePolicyIntake(AgentHooks):
             action_text(tool, args),
             with_limit,
             record_checks=self.record_checks,
+            today=self._today(),
         )
         if not ans:
             return None
@@ -977,8 +991,7 @@ class OnlinePolicyIntake(AgentHooks):
         return HookResult(
             message=f"POLICY CHECK: `{tool}` was not called: "
             + "; ".join(why[h] for h in hits)
-            + ". Check the rules and this record's data. If the action is still right, call it again unchanged; "
-            "otherwise skip it and continue with the task.",
+            + ". " + RETRY_RULE + " Otherwise skip it and continue with the task.",
             details=[rec],
         )
 
@@ -1096,7 +1109,8 @@ class OnlinePolicyIntake(AgentHooks):
         data = _json(
             self.model(
                 VERIFY_SYSTEM,
-                VERIFY_USER.format(
+                today_line(self._today())
+                + VERIFY_USER.format(
                     request=self.request,
                     statements=self._fmt(statements),
                     facts=self._facts_for(args),
@@ -1129,8 +1143,7 @@ class OnlinePolicyIntake(AgentHooks):
                         + (f" Do instead: {v.get('fix')}" if v.get("fix") else "")
                     )
                 lines.append(
-                    "Check the rule against the data. If the action is still right, call it again unchanged; "
-                    "otherwise change or skip it and continue with the task."
+                    RETRY_RULE + " Otherwise change or skip it and continue with the task."
                 )
                 return HookResult(message="\n".join(lines), details=[rec])
             if self.retry_effect == "hold":  # flagged again on the unchanged retry: keep it stopped
@@ -1212,12 +1225,14 @@ class OnlinePolicyIntake(AgentHooks):
         data = _json(
             self.model(
                 VERIFY_SYSTEM,
-                DONE_USER.format(
+                today_line(self._today())
+                + DONE_USER.format(
                     request=self.request,
                     statements=self._fmt(statements),
                     facts=self.facts[-DONE_FACTS_CHARS:],
                     actions="\n".join(self.writes) or "(none)",
-                ),
+                )
+                + (REPLY_NOTE.format(answer=(answer or "")[:REPLY_CHARS]) if self.voice == "check" else ""),
             )
         )
         missing = [
@@ -1228,17 +1243,42 @@ class OnlinePolicyIntake(AgentHooks):
             and 1 <= m["statement"] <= len(statements)
         ]
         by_statement = {s["n"]: s for s in statements}
+        left_out, look = [], []
+        if self.evidence == "on" and missing:
+            try:
+                keep, to_look, left_out = required_actions(
+                    self.model,
+                    [str(m.get("action") or "") for m in missing],
+                    self.request,
+                    self._fmt(statements),
+                    self.facts,
+                    answer,
+                    today=self._today(),
+                )
+                look = [missing[i] for i in to_look]
+                missing = [missing[i] for i in keep]
+            except Exception as e:  # noqa: BLE001 - a failed check leaves the actions as they are
+                self.records.append({"hook": "before_reply", "outcome": "evidence_error", "reason": str(e)[:200]})
         rec = {
             "hook": "before_reply",
-            "outcome": "followup" if missing else "complete",
+            "outcome": "followup" if missing or look else "complete",
             "missing": _with_statements(missing, by_statement),
         }
+        if left_out:
+            rec["left_out"] = left_out
         self.records.append(rec)
-        if not missing:
+        if not missing and not look:
             return HookResult(details=[rec])
         by_n = {s["n"]: s for s in statements}
-        lines = ["POLICY: before you finish, these required actions look missing:"]
+        lines = (
+            [CHECK_HEADER, "These may be missing:"]
+            if self.voice == "check"
+            else ["POLICY: before you finish, these required actions look missing:"]
+        )
         for m in missing:
             s = by_n.get(m.get("statement"), {})
             lines.append(f"- [{s.get('source', 'policy')}] {m.get('action', '')}")
+        if look:
+            lines.append(LOOK_HEADER)
+            lines += [f"- {m.get('action', '')}" for m in look]
         return HookResult(message="\n".join(lines), details=[rec])

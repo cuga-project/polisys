@@ -425,7 +425,6 @@ def _build_intake(a: Assembly) -> Piece:
     if checkers.rules == "on" and not a.ctx.tool_specs:
         raise a.fail("intake", "checkers.rules is on, and the task gives no tool specs to compile rules for")
     detector = a.detector(checkers.detector) if checkers.detector else None
-    guard = checkers.guard_code != "off"
     hook = OnlinePolicyIntake(
         a.model("intake", checkers.compile),
         verify_writes=verify,
@@ -438,7 +437,7 @@ def _build_intake(a: Assembly) -> Piece:
         guard_code=checkers.guard_code,
         brief=a.brief(),
         note_channel=a.note_channel(),
-        today=(a.ctx.world_time[:10] or None) if guard else None,
+        today=a.ctx.world_time[:10] or None,  # every check judges dates against it, not only guard code
         track_supersedes=a.cfg.authority.supersedes,
         discover=a.ctx.data_search if a.cfg.sources.discovery else None,
         decisions=Decisions(a.questions("decisions", checkers.narrow_questions))
@@ -448,6 +447,8 @@ def _build_intake(a: Assembly) -> Piece:
         cap_effect=decisions.after_repeated_denials,
         record_checks=decisions.record_checks,
         retry_effect=decisions.retry_effect,
+        voice=a.cfg.followups.voice,
+        evidence=a.cfg.followups.evidence,
     )
     return Piece(hooks=[hook])
 
@@ -460,7 +461,18 @@ def _build_requirements_tracker(a: Assembly) -> Piece:
     policy = a.ctx.system_prompt if cfg.read_system_prompt else ""
     if cfg.read_system_prompt and not policy:
         raise a.fail("requirements_tracker", "read_system_prompt is on, and the task gives no system prompt")
-    return Piece(hooks=[RequirementsTracker(model, policy=policy, wrong_mode=cfg.wrong_items)])
+    return Piece(
+        hooks=[
+            RequirementsTracker(
+                model,
+                policy=policy,
+                wrong_mode=cfg.wrong_items,
+                voice=a.cfg.followups.voice,
+                evidence=a.cfg.followups.evidence,
+                today=a.ctx.world_time[:10],
+            )
+        ]
+    )
 
 
 def _build_guide(a: Assembly) -> Piece:

@@ -259,6 +259,14 @@ class Decisions:
 
 
 @dataclass
+class Followups:
+    """What a check may say to the agent at the reply (``followups.py``)."""
+
+    voice: Literal["order", "check"] = "order"  # check: says it is automated, and the checker sees the agent's reply
+    evidence: Literal["off", "on"] = "off"  # on: an action goes to the agent only if a check finds it really required
+
+
+@dataclass
 class Notes:
     reminders: Literal["tool_result", "system"] = "tool_result"  # where a reminder goes
     brief: Literal["system", "message", "off"] = "system"  # where the brief goes (agent setting), or off
@@ -284,6 +292,7 @@ class PolicyConfig:
     organizers: Organizers = field(default_factory=Organizers)
     obligations: Obligations = field(default_factory=Obligations)
     decisions: Decisions = field(default_factory=Decisions)
+    followups: Followups = field(default_factory=Followups)
     notes: Notes = field(default_factory=Notes)
     trace: bool = True
 

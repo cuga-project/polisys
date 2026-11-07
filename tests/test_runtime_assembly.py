@@ -975,3 +975,16 @@ def test_a_model_client_with_no_name_raises_and_the_environment_gives_no_name(mo
         with pytest.raises(ValueError, match="needs a model name"):
             openai_json_model(name)
     assert openai_json_model("m/named").model_name == "m/named"
+
+
+def test_the_task_date_reaches_the_intake_and_the_tracker_with_guard_code_off():
+    """A check without the task's date guesses today: "older than 60 days" was wrong for a 10-day-old bill."""
+    ctx = dataclasses.replace(CTX, world_time="2026-02-07T10:00:00+00:00")
+    cfg = config(
+        {"rules": "on", "compile": "m/i", "verifier": {"mode": "on", "model": "m/i", "scope": "all_statements"}},
+        {"requirements_tracker": {"mode": "on", "model": "m/t"}},
+        sources={"data": True, "request": True},
+    )
+    parts, _ = build(cfg, None, ctx)
+    dated = {type(h).__name__: getattr(h, "today", None) for h in parts.hooks}
+    assert dated.get("OnlinePolicyIntake") == "2026-02-07" and dated.get("RequirementsTracker") == "2026-02-07", dated

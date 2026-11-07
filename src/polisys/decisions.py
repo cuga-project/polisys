@@ -17,6 +17,8 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Dict, Optional
 
+from .llm import today_line
+
 LIMIT_WORDS = re.compile(
     r"\b(max(imum)?|at most|no more than|up to|limit(ed)?|only (one|two|three|\d+)|\d+\s*(per|a|each)\s+\w+|"
     r"once (per|a)|cap(ped)?)\b",
@@ -68,8 +70,9 @@ class Decisions:
         action: str,
         with_limit: bool,
         record_checks: bool = False,
+        today: str = "",
     ) -> Dict[str, Optional[float]]:
-        state = (
+        state = today_line(today) + (
             f"Company rules:\n{self._cut(rules, 5000)}\n\nData about the record or target of the action:\n"
             f"{self._cut(record_data, 3000)}\n\nEarlier actions of the same kind in this task:\n"
             f"{self._cut(earlier, 1500) or '(none)'}\n\nPlanned action: {self._cut(action, 1500)}"

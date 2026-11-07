@@ -22,7 +22,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional
 
-from .llm import parse_json
+from .followups import REPLY_CHARS, REPLY_NOTE
+from .llm import parse_json, today_line
 from .validate import quote_ok
 
 KINDS = ("effect", "step", "guard", "format", "decision")
@@ -49,7 +50,8 @@ List the requirements for THIS request only. Each item:
   "guard" (must not happen in this work), "format" (template, naming rule or exact text for an output of this work),
   or "decision" (a rule that decides each record of a set: include, exclude, status, approval, escalation);
 - "text": the requirement in one short sentence (at most 30 words), with the concrete names, values and formats;
-- "quote": the words of the request, policy or data that require it, copied exactly (at most 20 words);
+- "quote": the words of the request, policy or data that require THIS item, copied exactly (at most 20 words). A
+  sentence about another record, value or topic is not a quote for this item; with no such sentence, leave the item out;
 - "when": the condition under which it applies, or "";
 - "check": {{"tool": "<tool name if known, else empty>", "targets": [recipients, channels, files, records named],
   "values": [exact texts, values or column names the result must contain]}}.
@@ -58,6 +60,11 @@ every record in the data that the request covers: one item per required effect p
 names, IDs, dates and amounts filled in and the policy's templates and naming rules applied. A record the policy
 says to skip, hold or exclude gets a "guard" item (what must not be done for it) and, if the policy says so, the
 effect that records the exception.
+Keep every qualifier and condition of the quote in the item ("significant", "only", "if", "unless", thresholds,
+dates). When the data does not show which records meet a qualifier such as "significant", keep the qualifier in "text"
+and do not name records for it. Before naming a record in an effect or include decision, read that record's own
+status, notes and flags: a record marked as excluded, held, a one-off or seasonal spike, a test, legal hold, do not
+send or distribute, or not meeting the condition gets a "guard" item instead.
 Do not list general advice, reading steps without a trace, or rules that this request does not trigger.
 Return {{"items": [...]}}"""
 
@@ -68,6 +75,7 @@ def compile_requirements(
     policy: str = "",
     tool_names: Optional[List[str]] = None,
     data: str = "",
+    today: str = "",
 ) -> Dict[str, Any]:
     """The checklist for one task: ``{"items": [...], "dropped": [...], "raw": n}``. ``data``: what the agent has
     read so far (emails, records, files); with it, per-record procedures are filled in per record."""
@@ -80,7 +88,8 @@ def compile_requirements(
     reply = parse_json(
         model(
             SYSTEM,
-            USER.format(
+            today_line(today)
+            + USER.format(
                 request=request[:20_000],
                 policy=(policy or "(none)")[:MAX_POLICY_CHARS],
                 tools=tools,
@@ -137,7 +146,7 @@ Changes the agent made (successful calls that change something, in order):
 For each checklist item, say whether the changes above do it: "done", "missing" (clearly not done at all), "wrong"
 (clearly done with a different recipient, record, value or format than the item says), "not_applicable" (its
 condition did not hold), or "unsure" (the changes do not show it either way, for example IDs you cannot map to the
-names in the item). Say "missing" or "wrong" only when the changes show it. A "guard" item is "done" when nothing
+names in the item).{reply} Say "missing" or "wrong" only when the changes show it. A "guard" item is "done" when nothing
 forbidden happened, "wrong" when it did. Return {{"items": [{{"id": "R1", "status": "done|missing|wrong|not_applicable", "why": "<short>"}}]}}"""
 
 
@@ -146,8 +155,10 @@ def gate(
     items: List[Dict[str, Any]],
     writes: List[Dict[str, Any]],
     max_chars: int = 60_000,
+    answer: str = "",
 ) -> Dict[str, Dict[str, str]]:
-    """Status per checklist item from the agent's successful writes: ``{id: {"status", "why"}}``."""
+    """Status per checklist item from the agent's successful writes: ``{id: {"status", "why"}}``. ``answer``: the agent's
+    reply; with it, an item the reply leaves out on purpose with a reason is "not_applicable"."""
     if not items:
         return {}
     lines = []
@@ -160,7 +171,11 @@ def gate(
     reply = parse_json(
         model(
             GATE_SYSTEM,
-            GATE_USER.format(checklist=render(items), writes="\n".join(lines)[:max_chars] or "(none)"),
+            GATE_USER.format(
+                checklist=render(items),
+                writes="\n".join(lines)[:max_chars] or "(none)",
+                reply=REPLY_NOTE.format(answer=answer[:REPLY_CHARS]) if answer else "",
+            ),
         )
     )
     out = {}

@@ -65,6 +65,12 @@ def openrouter_json_model(model: str, timeout: float = 90.0) -> Callable[[str, s
     )
 
 
+def today_line(today: str) -> str:
+    """The date a check must judge dates against (a task's world time in benchmarks). Without it a model guesses
+    today, and "older than 60 days" goes wrong."""
+    return f"Today's date: {today}\n\n" if today else ""
+
+
 def parse_json(text: str) -> Dict[str, Any]:
     """The first JSON object in a model answer, or {} when there is none."""
     m = re.search(r"\{.*\}", text or "", re.S)
