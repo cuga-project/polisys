@@ -60,11 +60,11 @@ every record in the data that the request covers: one item per required effect p
 names, IDs, dates and amounts filled in and the policy's templates and naming rules applied. A record the policy
 says to skip, hold or exclude gets a "guard" item (what must not be done for it) and, if the policy says so, the
 effect that records the exception.
-Keep every qualifier and condition of the quote in the item ("significant", "only", "if", "unless", thresholds,
-dates). When the data does not show which records meet a qualifier such as "significant", keep the qualifier in "text"
-and do not name records for it. Before naming a record in an effect or include decision, read that record's own
-status, notes and flags: a record marked as excluded, held, a one-off or seasonal spike, a test, legal hold, do not
-send or distribute, or not meeting the condition gets a "guard" item instead.
+Keep every qualifier and condition of the quote in the item (words that limit which records count, thresholds,
+dates). When the data does not show which records meet a qualifier, keep the qualifier in "text" and do not name
+records for it. Before naming a record in an effect or include decision, read that record's own status, notes and
+flags: a record whose own data says not to act on it now, or that does not meet the condition, gets a "guard" item
+instead.
 Do not list general advice, reading steps without a trace, or rules that this request does not trigger.
 Return {{"items": [...]}}"""
 

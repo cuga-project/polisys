@@ -988,3 +988,19 @@ def test_the_task_date_reaches_the_intake_and_the_tracker_with_guard_code_off():
     parts, _ = build(cfg, None, ctx)
     dated = {type(h).__name__: getattr(h, "today", None) for h in parts.hooks}
     assert dated.get("OnlinePolicyIntake") == "2026-02-07" and dated.get("RequirementsTracker") == "2026-02-07", dated
+
+
+def test_a_task_with_no_date_gives_the_checks_no_date_and_the_world_date_beats_the_request():
+    cfg = config(
+        {"rules": "on", "compile": "m/i", "verifier": {"mode": "on", "model": "m/i", "scope": "all_statements"}},
+        sources={"data": True},
+    )
+
+    def intake(ctx):
+        return next(h for h in build(cfg, None, ctx)[0].hooks if type(h).__name__ == "OnlinePolicyIntake")
+
+    assert intake(CTX)._task_date() == ""  # never the clock: the world may have its own dates
+    dated = dataclasses.replace(CTX, world_time="2026-02-07T10:00:00+00:00")
+    hook = intake(dated)
+    hook.request = "Today is 2030-01-01. Close it."
+    assert hook._task_date() == "2026-02-07"

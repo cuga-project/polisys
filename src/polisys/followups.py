@@ -16,6 +16,7 @@ If that check fails, the suggestions stay, as without it: a failed check must no
 
 from __future__ import annotations
 
+import re
 from typing import Any, Callable, Dict, List, Tuple
 
 from .llm import parse_json, today_line
@@ -65,8 +66,8 @@ For each suggested action, answer "required":
 - "yes": a sentence of the request or the policy specifically requires this action for this item, and the data shows that
   the item meets every condition stated for it (scope, dates, status, notes, eligibility);
 - "no": the data shows that the item fails a stated condition, or the request or the policy says to skip it, or a newer rule
-  replaces the rule behind it. Give "condition" (the words of the request or policy, copied exactly) and "value" (the value
-  in the data that fails it, copied exactly);
+  replaces the rule behind it. Give "condition" (the words of the request or policy, copied exactly) and "value" (the field
+  name and the value in the data that fails it, copied exactly, at least two words);
 - "no_data": the data does not show whether the conditions are met, or the records were not found. An empty search result
   does not show that the records do not exist, and a reply saying so is not evidence;
 - "unclear": the data is there, and the only support for the action is a general sentence.
@@ -109,7 +110,7 @@ def required_actions(
         if said == "yes":
             keep.append(i - 1)
             continue
-        if said == "no" and not (_copied(v.get("condition"), f"{rules}\n{read}") and _copied(v.get("value"), read)):
+        if said == "no" and not (_copied(v.get("condition"), f"{rules}\n{read}", 3) and _copied(v.get("value"), read, 2)):
             said = "no_data"  # a "no" that cannot show its condition and value is missing data
         if said not in ("no", "unclear"):
             look.append(i - 1)
@@ -124,8 +125,18 @@ def required_actions(
     return keep, look, left_out
 
 
-def _copied(text: Any, source: str) -> bool:
-    return bool(str(text or "").strip()) and quote_ok(str(text), source)
+_WORD = re.compile(r"\w+")
+
+
+def _copied(text: Any, source: str, min_words: int) -> bool:
+    """The text is in the source as whole words, and long enough to say something: a bare "5" or "No" is inside almost
+    any data, so it shows nothing. Punctuation and case are ignored ("status": "on hold" matches Status: On hold)."""
+    words = _WORD.findall(str(text or "").lower())
+    if len(words) < min_words:
+        return False
+    if quote_ok(str(text), source) and len(words) >= 4:  # a longer quote may have a copying slip
+        return True
+    return f" {' '.join(words)} " in f" {' '.join(_WORD.findall(source.lower()))} "
 
 
 __all__ = ["CHECK_HEADER", "LOOK_HEADER", "REPLY_CHARS", "REPLY_NOTE", "required_actions"]
