@@ -24,7 +24,7 @@ def _model(status="missing", required=None, seen=None):
 def _reply(model, **kw):
     t = RequirementsTracker(model, **kw)
     t.on_user_message("Please send the report.", None)
-    return t, t.before_reply("I left it out because the report is on hold.")
+    return t, t.before_reply("I left it out because the report is on hold (REPLY-7f3).")
 
 
 def test_default_keeps_the_order_voice_and_shows_no_reply_to_the_checker():
@@ -32,7 +32,7 @@ def test_default_keeps_the_order_voice_and_shows_no_reply_to_the_checker():
     _, res = _reply(_model(seen=seen))
     assert "do these now" in res.message
     assert CHECK_HEADER not in res.message
-    assert not any("on hold" in u for u in seen)
+    assert not any("REPLY-7f3" in u for u in seen)
 
 
 def test_check_voice_says_it_is_automated_and_the_checker_reads_the_reply():
@@ -40,7 +40,7 @@ def test_check_voice_says_it_is_automated_and_the_checker_reads_the_reply():
     _, res = _reply(_model(seen=seen), voice="check")
     assert res.message.startswith(CHECK_HEADER)
     assert "do these now" not in res.message
-    assert any("on hold" in u for u in seen)
+    assert any("REPLY-7f3" in u for u in seen)
 
 
 def test_evidence_sends_only_an_action_found_required():
@@ -81,6 +81,19 @@ def test_a_no_holds_only_with_its_condition_and_value_copied_from_what_was_read(
     assert look == [0] and out[0]["sent"] == "look"
     keep, look, out = required_actions(_verdict(required="no"), ["a"], request, "", data, "")
     assert look == [0]
+
+
+def test_a_no_with_a_short_or_partial_word_value_is_missing_data():
+    request, data = "Skip bills on hold.", "Invoice 2025-115: Status: Open"
+    for value in ("5", "Open", "atus: Op"):  # inside the data as text, but shows nothing
+        keep, look, out = required_actions(
+            _verdict(required="no", condition="Skip bills on hold", value=value), ["a"], request, "", data, ""
+        )
+        assert look == [0] and out[0]["sent"] == "look", value
+    keep, look, out = required_actions(
+        _verdict(required="no", condition="Skip bills on hold", value='"Status": "open"'), ["a"], request, "", data, ""
+    )
+    assert out[0]["sent"] == "no"
 
 
 def test_required_actions_treats_no_answer_as_missing_data():
