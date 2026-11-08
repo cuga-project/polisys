@@ -455,15 +455,18 @@ class SopLoop:
                     decision = "exception" if decision == "follow" else decision
                     reasons.append(f"exception applies: if {cond} then {then} ({a.get('evidence')})")
             checks += general_hits
+            # A general rule limits the actions it names (a channel, a recipient, a format); it does not replace the
+            # case's procedure. So it never changes the decision: the agent gets it as a rule to keep while it does
+            # the steps. Only the case's own preconditions and exceptions decide stop, hold or exception.
+            constraints = []
             for x in general_hits:
                 if self.require_evidence and not _grounded(x["evidence"], cdata):
                     entry.setdefault("ungrounded", []).append(f"general: {x['condition']}")
                     continue
-                if HARD.search(str(x["then"])):
-                    decision = "exception" if decision == "follow" else decision
-                    reasons.append(
-                        f"SOP rule applies: if {x['condition']} then {x['then']} ({x['evidence']})"
-                    )
+                if str(x["then"]).strip():
+                    constraints.append(f"if {x['condition']} then {x['then']} ({x['evidence']})")
+            if constraints:
+                entry["constraints"] = constraints
             if (
                 c.get("combined") is True and decision != "follow"
             ):  # one result from many items: rules apply per item
@@ -500,7 +503,7 @@ class SopLoop:
                     }
                 )
             msg = self._case_turn(
-                k, len(cases), c, proc, decision, reasons, checks, h, rules, entry.get("per_item")
+                k, len(cases), c, proc, decision, reasons, checks, h, rules, entry.get("per_item"), constraints
             )
             if self.mode == "advisory":
                 plans.append(msg)
@@ -549,10 +552,17 @@ class SopLoop:
         handled: Dict[str, Any],
         rules: List[Dict[str, Any]],
         per_item: Optional[List[str]] = None,
+        constraints: Optional[List[str]] = None,
     ) -> str:
         lines = [f"Case {k} of {n}: {c['case']} - {c.get('summary', '')}"]
         if proc:
             lines.append(f"SOP procedure: {proc.get('name')}")
+        if constraints:
+            lines.append(
+                "General SOP rules that apply to this case. Keep them while you do the work; each one limits only "
+                "the actions it names:"
+            )
+            lines += [f"- {r[:300]}" for r in constraints[:6]]
         if decision == "follow":
             lines.append("Decision from the checks: FOLLOW the procedure for this case.")
         else:
