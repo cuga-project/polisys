@@ -31,6 +31,14 @@ MISSING_NEEDS_READ = (
     ' "yes" only if the data shows that the record which should hold it was read and does not hold it; if that record'
     ' was not read, answer "no".'
 )
+# checkers.gate.trigger_check: a rule applies only when its trigger holds for this record at this stage, and a rule that
+# allows the action under a condition (an authorization, an exception) is checked against the data.
+TRIGGER_CHECK = (
+    ' Answer "yes" only if the rule\'s trigger holds for the record this action is about, at this stage of the work: a'
+    " rule for another record, another kind of case or a later step does not apply. If a rule allows the action under a"
+    ' condition (an authorization, an exception, an approved change), check that condition in the data; if it holds,'
+    ' answer "no".'
+)
 USER = """{label}:
 {rules}
 {dates}

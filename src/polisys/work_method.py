@@ -12,6 +12,8 @@ people). None names a domain, a system or a value. A profile lists the rules it 
 | ``cells`` | a flag column holds one value of its set; reasons and source values go to a notes column |
 | ``idempotent`` | look for an existing record before creating one; resolve an account once after an account error |
 | ``readback`` | before the final answer, one turn that reads back each record's required outputs from the systems |
+| ``sop_literal`` | templates, log fields, names, formats and locations come word for word from the SOP document |
+| ``readback_sop`` | ``readback``, but against the SOP: the procedures the agent opened, each record's branch and its outputs |
 """
 
 from __future__ import annotations
@@ -47,6 +49,11 @@ METHODS: Dict[str, str] = {
         "Before you create a record (a ticket, a comment, a file), check whether one already exists for the same item. "
         "After an error that a user or account is unknown, look the account up once and reuse it for every later write."
     ),
+    "sop_literal": (
+        "The procedure tools summarize the SOP. For templates, log and audit fields, names, formats and where files and "
+        "records are kept, use the SOP document's own text word for word; where the summary and the document differ, the "
+        "document wins. Save each file and record where the request or the SOP keeps it, not in a working folder."
+    ),
 }
 
 READBACK = (
@@ -56,7 +63,16 @@ READBACK = (
     "Create what is missing and correct what is wrong. Then give the final answer."
 )
 
-NAMES = (*METHODS, "readback")
+READBACK_SOP = (
+    "Before the final answer, check your work against the SOP, not against your own plan. For each record you handled, "
+    "take the branch the SOP gives for the decision you made, and check in the systems that every output of that branch "
+    "exists exactly once, in the place the request or the SOP names (not in a working folder), with the SOP's exact "
+    "template text and fields. Correct or complete only the outputs of decisions you already made; do not send new "
+    "messages to people as corrections unless a step of that branch requires them. Then give the final answer."
+)
+SOP_CHARS = 12000  # the procedures shown with READBACK_SOP
+
+NAMES = (*METHODS, "readback", "readback_sop")
 
 
 def note(names: List[str]) -> str:
@@ -68,11 +84,24 @@ def note(names: List[str]) -> str:
 
 
 class ReadbackHooks(AgentHooks):
-    """One read-back turn per run: the first final answer is sent back once with ``READBACK``."""
+    """One read-back turn per run: the first final answer is sent back once with ``READBACK``. With a ``store``
+    (``readback_sop``) the message is ``READBACK_SOP`` followed by the text of the procedures the agent opened."""
 
-    def __init__(self) -> None:
+    def __init__(self, store: Any = None) -> None:
+        self.store = store
         self.sent = False
         self.records: List[Dict[str, Any]] = []
+
+    def _message(self) -> str:
+        if self.store is None:
+            return READBACK
+        opened: List[str] = []
+        for call in getattr(self.store, "calls", []) or []:
+            opened += [i for i in call.get("expanded") or [] if i not in opened]
+        text = "\n\n".join(self.store.procedure_text(self.store.procs[i]) for i in opened if i in self.store.procs)
+        if not text:
+            return READBACK_SOP
+        return READBACK_SOP + "\n\nThe SOP procedures you opened:\n\n" + text[:SOP_CHARS]
 
     def session_start(self, thread_id: Optional[str]) -> None:
         self.sent = False
@@ -81,5 +110,6 @@ class ReadbackHooks(AgentHooks):
         if self.sent:
             return None
         self.sent = True
-        self.records.append({"component": "work_method", "outcome": "readback_sent"})
-        return HookResult(message=READBACK)
+        message = self._message()
+        self.records.append({"component": "work_method", "outcome": "readback_sent", "chars": len(message)})
+        return HookResult(message=message)

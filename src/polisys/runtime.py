@@ -528,7 +528,12 @@ def _build_work_method(a: Assembly) -> Piece:
     from .work_method import ReadbackHooks, note
 
     names = list(a.cfg.notes.work_method)
-    hooks = [ReadbackHooks()] if "readback" in names else []
+    if "readback" in names and "readback_sop" in names:
+        raise a.fail("work_method", "readback and readback_sop are two forms of one turn; list one")
+    if "readback_sop" in names:
+        hooks = [ReadbackHooks(store=a.store("work_method"))]
+    else:
+        hooks = [ReadbackHooks()] if "readback" in names else []
     return Piece(hooks=hooks, system_note=note(names), target=hooks[0] if hooks else None)
 
 
@@ -568,10 +573,10 @@ def _build_gate(a: Assembly) -> Piece:
         gate = StoreGate.from_package(
             None, model, sop_text=a.ctx.policy_text or a.ctx.system_prompt, today=today
         )
-    if cfg.missing_needs_read:
-        from .store_gate import MISSING_NEEDS_READ
+    if cfg.missing_needs_read or cfg.trigger_check:
+        from .store_gate import MISSING_NEEDS_READ, TRIGGER_CHECK
 
-        gate.extra = MISSING_NEEDS_READ
+        gate.extra = (MISSING_NEEDS_READ if cfg.missing_needs_read else "") + (TRIGGER_CHECK if cfg.trigger_check else "")
     if cfg.seed_request:
         if not a.ctx.request:
             raise a.fail("gate", "seed_request is on, and the task gives no request")

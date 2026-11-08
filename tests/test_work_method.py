@@ -47,3 +47,31 @@ def test_gate_missing_needs_read_adds_the_rule_only_when_on():
         parts, _ = build(config(gate_cfg, {"procedure_tools": "on"}, package="p.json"), from_store_graph(GRAPH))
         gate = next(h for h in parts.hooks if isinstance(h, StoreGate))
         assert gate.extra == want
+
+
+def test_readback_sop_shows_the_opened_procedures_and_needs_one_form():
+    from polisys.package import from_store_graph
+    from polisys.procedure_store import ProcedureStore
+    from polisys.work_method import READBACK_SOP
+    from tests.test_runtime_assembly import GRAPH
+
+    store = ProcedureStore.from_package(from_store_graph(GRAPH))
+    h = ReadbackHooks(store=store)
+    assert h.before_reply("done").message == READBACK_SOP  # nothing opened yet
+    store.get_procedure(["1.1"])
+    h.session_start("t2")
+    msg = h.before_reply("done").message
+    assert msg.startswith(READBACK_SOP) and "Open a ticket." in msg
+    with pytest.raises(Exception):
+        build(config(notes={"work_method": ["readback", "readback_sop"]}), ctx=CTX)
+
+
+def test_gate_trigger_check_is_added_next_to_missing_needs_read():
+    from polisys.store_gate import MISSING_NEEDS_READ, TRIGGER_CHECK, StoreGate
+    from tests.test_runtime_assembly import GATE_ON, GRAPH, from_store_graph
+
+    both = {"gate": {**GATE_ON["gate"], "missing_needs_read": True, "trigger_check": True}}
+    parts, _ = build(config(both, {"procedure_tools": "on"}, package="p.json"), from_store_graph(GRAPH))
+    gate = next(h for h in parts.hooks if isinstance(h, StoreGate))
+    assert gate.extra == MISSING_NEEDS_READ + TRIGGER_CHECK
+    assert METHODS["sop_literal"] in note(["sop_literal"])
