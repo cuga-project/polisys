@@ -508,6 +508,14 @@ def _build_procedure_tools(a: Assembly) -> Piece:
     return Piece(tools=policy_tools(store), system_note=POLICY_TOOLS_NOTE, target=store)
 
 
+def _build_work_method(a: Assembly) -> Piece:
+    from .work_method import ReadbackHooks, note
+
+    names = list(a.cfg.notes.work_method)
+    hooks = [ReadbackHooks()] if "readback" in names else []
+    return Piece(hooks=hooks, system_note=note(names), target=hooks[0] if hooks else None)
+
+
 def _build_gate(a: Assembly) -> Piece:
     from .router import router_reads_opened
     from .store_gate import StoreGate
@@ -543,6 +551,10 @@ def _build_gate(a: Assembly) -> Piece:
         gate = StoreGate.from_package(
             None, model, sop_text=a.ctx.policy_text or a.ctx.system_prompt, today=today
         )
+    if cfg.missing_needs_read:
+        from .store_gate import MISSING_NEEDS_READ
+
+        gate.extra = MISSING_NEEDS_READ
     if cfg.seed_request:
         if not a.ctx.request:
             raise a.fail("gate", "seed_request is on, and the task gives no request")
@@ -720,6 +732,7 @@ COMPONENTS: Dict[str, Component] = {
     "guide": Component(lambda cfg: cfg.organizers.guide.mode == "on", _build_guide),
     "procedure_tools": Component(lambda cfg: cfg.organizers.procedure_tools == "on", _build_procedure_tools),
     "gate": Component(lambda cfg: cfg.checkers.gate.mode == "on", _build_gate),
+    "work_method": Component(lambda cfg: bool(cfg.notes.work_method), _build_work_method),
     "sop_tracker": Component(lambda cfg: cfg.organizers.sop_tracker.mode == "on", _build_sop_tracker),
     "navigator": Component(lambda cfg: cfg.organizers.navigator.mode == "on", _build_navigator),
     "obligations": Component(_ledger_on, _build_obligations),

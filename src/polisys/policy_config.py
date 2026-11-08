@@ -132,6 +132,7 @@ class Gate:
     min_strength: Literal["agent", "none"] = "agent"  # none: the gate model may be weaker than the agent
     seed_request: bool = False  # the user's request counts as data the agent read
     max_tokens: Count = 4000  # one old runner gave gpt-oss models 16000
+    missing_needs_read: bool = False  # a "something is missing" block needs a read of the record that should hold it
 
 
 @dataclass
@@ -273,6 +274,11 @@ class Notes:
     brief: Literal["system", "message", "off"] = "system"  # where the brief goes (agent setting), or off
     # The brief of the package's rules also lists the guidance rules that name no tool (the measured runs never showed them).
     brief_guidance: bool = False
+    # General rules for SOP work on many records, in the system prompt (work_method.py); "readback" adds one read-back turn
+    # before the final answer. Empty: none.
+    work_method: List[Literal["worksheet", "actors", "request_scope", "cells", "idempotent", "readback"]] = field(
+        default_factory=list
+    )
 
 
 Shape = Literal[

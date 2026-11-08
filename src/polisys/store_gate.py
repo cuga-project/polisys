@@ -24,6 +24,13 @@ WINDOW = re.compile(
     re.I,
 )
 SYSTEM = "You check one action of an agent against SOP rules. Output JSON only."
+# checkers.gate.missing_needs_read: a rule broken because something is missing counts only when the record that should hold
+# it was read (an absence cannot be quoted, so the quote check alone does not stop such a block).
+MISSING_NEEDS_READ = (
+    " If the rule is broken because something is missing (an approval, a document, an attachment, a field), answer"
+    ' "yes" only if the data shows that the record which should hold it was read and does not hold it; if that record'
+    ' was not read, answer "no".'
+)
 USER = """{label}:
 {rules}
 {dates}
@@ -37,7 +44,7 @@ The agent is about to do this action:
 
 Does this action break one of the rules above for the case it belongs to? Answer "yes" only if a rule clearly
 forbids it given the data (for example a required approval or authorization is missing, or the SOP says not to
-reply). Quote the words from the data that show it. Return
+reply). Quote the words from the data that show it.{extra} Return
 {{"breaks": true|false, "rule": "<the rule>", "case": "<who/what>", "evidence": "<exact quote from the data>",
 "why": "<short>"}}"""
 
@@ -151,6 +158,7 @@ class StoreGate(AgentHooks):
         self.blocked: Set[Tuple[str, str]] = set()  # (rule, case): the gate stops a rule once for each case
         self.records: List[Dict[str, Any]] = []
         self._last = ""  # what the last check did (see ``last_decision``)
+        self.extra = ""  # added to the question (MISSING_NEEDS_READ); empty keeps the measured prompt
 
     @classmethod
     def from_package(
@@ -298,6 +306,7 @@ class StoreGate(AgentHooks):
                         dates=self._date_note(rules),
                         data=data,
                         action=action,
+                        extra=self.extra,
                     ),
                 )
             )
