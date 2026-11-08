@@ -548,11 +548,12 @@ def _build_gate(a: Assembly) -> Piece:
     model = a.model("gate", cfg.model, timeout=180, max_tokens=cfg.max_tokens)
     today = a.ctx.world_time[:10]
     if cfg.scope == "active_procedures":
-        if a.cfg.organizers.procedure_tools != "on" and router_reads_opened(cfg_router.kind):
+        opens = a.cfg.organizers.procedure_tools == "on" or a.cfg.organizers.procedure_push.mode == "on"
+        if not opens and router_reads_opened(cfg_router.kind):
             raise a.fail(
                 "gate",
-                "scope active_procedures with the router agent_opened needs organizers.procedure_tools: nothing else opens a "
-                "procedure (a router that searches does not need them)",
+                "scope active_procedures with the router agent_opened needs organizers.procedure_tools or procedure_push: "
+                "nothing else opens a procedure (a router that searches does not need them)",
             )
         reader = a.scope_reader("gate")
         gate = StoreGate.from_package(
