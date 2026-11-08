@@ -102,6 +102,7 @@ flowchart LR
 | Offline build, Claude skill | Document → package | `skill/SKILL.md`, `cli.py`, `validate.py` | Built for rules, procedures, obligations and policy questions; decision tests come from a second agent that does not read the rules (Task 3.4) |
 | Offline build, pipeline | Same output, no human | `builder.py`, `handlers/`, `rule_repair.py`, `procedure_compiler.py` | Built and measured on 7 documents with 2 models: it does not replace the skill today (`packages/PIPELINE_VS_SKILL.md`, change 135). `compile_sop` has a known defect: `STEP_LINE` misses `**Step 1:**` and `*` bullets |
 | Online intake + discovery | Rules found in data; trust; newer rule wins | `intake.py`, `detectors.py` | Built |
+| Listing (`sources.listing`) | At the request, read every record the host lists; a model keeps the records that state rules (tables always); those go to the online intake's extraction. Records the listing read skip the online intake later | `listing.py`, `intake.py` | Built, off by default. AutomationBench fresh3 (tuning set), 3 trials: gold rule records found 93.7% vs 28.6% with discovery; strict +11.4 on gpt-oss, no gain and no harm on Haiku 5.5. Notes in single table rows are often lost in extraction. The host gives the records (`RunContext.data_list`); a general crawler over any host's read tools is deferred (below) |
 | Procedure tools | The agent reads the SOP through `policy__` tools; what it opens scopes the gate | `procedure_store.py` | Built; the measured gate path |
 | Router | Which procedures apply: `agent_opened` (measured), `llm_cards`, `bm25_kev` | `router.py` (registry); `sop_retrieval.py`, `sop_loop.py` | Built: `Router` and `Expander` by name. The gate reads `Scope`; the ledger has no retrieval scope. `bm25_kev` and `llm_cards` have not run against a real model through the registry |
 | Hard rules | Typed rules by code; roles by Cedar | `ruleset.py`, `cedar_engine.py` | Built |
@@ -372,7 +373,7 @@ requirements gate flagged 17–40% of passed checks). Item levels are never set 
 | Hook | What runs |
 |---|---|
 | `session_start` | Each hook object resets its own state (`session_start` in `ruleset.py`, `intake.py`, `obligations.py`, `procedure_monitor.py`). The package is loaded and checked, and the audit file is opened, in `build_runtime` before the run, not at this hook |
-| `on_user_message` | Request producer; discovery in data sources; SOP tracker note (flow shape) |
+| `on_user_message` | Request producer; discovery in data sources, or the listing (`sources.listing`); SOP tracker note (flow shape) |
 | `before_llm_call` | Brief and checklist, in the system prompt (measured: the newest-message option scored −4.2, change 111) |
 | `before_tool_call` | Write checks, in order below; guide stops (level 3) |
 | `after_tool_call` | Facts; online intake; ledger update; reminders in the tool result |
@@ -583,7 +584,7 @@ One YAML file per deployment or experiment. A profile holds facts and method cho
 ```yaml
 policy:
   package: packages/handbook/crestwood/package.json   # none = rules only from data
-  sources: {data: true, discovery: true, request: true}
+  sources: {data: true, discovery: true, listing: false, request: true}   # listing needs data and RunContext.data_list
   authority: {supersedes: false}   # company_domains and may_change_rules are not read: build_runtime raises when they are set; supersedes is read
   priority_classes: [regulatory, company, department, team]   # validate only: an audit note, no runtime reader
   control:
@@ -675,3 +676,20 @@ measured behavior silently (mitigation: parity tests; re-baseline first after th
 | `docs/analysis/2026-11-04-graph-and-rule-testing-research.md` | Open-source and published methods |
 | `src/cuga/policy_layer/MODEL.md` (gate repo) | Current policy model |
 | `benchmarks/policy_eval/STABILITY_REPORT.md` | The 10 gate checks, the first run on stable code, and what the experiment plan must decide |
+
+## Deferred: a general crawler for the listing
+
+`sources.listing` reads what the host returns from `RunContext.data_list()`. Today only the AutomationBench adapter
+provides it, with a walk written for five apps. The planned general form, so a user can bring any tools and say where
+the policies are:
+
+- Inputs: the host's tools with their schemas and read or write labels, and optional locations in config
+  (`sources.listing.locations`): a tool with fixed arguments, an app, or a sentence that a model turns into tool calls.
+  No locations means everything the read tools reach.
+- Crawl: call read tools with no required arguments (or the located ones); follow IDs from a record's fields into
+  read tools whose required parameter has that name; follow pages; take required values from schema enums; when a
+  required value is still unknown, a model proposes it from records already seen and code checks it against the schema.
+- Safety: read tools only, a call and time budget, the host's sandbox or world copy, and a report of failed reads,
+  pages left and tools never reached.
+- Done when: on AutomationBench the crawler alone matches the adapter walk's coverage, one other benchmark works with
+  no new code, and a unit test with invented tools passes.
