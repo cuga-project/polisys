@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import time
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
 
@@ -265,6 +266,7 @@ class OnlinePolicyIntake(AgentHooks):
         today: Optional[str] = None,
         track_supersedes: bool = False,
         discover: Optional[List[Any]] = None,
+        listing: Optional[Callable[[], Dict[str, List[Any]]]] = None,
         decisions: Optional[Decisions] = None,
         model_effect: str = "remind",
         cap_effect: str = "allow",
@@ -296,6 +298,8 @@ class OnlinePolicyIntake(AgentHooks):
         self.track_supersedes = track_supersedes
         # (tool name, search(query) -> result) pairs run once per thread at the request (see DISCOVERY_QUERIES)
         self.discover = list(discover or [])
+        # () -> {source: [record, ...]}: every record of every app, read once per thread at the request (listing.py)
+        self.listing = listing
         # Narrow decision-model questions (decisions.py): rule changes without policy words, record exclusions and
         # limits before writes, and whether a code rule applies before it denies.
         self.decisions = decisions
@@ -342,6 +346,8 @@ class OnlinePolicyIntake(AgentHooks):
         self.compiled: set = set()  # statement texts enforced by code rules
         self.superseded: Dict[str, str] = {}  # replaced statement text -> what replaced it
         self._discovered = False
+        self._listed = False
+        self.listed_ids: Optional[set] = None  # IDs of the records the listing read; their later reads skip intake
         self._blocked_once: set = set()  # calls already stopped once (model verdicts and decisions)
         self.enforcer = (
             RuleSetHooks(
@@ -630,6 +636,9 @@ class OnlinePolicyIntake(AgentHooks):
         except Exception as exc:  # intake failure must not stop the agent
             self.records.append({"hook": "after_tool_call", "outcome": "intake_error", "reason": str(exc)})
             return
+        self._take(data)
+
+    def _take(self, data: Dict[str, Any]) -> None:
         found = [p for p in data.get("policies") or [] if isinstance(p, dict) and p.get("statements")]
         for p in found:
             p["tool"] = data["tool"]
@@ -716,7 +725,38 @@ class OnlinePolicyIntake(AgentHooks):
         if self.discover and not self._discovered:
             self._discovered = True
             self._run_discovery()
+        if self.listing is not None and not self._listed:
+            self._listed = True
+            self._run_listing()
         return HookResult()
+
+    def _run_listing(self) -> None:
+        """Read every listed record; the model keeps those that state rules (tables always), and the kept records go
+        through the normal extraction in the background. A failed listing leaves the online intake as it was."""
+        from . import listing as L
+
+        t0 = time.monotonic()
+        try:
+            items = L.flatten(self.listing() or {})
+        except Exception as exc:  # the agent runs on without it
+            self.records.append({"hook": "on_user_message", "outcome": "listing_error", "reason": str(exc)[:200]})
+            return
+        self.listed_ids = L.listed_ids(items)
+        for _, r in items:  # the same records read later by the agent are not sent again
+            self.seen.add(hashlib.sha256(json.dumps(r, sort_keys=True, default=str).encode()).hexdigest())
+
+        def job() -> None:
+            keep, counts = L.sort_records(self.model, self.request, items)
+            groups = L.extraction_groups(items, keep, MAX_BATCH_CHARS)
+            with ThreadPoolExecutor(max_workers=4) as ex:
+                for data in ex.map(lambda g: self._extract(g[0], g[1]), groups):
+                    self._take(data)
+            self.records.append(
+                {"hook": "on_user_message", "outcome": "listing", **counts, "extract_calls": len(groups),
+                 "ms": round((time.monotonic() - t0) * 1000)}
+            )
+
+        self.pending.append(self.pool.submit(job))
 
     def _run_discovery(self) -> None:
         """Search message and document sources for written rules; candidates go through the normal intake."""
@@ -799,6 +839,10 @@ class OnlinePolicyIntake(AgentHooks):
         hits = self._candidates(tool, args, result)
         texts = self._new(self._text_records(result, hits)[:MAX_DETECT_RECORDS]) if self.detector else []
         new = self._new(hits)
+        if self.listed_ids is not None:  # the listing read these records already
+            from .listing import unlisted
+
+            new, texts = unlisted(new, self.listed_ids), unlisted(texts, self.listed_ids)
         if not new and not texts:
             return HookResult(message=self._tool_notes())
         fut = self.pool.submit(self._detect_and_extract, tool, new, texts)

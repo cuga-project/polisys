@@ -53,6 +53,9 @@ class RunContext:
     data_search: List[Tuple[str, Callable[[str], Any]]] = field(
         default_factory=list
     )  # (tool name, search(query))
+    # () -> {source: [record, ...]}: every record of every app, read through the host's read tools (sources.listing). A
+    # table is one record with a "rows" list. None: the host cannot list.
+    data_list: Optional[Callable[[], Dict[str, List[Any]]]] = None
     # Where the run writes audit.jsonl. None: the audit stays in memory.
     out_dir: Optional[Path] = None
     policy_version: str = ""  # which policy the task is under, also when it has no package
@@ -422,6 +425,8 @@ def _build_intake(a: Assembly) -> Piece:
         raise a.fail(
             "intake", "sources.discovery is on, and the task gives no search over messages or documents"
         )
+    if a.cfg.sources.listing and a.ctx.data_list is None:
+        raise a.fail("intake", "sources.listing is on, and the task gives no listing of its records")
     if checkers.rules == "on" and not a.ctx.tool_specs:
         raise a.fail("intake", "checkers.rules is on, and the task gives no tool specs to compile rules for")
     detector = a.detector(checkers.detector) if checkers.detector else None
@@ -440,6 +445,7 @@ def _build_intake(a: Assembly) -> Piece:
         today=a.ctx.world_time[:10] or None,  # every check judges dates against it, not only guard code
         track_supersedes=a.cfg.authority.supersedes,
         discover=a.ctx.data_search if a.cfg.sources.discovery else None,
+        listing=a.ctx.data_list if a.cfg.sources.listing else None,
         decisions=Decisions(a.questions("decisions", checkers.narrow_questions))
         if decisions.mode == "on"
         else None,
@@ -893,6 +899,7 @@ def _check_settings(a: Assembly) -> None:
         ),
         ("obligations.item_level", cfg.obligations.item_level is not None, ledger, "a producer"),
         ("sources.discovery", cfg.sources.discovery, data, "sources.data"),
+        ("sources.listing", cfg.sources.listing, data, "sources.data"),
         ("authority.supersedes", cfg.authority.supersedes, data, "sources.data"),
         ("checkers.compile", bool(checkers.compile), data, "sources.data"),
         ("checkers.detector", bool(checkers.detector), data, "sources.data"),
