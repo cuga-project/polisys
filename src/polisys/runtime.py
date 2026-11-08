@@ -73,6 +73,7 @@ class RunContext:
     message_tool: Optional[str] = None
     # The model the agent runs on, as ``control.by_model`` names it. "": not said, and the level takes ``control.default_level``.
     agent_model: str = ""
+    tool_apps: Optional[Dict[str, str]] = None  # tool name -> app ("gmail", "slack"); notes.read_first needs it
 
 
 @dataclass
@@ -446,6 +447,7 @@ def _build_intake(a: Assembly) -> Piece:
         track_supersedes=a.cfg.authority.supersedes,
         discover=a.ctx.data_search if a.cfg.sources.discovery else None,
         listing=a.ctx.data_list if a.cfg.sources.listing else None,
+        listing_data=a.cfg.sources.listing and a.cfg.sources.listing_data,
         decisions=Decisions(a.questions("decisions", checkers.narrow_questions))
         if decisions.mode == "on"
         else None,
@@ -522,6 +524,15 @@ def _build_procedure_push(a: Assembly) -> Piece:
         store, a.package("procedure_push"), router, request=a.ctx.request or "", max_selections=cfg.max_selections
     )
     return Piece(hooks=[push])
+
+
+def _build_read_first(a: Assembly) -> Piece:
+    from .read_first import ReadFirst
+    from .ruleset import is_write_tool
+
+    if not a.ctx.tool_apps:
+        raise a.fail("read_first", "notes.read_first needs RunContext.tool_apps (which app each tool belongs to)")
+    return Piece(hooks=[ReadFirst(a.ctx.tool_apps, is_write_tool, request=a.ctx.request or "")])
 
 
 def _build_work_method(a: Assembly) -> Piece:
@@ -755,6 +766,7 @@ COMPONENTS: Dict[str, Component] = {
     "procedure_tools": Component(lambda cfg: cfg.organizers.procedure_tools == "on", _build_procedure_tools),
     "gate": Component(lambda cfg: cfg.checkers.gate.mode == "on", _build_gate),
     "procedure_push": Component(lambda cfg: cfg.organizers.procedure_push.mode == "on", _build_procedure_push),
+    "read_first": Component(lambda cfg: cfg.notes.read_first, _build_read_first),
     "work_method": Component(lambda cfg: bool(cfg.notes.work_method), _build_work_method),
     "sop_tracker": Component(lambda cfg: cfg.organizers.sop_tracker.mode == "on", _build_sop_tracker),
     "navigator": Component(lambda cfg: cfg.organizers.navigator.mode == "on", _build_navigator),

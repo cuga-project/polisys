@@ -98,6 +98,17 @@ def flatten(by_source: Dict[str, List[Any]]) -> List[Tuple[str, Any]]:
     return out
 
 
+# sources.listing_data: two more labels, so records that are data the work needs (not rules) reach the agent too.
+SORT_USER_DATA = SORT_USER.replace(
+    '- "data": anything else',
+    '- "correction": it corrects, updates or releases a value or a status in another record (a fixed amount, a lifted\n'
+    "  hold, an updated date), and is not a rule.\n"
+    '- "example": a past message or record that the request asks to copy or to follow (the same format as before).\n'
+    '- "data": anything else',
+).replace('"rule" | "data" | "unsure"', '"rule" | "correction" | "example" | "data" | "unsure"')
+DATA_LABELS = ("correction", "example")
+
+
 def _text(source: str, record: Any) -> str:
     return f"({source}) {json.dumps(record, default=str)[:RECORD_CHARS]}"
 
@@ -116,17 +127,24 @@ def _batches(texts: Sequence[str], limit: int) -> Iterator[List[int]]:
 
 
 def sort_records(
-    model: Callable[[str, str], str], request: str, items: List[Tuple[str, Any]], workers: int = 8
+    model: Callable[[str, str], str],
+    request: str,
+    items: List[Tuple[str, Any]],
+    workers: int = 8,
+    data_out: Optional[List[Tuple[str, str, Any]]] = None,
 ) -> Tuple[List[int], Dict[str, int]]:
     """Indexes of the items that go to extraction: tables, and records the model calls "rule" or "unsure". A record
-    the model gives no label (a failed call, a missing entry) goes too: unknown is kept, never dropped."""
+    the model gives no label (a failed call, a missing entry) goes too: unknown is kept, never dropped. With ``data_out``
+    (sources.listing_data) the model may also say "correction" or "example"; those records are appended to ``data_out``
+    as (label, source, record) and do not go to the rule extraction."""
     texts = [_text(s, r) for s, r in items]
     groups = [g for g in _batches(texts, SORT_BATCH_CHARS)]
 
     def one(group: List[int]) -> Dict[int, str]:
         body = "\n\n".join(f"[{n}] {texts[i]}" for n, i in enumerate(group, 1))
         try:
-            data = parse_json(model(SORT_SYSTEM, SORT_USER.format(request=request[:3000], records=body)))
+            prompt = SORT_USER_DATA if data_out is not None else SORT_USER
+            data = parse_json(model(SORT_SYSTEM, prompt.format(request=request[:3000], records=body)))
         except Exception:  # a failed call keeps the whole group
             return {}
         labels: Dict[int, str] = {}
@@ -143,7 +161,13 @@ def sort_records(
     with ThreadPoolExecutor(max_workers=workers) as ex:
         for got in ex.map(one, groups):
             labels.update(got)
-    keep = [i for i, (_, r) in enumerate(items) if is_table(r) or labels.get(i, "unsure") != "data"]
+    if data_out is not None:
+        data_out += [(labels[i], items[i][0], items[i][1]) for i in sorted(labels) if labels[i] in DATA_LABELS]
+    keep = [
+        i
+        for i, (_, r) in enumerate(items)
+        if is_table(r) or labels.get(i, "unsure") not in (("data", *DATA_LABELS) if data_out is not None else ("data",))
+    ]
     counts = {
         "records": len(items),
         "sort_calls": len(groups),
