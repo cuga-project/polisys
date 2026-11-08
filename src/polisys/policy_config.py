@@ -71,6 +71,7 @@ class Sources:
     data: bool = False  # rules found in tool results while the agent runs (online intake)
     discovery: bool = False  # the layer searches the message sources for rules at the start
     listing: bool = False  # the layer reads every record the host lists at the start (listing.py)
+    listing_data: bool = False  # the listing also keeps corrections and examples and shows them to the agent as data
     request: bool = False  # the user's request is read as a source of requirements
 
 
@@ -288,6 +289,9 @@ class Notes:
     brief_guidance: bool = False
     # General rules for SOP work on many records, in the system prompt (work_method.py); "readback" adds one read-back turn
     # before the final answer. Empty: none.
+    # Before the first message to people, remind the agent of the sources the request names that it has not read
+    # (read_first.py; needs RunContext.tool_apps).
+    read_first: bool = False
     work_method: List[
         Literal["worksheet", "actors", "request_scope", "cells", "idempotent", "sop_literal", "readback", "readback_sop"]
     ] = field(

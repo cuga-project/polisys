@@ -93,3 +93,25 @@ def test_records_sort_oldest_first_within_a_source():
 def test_a_part_of_a_listed_record_without_an_id_is_known():
     listed = L.Listed(L.flatten({"sheets": [{"id": "t", "rows": [{"id": "r1", "cells": {"Note": "hold, policy"}}]}]}))
     assert L.unlisted([{"Note": "hold, policy"}, {"Note": "other"}], listed) == [{"Note": "other"}]
+
+
+CORR = {"id": "s9", "text": "Correction: the East amount should be $35,000, not $38,000."}
+
+
+def test_listing_data_keeps_corrections_for_the_brief_and_not_for_extraction():
+    model = Model({"Refund handling": "rule", "Correction": "correction", "Lunch": "data"})
+    hooks = OnlinePolicyIntake(
+        model,
+        verify_writes=False,
+        check_reply=False,
+        listing=lambda: {"gmail": [NOTE, CHAT], "slack": [CORR]},
+        listing_data=True,
+    )
+    hooks.on_user_message("process the refunds", None)
+    hooks._drain(10)
+    assert not any("35,000" in u for u in model.extracted)
+    brief = hooks.before_llm_call(None).message
+    assert "[correction] (slack)" in brief and "35,000" in brief
+    off = Model({"Refund handling": "rule", "Correction": "correction"})
+    _hooks(off, {"slack": [CORR]})
+    assert any("35,000" in u for u in off.extracted)  # without the flag a correction is not sorted out as data

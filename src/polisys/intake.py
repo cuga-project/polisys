@@ -284,6 +284,7 @@ class OnlinePolicyIntake(AgentHooks):
         track_supersedes: bool = False,
         discover: Optional[List[Any]] = None,
         listing: Optional[Callable[[], Dict[str, List[Any]]]] = None,
+        listing_data: bool = False,
         decisions: Optional[Decisions] = None,
         model_effect: str = "remind",
         cap_effect: str = "allow",
@@ -317,6 +318,7 @@ class OnlinePolicyIntake(AgentHooks):
         self.discover = list(discover or [])
         # () -> {source: [record, ...]}: every record of every app, read once per thread at the request (listing.py)
         self.listing = listing
+        self.listing_data = listing_data  # the listing also hands corrections and examples to the agent
         # Narrow decision-model questions (decisions.py): rule changes without policy words, record exclusions and
         # limits before writes, and whether a code rule applies before it denies.
         self.decisions = decisions
@@ -348,7 +350,8 @@ class OnlinePolicyIntake(AgentHooks):
         self.policies: List[Dict[str, Any]] = []
         self.store = FactStore(match_phrases=self.record_checks)  # tool output seen in this thread (facts.py)
         self.writes: List[str] = []
-        self.own_texts: List[str] = []  # text the agent wrote in this run (long string arguments of its writes)
+        self.own_texts: List[str] = []
+        self.data_notes: List[Tuple[str, str, str]] = []  # (label, source, record text) from the listing  # text the agent wrote in this run (long string arguments of its writes)
         self.records: List[Dict[str, Any]] = fresh(getattr(self, "records", None))
         self._denials: Dict[str, int] = {}
         self._reply_checked = False
@@ -786,7 +789,12 @@ class OnlinePolicyIntake(AgentHooks):
             self.seen.add(hashlib.sha256(json.dumps(r, sort_keys=True, default=str).encode()).hexdigest())
 
         def job() -> None:
-            keep, counts = L.sort_records(self.model, self.request, items)
+            data_out = [] if self.listing_data else None
+            keep, counts = L.sort_records(self.model, self.request, items, data_out=data_out)
+            if data_out:
+                self.data_notes = [(label, src, json.dumps(rec, default=str)[:1500]) for label, src, rec in data_out]
+                counts = {**counts, "corrections": sum(x[0] == "correction" for x in data_out),
+                          "examples": sum(x[0] == "example" for x in data_out)}
             groups = L.extraction_groups(items, keep, MAX_BATCH_CHARS)
             with ThreadPoolExecutor(max_workers=4) as ex:
                 for data in ex.map(lambda g: self._extract(g[0], g[1]), groups):
@@ -935,6 +943,12 @@ class OnlinePolicyIntake(AgentHooks):
             ]
             if sup:
                 lines.append("Replaced (no longer current): " + "; ".join(sup))
+        if self.data_notes:
+            lines.append(
+                "## Records that correct other records, or show how earlier work was done (data, not rules: "
+                "use the corrected values and follow the examples' form)"
+            )
+            lines += [f"- [{label}] ({src}) {text}" for label, src, text in self.data_notes[:12]]
         if self.superseded:
             lines.append("## Replaced rules (no longer current: do not apply them)")
             lines += [f"- {old} (replaced by: {by})" for old, by in list(self.superseded.items())[:20]]
