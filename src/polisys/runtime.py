@@ -508,6 +508,22 @@ def _build_procedure_tools(a: Assembly) -> Piece:
     return Piece(tools=policy_tools(store), system_note=POLICY_TOOLS_NOTE, target=store)
 
 
+def _build_procedure_push(a: Assembly) -> Piece:
+    from .procedure_push import ProcedurePush
+    from .router import make_router
+
+    cfg = a.cfg.organizers.procedure_push
+    store = a.store("procedure_push")
+    if not store.procs:
+        raise a.fail("procedure_push", "the package has no procedures to hand over")
+    model = a.model("procedure_push", cfg.model, timeout=240, max_tokens=16000)
+    router = make_router("llm_cards", model=model, top_k=cfg.top_k)
+    push = ProcedurePush(
+        store, a.package("procedure_push"), router, request=a.ctx.request or "", max_selections=cfg.max_selections
+    )
+    return Piece(hooks=[push])
+
+
 def _build_work_method(a: Assembly) -> Piece:
     from .work_method import ReadbackHooks, note
 
@@ -732,6 +748,7 @@ COMPONENTS: Dict[str, Component] = {
     "guide": Component(lambda cfg: cfg.organizers.guide.mode == "on", _build_guide),
     "procedure_tools": Component(lambda cfg: cfg.organizers.procedure_tools == "on", _build_procedure_tools),
     "gate": Component(lambda cfg: cfg.checkers.gate.mode == "on", _build_gate),
+    "procedure_push": Component(lambda cfg: cfg.organizers.procedure_push.mode == "on", _build_procedure_push),
     "work_method": Component(lambda cfg: bool(cfg.notes.work_method), _build_work_method),
     "sop_tracker": Component(lambda cfg: cfg.organizers.sop_tracker.mode == "on", _build_sop_tracker),
     "navigator": Component(lambda cfg: cfg.organizers.navigator.mode == "on", _build_navigator),

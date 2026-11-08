@@ -182,6 +182,16 @@ class Guide:
 
 
 @dataclass
+class ProcedurePush:
+    """The policy system picks the procedures that govern the data just read and attaches them to the tool result."""
+
+    mode: Mode = "off"
+    model: Optional[str] = None  # the llm_cards router's model
+    top_k: Count = 2
+    max_selections: Count = 15  # router calls per run
+
+
+@dataclass
 class Loop:
     """SOP loop: explore, then one scoped turn per case."""
 
@@ -226,6 +236,7 @@ class Organizers:
         "auto"  # the agent reads the procedures through tools; what it opens scopes the gate
     )
     guide: Guide = field(default_factory=Guide)
+    procedure_push: ProcedurePush = field(default_factory=ProcedurePush)
     loop: Loop = field(default_factory=Loop)
     sop_tracker: SopTracker = field(default_factory=SopTracker)
     navigator: Navigator = field(default_factory=Navigator)
