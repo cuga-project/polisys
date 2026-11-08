@@ -508,6 +508,35 @@ def _build_procedure_tools(a: Assembly) -> Piece:
     return Piece(tools=policy_tools(store), system_note=POLICY_TOOLS_NOTE, target=store)
 
 
+def _build_procedure_push(a: Assembly) -> Piece:
+    from .procedure_push import ProcedurePush
+    from .router import make_router
+
+    cfg = a.cfg.organizers.procedure_push
+    store = a.store("procedure_push")
+    if not store.procs:
+        raise a.fail("procedure_push", "the package has no procedures to hand over")
+    model = a.model("procedure_push", cfg.model, timeout=240, max_tokens=16000)
+    router = make_router("llm_cards", model=model, top_k=cfg.top_k)
+    push = ProcedurePush(
+        store, a.package("procedure_push"), router, request=a.ctx.request or "", max_selections=cfg.max_selections
+    )
+    return Piece(hooks=[push])
+
+
+def _build_work_method(a: Assembly) -> Piece:
+    from .work_method import ReadbackHooks, note
+
+    names = list(a.cfg.notes.work_method)
+    if "readback" in names and "readback_sop" in names:
+        raise a.fail("work_method", "readback and readback_sop are two forms of one turn; list one")
+    if "readback_sop" in names:
+        hooks = [ReadbackHooks(store=a.store("work_method"))]
+    else:
+        hooks = [ReadbackHooks()] if "readback" in names else []
+    return Piece(hooks=hooks, system_note=note(names), target=hooks[0] if hooks else None)
+
+
 def _build_gate(a: Assembly) -> Piece:
     from .router import router_reads_opened
     from .store_gate import StoreGate
@@ -524,11 +553,12 @@ def _build_gate(a: Assembly) -> Piece:
     model = a.model("gate", cfg.model, timeout=180, max_tokens=cfg.max_tokens)
     today = a.ctx.world_time[:10]
     if cfg.scope == "active_procedures":
-        if a.cfg.organizers.procedure_tools != "on" and router_reads_opened(cfg_router.kind):
+        opens = a.cfg.organizers.procedure_tools == "on" or a.cfg.organizers.procedure_push.mode == "on"
+        if not opens and router_reads_opened(cfg_router.kind):
             raise a.fail(
                 "gate",
-                "scope active_procedures with the router agent_opened needs organizers.procedure_tools: nothing else opens a "
-                "procedure (a router that searches does not need them)",
+                "scope active_procedures with the router agent_opened needs organizers.procedure_tools or procedure_push: "
+                "nothing else opens a procedure (a router that searches does not need them)",
             )
         reader = a.scope_reader("gate")
         gate = StoreGate.from_package(
@@ -543,6 +573,10 @@ def _build_gate(a: Assembly) -> Piece:
         gate = StoreGate.from_package(
             None, model, sop_text=a.ctx.policy_text or a.ctx.system_prompt, today=today
         )
+    if cfg.missing_needs_read or cfg.trigger_check:
+        from .store_gate import MISSING_NEEDS_READ, TRIGGER_CHECK
+
+        gate.extra = (MISSING_NEEDS_READ if cfg.missing_needs_read else "") + (TRIGGER_CHECK if cfg.trigger_check else "")
     if cfg.seed_request:
         if not a.ctx.request:
             raise a.fail("gate", "seed_request is on, and the task gives no request")
@@ -720,6 +754,8 @@ COMPONENTS: Dict[str, Component] = {
     "guide": Component(lambda cfg: cfg.organizers.guide.mode == "on", _build_guide),
     "procedure_tools": Component(lambda cfg: cfg.organizers.procedure_tools == "on", _build_procedure_tools),
     "gate": Component(lambda cfg: cfg.checkers.gate.mode == "on", _build_gate),
+    "procedure_push": Component(lambda cfg: cfg.organizers.procedure_push.mode == "on", _build_procedure_push),
+    "work_method": Component(lambda cfg: bool(cfg.notes.work_method), _build_work_method),
     "sop_tracker": Component(lambda cfg: cfg.organizers.sop_tracker.mode == "on", _build_sop_tracker),
     "navigator": Component(lambda cfg: cfg.organizers.navigator.mode == "on", _build_navigator),
     "obligations": Component(_ledger_on, _build_obligations),

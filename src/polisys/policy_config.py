@@ -132,6 +132,8 @@ class Gate:
     min_strength: Literal["agent", "none"] = "agent"  # none: the gate model may be weaker than the agent
     seed_request: bool = False  # the user's request counts as data the agent read
     max_tokens: Count = 4000  # one old runner gave gpt-oss models 16000
+    missing_needs_read: bool = False  # a "something is missing" block needs a read of the record that should hold it
+    trigger_check: bool = False  # a block needs the rule's trigger to hold for this record and stage, and its conditions checked
 
 
 @dataclass
@@ -181,6 +183,16 @@ class Guide:
 
 
 @dataclass
+class ProcedurePush:
+    """The policy system picks the procedures that govern the data just read and attaches them to the tool result."""
+
+    mode: Mode = "off"
+    model: Optional[str] = None  # the llm_cards router's model
+    top_k: Count = 2
+    max_selections: Count = 15  # router calls per run
+
+
+@dataclass
 class Loop:
     """SOP loop: explore, then one scoped turn per case."""
 
@@ -225,6 +237,7 @@ class Organizers:
         "auto"  # the agent reads the procedures through tools; what it opens scopes the gate
     )
     guide: Guide = field(default_factory=Guide)
+    procedure_push: ProcedurePush = field(default_factory=ProcedurePush)
     loop: Loop = field(default_factory=Loop)
     sop_tracker: SopTracker = field(default_factory=SopTracker)
     navigator: Navigator = field(default_factory=Navigator)
@@ -273,6 +286,13 @@ class Notes:
     brief: Literal["system", "message", "off"] = "system"  # where the brief goes (agent setting), or off
     # The brief of the package's rules also lists the guidance rules that name no tool (the measured runs never showed them).
     brief_guidance: bool = False
+    # General rules for SOP work on many records, in the system prompt (work_method.py); "readback" adds one read-back turn
+    # before the final answer. Empty: none.
+    work_method: List[
+        Literal["worksheet", "actors", "request_scope", "cells", "idempotent", "sop_literal", "readback", "readback_sop"]
+    ] = field(
+        default_factory=list
+    )
 
 
 Shape = Literal[
