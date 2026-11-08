@@ -21,7 +21,7 @@ import json
 import re
 import time
 from concurrent.futures import Future, ThreadPoolExecutor, wait
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence
+from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
 
 from polisys.hooks import AgentHooks, HookResult
 
@@ -127,7 +127,8 @@ Judge each record on its own. A record that adds to, changes or replaces rules i
 replaced rule records as well, so they can be marked.
 A rule is replaced only when a record says so (supersedes, replaces, overrides, correction, archived, legacy, no
 longer applies) or states the same rule with a later effective date, and only if nothing in the data says that its
-author may not change that rule.
+author may not change that rule. Replace rule by rule: a record that changes one rule of another record leaves that
+record's other rules in place, so name each replaced rule by its exact text.
 Return {{"policies": [{{"record": <number>,
  "title": "short name of the policy",
  "trust": "trusted|untrusted",
@@ -136,11 +137,27 @@ Return {{"policies": [{{"record": <number>,
                  "types": ["one or two of: {types}"]}}],
  "supersedes": "older guidance this replaces, or empty",
  "replaces_known": [<K numbers of already-found rules this record replaces or changes>],
- "replaces_records": [<numbers of records above whose rules this record replaces>],
- "replaced_by_known": [<K numbers of already-found rules that replace this record's rules>],
+ "replaces_records": [{{"record": <number of a record above>, "statements": [<exact text of each of that record's rules this record replaces>]}}],
+ "replaced_by_known": [{{"known": <K number>, "statements": [<exact text of each of this record's own rules that K replaces>]}}],
  "archived": <true if the record itself says its rules are no longer in effect>}}]}}
 Use empty lists when nothing is replaced. List only records that state rules; return {{"policies": []}} if none do."""
 MAX_KNOWN_RULES = 60
+OWN_TEXT_CHARS = 40  # a written string this long, found again in a read record, marks the record as the agent's own
+
+
+def _strings(x: Any) -> List[str]:
+    if isinstance(x, str):
+        return [x]
+    if isinstance(x, dict):
+        return [s for v in x.values() for s in _strings(v)]
+    if isinstance(x, list):
+        return [s for v in x for s in _strings(v)]
+    return []
+
+
+def _norm_text(s: str) -> str:
+    """Compare text as written: JSON escapes and runs of whitespace removed, case kept."""
+    return re.sub(r"\s+", " ", s.replace("\\n", " ").replace("\\t", " ")).strip()
 
 # Policy discovery (``discover``): at the start of a run the layer itself searches the message and document sources
 # for written rules, so a rule in a mailbox the agent never opens still reaches the brief and the checks.
@@ -331,6 +348,7 @@ class OnlinePolicyIntake(AgentHooks):
         self.policies: List[Dict[str, Any]] = []
         self.store = FactStore(match_phrases=self.record_checks)  # tool output seen in this thread (facts.py)
         self.writes: List[str] = []
+        self.own_texts: List[str] = []  # text the agent wrote in this run (long string arguments of its writes)
         self.records: List[Dict[str, Any]] = fresh(getattr(self, "records", None))
         self._denials: Dict[str, int] = {}
         self._reply_checked = False
@@ -425,37 +443,59 @@ class OnlinePolicyIntake(AgentHooks):
         )
 
     def _apply_replacements(self, found: List[Dict[str, Any]], known: List[Dict[str, Any]]) -> None:
-        """Mark replaced statements from one extraction answer. Only trusted records replace rules."""
+        """Mark replaced statements from one extraction answer, rule by rule. Only trusted records replace rules. An
+        entry names the replaced statements by their text; a bare record or K number replaces only when the replaced
+        side has one statement, so one changed rule never takes the other rules of its record with it."""
 
         def num(x: Any) -> Optional[int]:
             m = re.search(r"\d+", str(x))
             return int(m.group(0)) if m else None
 
+        def pick(entry: Any, key: str, pool: List[str]) -> Tuple[Optional[int], List[str]]:
+            """The number in the entry and the statements of ``pool`` it names (exact text, spaces normalized)."""
+            if isinstance(entry, dict):
+                wanted = {_norm_text(str(t)) for t in entry.get("statements") or []}
+                return num(entry.get(key)), [s for s in pool if _norm_text(s) in wanted]
+            return num(entry), (list(pool) if len(pool) == 1 else [])
+
         for p in found:
             if p.get("trust") != "trusted":
                 continue
-            own = set(p.get("statements") or [])
+            own = list(dict.fromkeys(p.get("statements") or []))
             by = str(p.get("title") or p.get("tool"))
             for x in p.get("replaces_known") or []:
                 n = num(x)
                 if n and 1 <= n <= len(known) and known[n - 1]["text"] not in own:
                     self._mark_replaced(known[n - 1]["text"], by)
             for x in p.get("replaces_records") or []:
-                n = num(x)
+                n = num(x.get("record")) if isinstance(x, dict) else num(x)
                 for q in found:
-                    if q is not p and n is not None and num(q.get("record")) == n:
-                        for s in q.get("statements") or []:
-                            if s not in own:
-                                self._mark_replaced(s, by)
+                    if q is p or n is None or num(q.get("record")) != n:
+                        continue
+                    _, hit = pick(x, "record", [s for s in q.get("statements") or [] if s not in own])
+                    if not hit:
+                        self._note_unclear(by, f"record {n}")
+                    for s in hit:
+                        self._mark_replaced(s, by)
             for x in p.get("replaced_by_known") or []:
-                n = num(x)
-                if n and 1 <= n <= len(known):
-                    k = known[n - 1]
-                    for s in own - {k["text"]}:
-                        self._mark_replaced(s, f"{k['source']}: {k['text']}"[:240])
+                n, hit = pick(x, "known", own)
+                if not (n and 1 <= n <= len(known)):
+                    continue
+                k = known[n - 1]
+                hit = [s for s in hit if s != k["text"]]
+                if not hit:
+                    self._note_unclear(by, f"K{n}")
+                for s in hit:
+                    self._mark_replaced(s, f"{k['source']}: {k['text']}"[:240])
             if p.get("archived") is True:
                 for s in own:
                     self._mark_replaced(s, "its own record says it is archived or no longer in effect")
+
+    def _note_unclear(self, by: str, target: str) -> None:
+        """A replacement that names no statement of a record with several rules: nothing is marked (the unknown path)."""
+        self.records.append(
+            {"hook": "after_tool_call", "outcome": "replacement_unclear", "by": by, "target": target}
+        )
 
     def _may_deny(self, types: List[str]) -> bool:
         """A statement may block only if none of its types is measured as remind-only (method_choice)."""
@@ -834,11 +874,16 @@ class OnlinePolicyIntake(AgentHooks):
             self.observations.append({"tool": tool, "args": args, "records": flatten_records(result)[:500]})
         if self.is_write(tool):
             self.writes.append(f"{tool}({json.dumps(args, default=str)[:400]})")
+            self.own_texts += [t for t in (_norm_text(v) for v in _strings(args)) if len(t) >= OWN_TEXT_CHARS]
         if self.enforcer is not None:
             self.enforcer.after_tool_call(tool, args, result)
+        if self.is_write(tool):  # the result of the agent's own write is its output, not a rule source
+            return HookResult(message=self._tool_notes())
         hits = self._candidates(tool, args, result)
         texts = self._new(self._text_records(result, hits)[:MAX_DETECT_RECORDS]) if self.detector else []
         new = self._new(hits)
+        if self.own_texts:  # a record that carries text the agent wrote in this run is its own output, not a rule
+            new, texts = [r for r in new if not self._own(r)], [r for r in texts if not self._own(r)]
         if self.listed is not None:  # the listing read these records already
             from .listing import unlisted
 
@@ -860,6 +905,10 @@ class OnlinePolicyIntake(AgentHooks):
                 }
             ],
         )
+
+    def _own(self, record: Any) -> bool:
+        text = _norm_text(json.dumps(record, default=str, ensure_ascii=False))
+        return any(t in text for t in self.own_texts)
 
     def _tool_notes(self) -> Optional[str]:
         """Reminders queued for this call, handed to its tool result when notes go there (``note_channel``)."""
