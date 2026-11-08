@@ -88,3 +88,8 @@ def test_records_sort_oldest_first_within_a_source():
     new = {"id": "b", "date": "2026-02-01T09:00:00Z", "body": "rule v2"}
     old = {"id": "a", "date": "2026-01-05T09:00:00Z", "body": "rule v1"}
     assert [r["id"] for _, r in L.flatten({"gmail": [new, old]})] == ["a", "b"]
+
+
+def test_a_part_of_a_listed_record_without_an_id_is_known():
+    listed = L.Listed(L.flatten({"sheets": [{"id": "t", "rows": [{"id": "r1", "cells": {"Note": "hold, policy"}}]}]}))
+    assert L.unlisted([{"Note": "hold, policy"}, {"Note": "other"}], listed) == [{"Note": "other"}]

@@ -167,12 +167,34 @@ def extraction_groups(items: List[Tuple[str, Any]], keep: List[int], limit: int)
     return out
 
 
-def listed_ids(items: List[Tuple[str, Any]]) -> Set[str]:
-    return {i for _, r in items for i in record_ids(r)}
+def _nodes(x: Any) -> Iterator[Dict[str, Any]]:
+    if isinstance(x, dict):
+        yield x
+        for v in x.values():
+            yield from _nodes(v)
+    elif isinstance(x, list):
+        for v in x:
+            yield from _nodes(v)
 
 
-def unlisted(records: List[Any], ids: Optional[Set[str]]) -> List[Any]:
-    """Records the listing did not read (none of their IDs is known). A record without an ID counts as unlisted."""
-    if not ids:
+def _key(node: Any) -> str:
+    return json.dumps(node, sort_keys=True, default=str)
+
+
+class Listed:
+    """What the listing read: every ID and every nested record (exact JSON), so a later read of the same record, or of
+    a part of it such as a row's cells, is known."""
+
+    def __init__(self, items: List[Tuple[str, Any]]):
+        self.ids: Set[str] = {i for _, r in items for i in record_ids(r)}
+        self.nodes: Set[str] = {_key(n) for _, r in items for n in _nodes(r) if n}
+
+    def has(self, record: Any) -> bool:
+        return _key(record) in self.nodes or bool(set(record_ids(record)) & self.ids)
+
+
+def unlisted(records: List[Any], listed: Optional[Listed]) -> List[Any]:
+    """Records the listing did not read."""
+    if listed is None:
         return records
-    return [r for r in records if not (set(record_ids(r)) & ids)]
+    return [r for r in records if not listed.has(r)]

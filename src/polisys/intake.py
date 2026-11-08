@@ -347,7 +347,7 @@ class OnlinePolicyIntake(AgentHooks):
         self.superseded: Dict[str, str] = {}  # replaced statement text -> what replaced it
         self._discovered = False
         self._listed = False
-        self.listed_ids: Optional[set] = None  # IDs of the records the listing read; their later reads skip intake
+        self.listed: Any = None  # listing.Listed: what the listing read; later reads of it skip the online intake
         self._blocked_once: set = set()  # calls already stopped once (model verdicts and decisions)
         self.enforcer = (
             RuleSetHooks(
@@ -741,7 +741,7 @@ class OnlinePolicyIntake(AgentHooks):
         except Exception as exc:  # the agent runs on without it
             self.records.append({"hook": "on_user_message", "outcome": "listing_error", "reason": str(exc)[:200]})
             return
-        self.listed_ids = L.listed_ids(items)
+        self.listed = L.Listed(items)
         for _, r in items:  # the same records read later by the agent are not sent again
             self.seen.add(hashlib.sha256(json.dumps(r, sort_keys=True, default=str).encode()).hexdigest())
 
@@ -839,10 +839,10 @@ class OnlinePolicyIntake(AgentHooks):
         hits = self._candidates(tool, args, result)
         texts = self._new(self._text_records(result, hits)[:MAX_DETECT_RECORDS]) if self.detector else []
         new = self._new(hits)
-        if self.listed_ids is not None:  # the listing read these records already
+        if self.listed is not None:  # the listing read these records already
             from .listing import unlisted
 
-            new, texts = unlisted(new, self.listed_ids), unlisted(texts, self.listed_ids)
+            new, texts = unlisted(new, self.listed), unlisted(texts, self.listed)
         if not new and not texts:
             return HookResult(message=self._tool_notes())
         fut = self.pool.submit(self._detect_and_extract, tool, new, texts)
