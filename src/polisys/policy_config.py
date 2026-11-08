@@ -70,6 +70,7 @@ class Sources:
 
     data: bool = False  # rules found in tool results while the agent runs (online intake)
     discovery: bool = False  # the layer searches the message sources for rules at the start
+    listing: bool = False  # the layer reads every record the host lists at the start (listing.py)
     request: bool = False  # the user's request is read as a source of requirements
 
 
