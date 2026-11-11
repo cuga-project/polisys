@@ -583,22 +583,22 @@ One YAML file per deployment or experiment. A profile holds facts and method cho
 
 ```yaml
 policy:
-  package: packages/handbook/crestwood/package.json   # none = rules only from data
+  package: packages/example/package.json   # none = rules only from data
   sources: {data: true, discovery: true, listing: false, request: true}   # listing needs data and RunContext.data_list
   authority: {supersedes: false}   # company_domains and may_change_rules are not read: build_runtime raises when they are set; supersedes is read
   priority_classes: [regulatory, company, department, team]   # validate only: an audit note, no runtime reader
   control:
     level: by_model
-    by_model: {aws/gpt-oss-120b: 3, azure/DeepSeek-V4-Pro: 2, gcp/gemini-3.8-flash: 2}
+    by_model: {openai/gpt-oss-120b: 3, deepseek/deepseek-v4-pro: 2, gcp/gemini-3.8-flash: 2}
     risk: {level3_tools: ["*payment*", "*delete*", "send_email_external"]}   # fnmatch on the tool name, checked against the task's tools
   checkers:
-    compile: aws/gpt-oss-120b
+    compile: openai/gpt-oss-120b
     narrow_questions: jaredpalmer/kev-4b
     router: {kind: agent_opened, expand: next_links}   # any registered kinds (section 11)
     gate: {model: gcp/gemini-3.8-flash, scope: active_procedures, min_strength: agent}
-    verifier: {model: aws/gpt-oss-120b, scope: specific_statements, may_deny: false}
+    verifier: {model: openai/gpt-oss-120b, scope: specific_statements, may_deny: false}
   organizers: {procedure_tools: auto, guide: auto, loop: auto, sop_tracker: auto, navigator: auto, requirements_tracker: auto}
-  obligations: {producers: [package, request, duty], model: aws/gpt-oss-120b, max_follow_ups: 1, wrong_values: known_origin_only}
+  obligations: {producers: [package, request, duty], model: openai/gpt-oss-120b, max_follow_ups: 1, wrong_values: known_origin_only}
   decisions: {require_evidence: true, after_repeated_denials: skip}
   notes: {reminders: tool_result, brief: system, brief_guidance: false}
   trace: true

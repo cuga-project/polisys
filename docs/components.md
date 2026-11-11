@@ -19,7 +19,7 @@ from polisys.builder import build_policy_set
 from polisys.llm import openai_json_model
 
 ps = load_policy_set(["sop.pdf", "update_memo.md"], {"update_memo": {"effective_date": "2026-10-01"}})
-build = build_policy_set(ps, tool_specs, openai_json_model("aws/gpt-oss-120b"), cache_dir=".policy_cache")
+build = build_policy_set(ps, tool_specs, openai_json_model("openai/gpt-oss-120b"), cache_dir=".policy_cache")
 print(build.stats, build.validation)
 ```
 
@@ -27,7 +27,7 @@ Or from the shell (also used by the policy compiler skill, `skill/SKILL.md`, in 
 
 ```bash
 python -m polisys.cli convert sop.pdf update_memo.md -o set.json --meta meta.json
-python -m polisys.cli build set.json --tools tools.json -o build.json --model aws/gpt-oss-120b
+python -m polisys.cli build set.json --tools tools.json -o build.json --model openai/gpt-oss-120b
 python -m polisys.cli validate build.json --tools tools.json --set set.json
 # a policy package written by a person or an agent (the skill): draft.json + set.json -> package.json
 python -m polisys.cli pack set.json draft.json -o package.json --harness claude-code --model <model> --tools tools.json
