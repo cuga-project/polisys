@@ -839,22 +839,22 @@ def test_an_explicit_item_level_keeps_the_earlier_reading_whatever_the_run_level
 
 SPEC_EXAMPLE = """
 policy:
-  package: packages/handbook/crestwood/package.json
+  package: packages/example/package.json
   sources: {data: true, discovery: true, request: true}
   authority: {company_domains: [company.example.com], may_change_rules: [VP, COO, HR]}
   priority_classes: [regulatory, company, department, team]
   control:
     level: by_model
-    by_model: {aws/gpt-oss-120b: 3, azure/DeepSeek-V4-Pro: 2, gcp/gemini-3.8-flash: 2}
+    by_model: {openai/gpt-oss-120b: 3, deepseek/deepseek-v4-pro: 2, gcp/gemini-3.8-flash: 2}
     risk: {level3_tools: ["*payment*", "*delete*", "send_email_external"]}
   checkers:
-    compile: aws/gpt-oss-120b
+    compile: openai/gpt-oss-120b
     narrow_questions: jaredpalmer/kev-4b
     router: {kind: agent_opened, expand: next_links}   # any registered kinds (section 11)
     gate: {model: gcp/gemini-3.8-flash, scope: active_procedures, min_strength: agent}
-    verifier: {model: aws/gpt-oss-120b, scope: specific_statements, may_deny: false}
+    verifier: {model: openai/gpt-oss-120b, scope: specific_statements, may_deny: false}
   organizers: {procedure_tools: auto, guide: auto, loop: auto, sop_tracker: auto, navigator: auto, requirements_tracker: auto}
-  obligations: {producers: [package, request, duty], model: aws/gpt-oss-120b, max_follow_ups: 1, wrong_values: known_origin_only}
+  obligations: {producers: [package, request, duty], model: openai/gpt-oss-120b, max_follow_ups: 1, wrong_values: known_origin_only}
   decisions: {require_evidence: true, after_repeated_denials: skip}
   notes: {reminders: tool_result, brief: system}
   trace: true
@@ -894,9 +894,9 @@ def spec_ctx(agent_model: str) -> RunContext:
 @pytest.mark.parametrize(
     "agent, level, on",
     [
-        ("azure/DeepSeek-V4-Pro", 2, {"rules", "procedure_tools", "gate", "decisions"}),
+        ("deepseek/deepseek-v4-pro", 2, {"rules", "procedure_tools", "gate", "decisions"}),
         ("gcp/gemini-3.8-flash", 2, {"rules", "procedure_tools", "gate", "decisions"}),
-        ("aws/gpt-oss-120b", 3, {"rules", "procedure_tools", "gate", "decisions", "verifier"}),
+        ("openai/gpt-oss-120b", 3, {"rules", "procedure_tools", "gate", "decisions", "verifier"}),
         (
             "a/other",
             1,
@@ -930,7 +930,7 @@ def test_the_example_of_the_spec_builds_for_any_model_also_one_that_is_not_in_th
 
 def test_the_example_as_written_raises_only_on_authority_which_nothing_reads_yet():
     with pytest.raises(RuntimeWiringError, match="authority.*nothing reads it yet"):
-        build(example(drop=()), spec_package(), spec_ctx("azure/DeepSeek-V4-Pro"))
+        build(example(drop=()), spec_package(), spec_ctx("deepseek/deepseek-v4-pro"))
 
 
 # -- a real agent loop --------------------------------------------------------------------------------------------------

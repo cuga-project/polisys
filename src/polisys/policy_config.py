@@ -6,7 +6,7 @@ A profile holds facts the deployment knows and method choices. It never holds ru
       package: packages/<bench>/{policy}/<source>/package.json   # none = rules only from data
       sources: {data: true, discovery: true, request: false}
       checkers: {rules: on, gate: {mode: on, model: gcp/gemini-3.8-flash}}
-      organizers: {guide: on, loop: {mode: on, model: azure/DeepSeek-V4-Pro}, sop_tracker: off}
+      organizers: {guide: on, loop: {mode: on, model: deepseek/deepseek-v4-pro}, sop_tracker: off}
       ...
 
 ``load_config(path)`` reads a file and returns a ``PolicyConfig``. Rules of the format:

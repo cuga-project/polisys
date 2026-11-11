@@ -15,20 +15,20 @@ from polisys.policy_config import (
 
 SPEC_EXAMPLE = """
 policy:
-  package: packages/handbook/crestwood/package.json
+  package: packages/example/package.json
   sources: {data: true, discovery: true, request: true}
   authority: {company_domains: [company.example.com], may_change_rules: [VP, COO, HR]}
   priority_classes: [regulatory, company, department, team]
   control:
     level: by_model
-    by_model: {aws/gpt-oss-120b: 3, azure/DeepSeek-V4-Pro: 2, gcp/gemini-3.8-flash: 2}
+    by_model: {openai/gpt-oss-120b: 3, deepseek/deepseek-v4-pro: 2, gcp/gemini-3.8-flash: 2}
     risk: {level3_tools: ["*_payment*", "*_delete*", send_email_external]}
   checkers:
-    compile: aws/gpt-oss-120b
+    compile: openai/gpt-oss-120b
     narrow_questions: jaredpalmer/kev-4b
     router: {kind: agent_opened, expand: next_links}
     gate: {model: gcp/gemini-3.8-flash, scope: active_procedures, min_strength: agent}
-    verifier: {model: aws/gpt-oss-120b, scope: specific_statements, may_deny: false}
+    verifier: {model: openai/gpt-oss-120b, scope: specific_statements, may_deny: false}
   organizers: {procedure_tools: auto, guide: auto, loop: auto, sop_tracker: auto, navigator: auto, requirements_tracker: auto}
   obligations: {producers: [package, request, duty], max_follow_ups: 1, wrong_values: known_origin_only}
   decisions: {require_evidence: true, after_repeated_denials: skip}
@@ -79,11 +79,11 @@ def test_defaults_load(tmp_path):
 
 def test_the_example_of_the_spec_loads(tmp_path):
     config = load_config(write(tmp_path, SPEC_EXAMPLE))
-    assert config.package == "packages/handbook/crestwood/package.json"
+    assert config.package == "packages/example/package.json"
     assert config.sources.request is True
     assert config.authority.may_change_rules == ["VP", "COO", "HR"]
     assert config.priority_classes == ["regulatory", "company", "department", "team"]
-    assert config.control.by_model["azure/DeepSeek-V4-Pro"] == 2
+    assert config.control.by_model["deepseek/deepseek-v4-pro"] == 2
     assert config.control.risk.level3_tools == ["*_payment*", "*_delete*", "send_email_external"]
     assert config.checkers.narrow_questions == KEV
     assert (config.checkers.gate.model, config.checkers.gate.scope) == (

@@ -1,15 +1,12 @@
 """Handlers: code rules from tables, model slot filling for prose, and the new rule types at run time."""
 
 import json
-from pathlib import Path
 
 from polisys.documents import load_document, split_policy
 from polisys.handlers.prose import prose_rules
 from polisys.handlers.tables import code_rules, table_rules
 from polisys.model import StatementType
 from polisys.ruleset import RuleSetHooks
-
-ITSM = Path(__file__).resolve().parents[5] / "docs" / "examples" / "policy_samples"
 
 SPECS = [
     {

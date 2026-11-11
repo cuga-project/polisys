@@ -5,7 +5,7 @@ checks that run while an agent works: rules that stop a wrong tool call, procedu
 and obligations that find work the agent never did. It is a library with a hook interface, so it runs next to an agent
 and does not contain one.
 
-> **Status: experimental, private repository, Apache-2.0.** The code is stable and tested (the suite has more than 3,400 tests), and the measured
+> **Status: experimental, Apache-2.0.** The code is stable and tested (the suite has more than 3,400 tests), and the measured
 > results are on tuning or already-seen task sets only; nothing here is a held-out result. Read [Evidence](#evidence) before
 > you quote a number.
 
@@ -105,6 +105,13 @@ With the obligation ledger on, `host_features` must include `tool_blocked`; othe
 A profile is plain YAML; see [`examples/profiles/`](examples/profiles/) and the field list in
 [`policy_config.py`](src/polisys/policy_config.py). An unknown key is an error that names it.
 
+### Models and keys
+
+Every model is named in the profile. A name such as `openai/gpt-oss-120b` goes to any OpenAI-compatible gateway, for
+example LiteLLM (`OPENAI_BASE_URL`, `OPENAI_API_KEY`); `openrouter:<name>` goes to OpenRouter (`OPENROUTER_API_KEY`).
+The optional decision-model checks (yes/no questions to Kev-4B) use OpenRouter's `systemone` endpoint and need
+`OPENROUTER_API_KEY`; they are off unless a profile turns them on.
+
 ## Compiling a policy
 
 **With the skill (recommended).** Give an agent `skill/SKILL.md`, the policy documents (the original files, not a flattened
@@ -131,9 +138,8 @@ Zapier-style workflows, and a conversational telecom/airline/retail benchmark). 
   has 0 false opens and 27.6% recall against a bar of 30%.
 - **No set is truly held-out any more.** Sets that were held out when first run have since been seen and are labelled so.
 
-Every number, its basis (tuning, seen, unseen) and the corrections to earlier claims are in
-[docs/history/stability-report.md](docs/history/stability-report.md) and
-[docs/history/stabilization-decisions.md](docs/history/stabilization-decisions.md). The design the code was built to is
+The runs behind these numbers, their basis (tuning, seen, unseen) and the corrections to earlier claims are kept with
+the evaluation work, which is not part of this repository. The design the code was built to is
 [docs/design.md](docs/design.md).
 
 ## Repository layout
@@ -152,7 +158,7 @@ src/polisys/
   hooks.py, adapters/                 the hook contract and host glue
 tests/                                 the suite (offline; models are scripted)
 examples/                              a made-up policy, two profiles and a quickstart
-docs/                                  design, hook contract, components, history
+docs/                                  design, hook contract, components
 ```
 
 ## Development
