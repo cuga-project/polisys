@@ -35,6 +35,7 @@ except ImportError:  # pragma: no cover
     CugaAgent = None
 
 from .test_obligations import Scripted
+from tests.cuga_agent_loop import load_agent_loop
 
 SPECS = [
     {
@@ -653,7 +654,7 @@ async def create_task(title: str) -> str:
 
 
 async def run_loop(monkeypatch, led, script, request):
-    agent_loop = pytest.importorskip("cuga.backend.hooks.tests.test_agent_loop")
+    agent_loop = load_agent_loop()
     MARKER, ScriptedModel = agent_loop.MARKER, agent_loop.ScriptedModel
 
     class Marker(AgentHooks):

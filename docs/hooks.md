@@ -57,7 +57,7 @@ the CUGA agent use `polisys.adapters.cuga.host_features()`, which gives the empt
 
 | Host | State |
 |---|---|
-| CUGA agent | Used in every measurement of this system. As of 2026-11-05 no released agent has hooks: they are in the open pull request cuga-project/cuga-agent#1103, which lacks `tool_blocked` and failure reporting. Pass `parts.hooks` to `CugaAgent(hooks=[...])`. `polisys.adapters.cuga` wraps tools that come from a tool provider. `polisys.hooks` is a structural copy of `cuga.backend.hooks`. |
+| CUGA agent | Used in every measurement of this system. No released agent has hooks yet: they are in the open pull request cuga-project/cuga-agent#1103, whose registry offers `tool_blocked` and failure reporting (`HookRegistry.FEATURES`), so `host_features()` gives both. Pass `parts.hooks` to `CugaAgent(hooks=[...])`. `polisys.adapters.cuga` wraps tools that come from a tool provider. `polisys.hooks` is a structural copy of `cuga.backend.hooks`. |
 | Other agents | Not tried. Implement the nine calls above, and read the assumptions below. |
 
 Assumptions that are written for the CUGA host and that another host must meet or change:
