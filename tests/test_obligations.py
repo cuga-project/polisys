@@ -36,6 +36,7 @@ from polisys.procedure_store import ProcedureStore
 from polisys.runtime import RunContext, RuntimeWiringError, build_runtime
 from polisys.sop_loop import LoopHooks, SopLoop
 from polisys.trace import AuditLog
+from tests.cuga_agent_loop import load_agent_loop
 try:  # the CUGA agent is optional: its real-loop tests are skipped without it
     from cuga.sdk import CugaAgent
 except ImportError:  # pragma: no cover
@@ -2220,7 +2221,7 @@ async def get_request(batch: str) -> str:
 
 
 async def test_a_real_agent_loop_one_follow_up_then_the_work_then_no_second_follow_up(monkeypatch):
-    agent_loop = pytest.importorskip("cuga.backend.hooks.tests.test_agent_loop")
+    agent_loop = load_agent_loop()
     MARKER, ScriptedModel = agent_loop.MARKER, agent_loop.ScriptedModel
 
     class Marker(AgentHooks):
@@ -2263,7 +2264,7 @@ async def test_a_real_agent_loop_one_follow_up_then_the_work_then_no_second_foll
 
 
 async def test_a_real_agent_loop_a_blocked_write_is_not_asked_for(monkeypatch):
-    agent_loop = pytest.importorskip("cuga.backend.hooks.tests.test_agent_loop")
+    agent_loop = load_agent_loop()
     MARKER, ScriptedModel = agent_loop.MARKER, agent_loop.ScriptedModel
 
     class Gate(AgentHooks):

@@ -169,7 +169,13 @@ pytest -q                 # offline, no model calls; a few tests need the extras
 ruff check .
 ```
 
-Tests that run a real CUGA agent loop skip when `cuga` is not installed. Tests that read PDFs skip without `docling`.
+Tests that read PDFs skip without `docling`. Eight tests run a real CUGA agent loop. They need the loop helper of the agent's
+hook tests (`tests/unit/hooks/test_agent_loop.py` of cuga-agent) and the agent's own dependencies, so run them in the agent's
+environment with `CUGA_REPO` set to a cuga-agent checkout; without it they skip and say why:
+
+```bash
+CUGA_REPO=~/dev/cuga-agent pytest -q tests/test_levels.py tests/test_obligations.py tests/test_producers.py
+```
 
 ## Provenance and licence
 

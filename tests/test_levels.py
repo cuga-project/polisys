@@ -35,6 +35,7 @@ from polisys.runtime import RunContext, RuntimeWiringError, build_runtime
 from polisys.ruleset import RuleSetHooks
 from polisys.store_gate import StoreGate
 from polisys.verifier import Verifier
+from tests.cuga_agent_loop import load_agent_loop
 try:  # the CUGA agent is optional: its real-loop tests are skipped without it
     from cuga.sdk import CugaAgent
 except ImportError:  # pragma: no cover
@@ -946,7 +947,7 @@ async def update_ticket(ticket_id: str, status: str) -> str:
 
 
 async def run_loop(monkeypatch, parts, script):
-    agent_loop = pytest.importorskip("cuga.backend.hooks.tests.test_agent_loop")
+    agent_loop = load_agent_loop()
     MARKER, ScriptedModel = agent_loop.MARKER, agent_loop.ScriptedModel
 
     class Marker(AgentHooks):
