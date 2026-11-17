@@ -75,3 +75,73 @@ def test_gate_trigger_check_is_added_next_to_missing_needs_read():
     gate = next(h for h in parts.hooks if isinstance(h, StoreGate))
     assert gate.extra == MISSING_NEEDS_READ + TRIGGER_CHECK
     assert METHODS["sop_literal"] in note(["sop_literal"])
+
+
+# -- lookup_retry and finish_check ------------------------------------------------------------------------------------------
+
+
+def _is_write(tool):
+    return tool.startswith(("create_", "update_"))
+
+
+def test_finish_check_is_sent_once_and_is_one_of_the_reply_turns():
+    from polisys.work_method import FINISH_CHECK, FinishCheckHooks
+
+    h = FinishCheckHooks()
+    assert h.before_reply("done").message == FINISH_CHECK
+    assert h.before_reply("done again") is None
+    with pytest.raises(Exception, match="list one"):
+        build(config(notes={"work_method": ["readback", "finish_check"]}), ctx=CTX)
+
+
+def test_a_failed_lookup_of_a_name_the_request_gives_gets_one_note():
+    from polisys.work_method import LookupRetryHooks
+
+    h = LookupRetryHooks("Add the staff of the Northern Depot Team to the roster.", _is_write)
+    miss = {"error": {"detail": "not found"}}
+    note = h.after_tool_call("find_team", {"name": "Northern Depot Team"}, miss)
+    assert note is not None and '"Northern Depot Team"' in note.message
+    assert h.after_tool_call("find_team", {"name": "northern depot team"}, miss) is None  # one note per name
+    assert h.records[0]["outcome"] == "lookup_retry_note"
+
+
+def test_no_lookup_note_for_a_success_a_write_a_short_value_or_a_value_the_request_does_not_hold():
+    from polisys.work_method import LookupRetryHooks, named_in
+
+    h = LookupRetryHooks("Add the staff of the Northern Depot Team to the roster.", _is_write)
+    miss = {"error": "not found"}
+    assert h.after_tool_call("find_team", {"name": "Northern Depot Team"}, {"team": {"id": 3}}) is None
+    assert h.after_tool_call("create_team", {"name": "Northern Depot Team"}, miss) is None
+    assert h.after_tool_call("find_team", {"name": "Southern Depot"}, miss) is None
+    assert h.after_tool_call("find_team", {"name": "the"}, miss) is None
+    assert not named_in("Depot Tea", "the Northern Depot Team")  # whole words only
+    assert not named_in(7, "team 7")
+
+
+def test_the_lookup_notes_stop_at_the_limit():
+    from polisys.work_method import LookupRetryHooks
+
+    h = LookupRetryHooks("Find Alpha Unit, Beta Unit, Gamma Unit and Delta Unit.", _is_write, max_notes=3)
+    miss = {"error": "not found"}
+    sent = [h.after_tool_call("find_unit", {"name": f"{n} Unit"}, miss) for n in ("Alpha", "Beta", "Gamma", "Delta")]
+    assert [s is not None for s in sent] == [True, True, True, False]
+
+
+def test_the_runtime_adds_the_two_new_hooks_only_when_listed():
+    from polisys.work_method import FinishCheckHooks, LookupRetryHooks
+
+    parts, _ = build(config(notes={"work_method": ["lookup_retry", "finish_check"]}), ctx=CTX)
+    kinds = {type(h) for h in parts.hooks}
+    assert FinishCheckHooks in kinds and LookupRetryHooks in kinds
+    off, _ = build(config(notes={"work_method": ["readback"]}), ctx=CTX)
+    assert not {FinishCheckHooks, LookupRetryHooks} & {type(h) for h in off.hooks}
+
+
+def test_the_finish_check_says_that_the_tools_list_is_in_force_only_when_the_deployment_says_so():
+    from polisys.work_method import FINISH_CHECK, FINISH_CHECK_TOOL_LISTS, FinishCheckHooks
+
+    assert FinishCheckHooks().before_reply("done").message == FINISH_CHECK
+    assert FinishCheckHooks("tool").before_reply("done").message == FINISH_CHECK + FINISH_CHECK_TOOL_LISTS
+    parts, _ = build(config(notes={"work_method": ["finish_check"]}, authority={"value_lists": "tool"}), ctx=CTX)
+    assert parts.hooks[0].message.endswith(FINISH_CHECK_TOOL_LISTS)
+

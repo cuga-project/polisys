@@ -536,16 +536,100 @@ def _build_read_first(a: Assembly) -> Piece:
 
 
 def _build_work_method(a: Assembly) -> Piece:
-    from .work_method import ReadbackHooks, note
+    from .ruleset import is_write_tool
+    from .work_method import REPLY_TURNS, FinishCheckHooks, LookupRetryHooks, ReadbackHooks, note
 
     names = list(a.cfg.notes.work_method)
-    if "readback" in names and "readback_sop" in names:
-        raise a.fail("work_method", "readback and readback_sop are two forms of one turn; list one")
+    turns = [n for n in names if n in REPLY_TURNS]
+    if len(turns) > 1:
+        raise a.fail("work_method", f"{' and '.join(turns)} each send the agent back before the reply; list one")
     if "readback_sop" in names:
-        hooks = [ReadbackHooks(store=a.store("work_method"))]
+        hooks: List[Any] = [ReadbackHooks(store=a.store("work_method"))]
+    elif "readback" in names:
+        hooks = [ReadbackHooks()]
+    elif "finish_check" in names:
+        hooks = [FinishCheckHooks(a.cfg.authority.value_lists)]
+    elif "finish_ledger" in names:
+        from .work_method import FinishLedgerHooks
+
+        hooks = [FinishLedgerHooks(a.cfg.authority.value_lists, is_write_tool)]
     else:
-        hooks = [ReadbackHooks()] if "readback" in names else []
+        hooks = []
+    if "lookup_retry" in names:
+        hooks.append(LookupRetryHooks(a.ctx.request or "", is_write_tool))
+    if "literal_values" in names:
+        from .work_method import LiteralValueHooks
+
+        hooks.append(LiteralValueHooks(a.ctx.request or "", is_write_tool))
+    if "literal_coverage" in names:
+        from .work_method import LiteralCoverageHooks
+
+        hooks.append(LiteralCoverageHooks(a.ctx.request or ""))
     return Piece(hooks=hooks, system_note=note(names), target=hooks[0] if hooks else None)
+
+
+def _own_model(a: Assembly, component: str, name: Optional[str], **kwargs: Any) -> Any:
+    """The model of a component whose setting may say ``agent``: the model the agent runs on."""
+    if name == "agent":
+        if not a.ctx.agent_model:
+            raise a.fail(component, "its model is 'agent', and RunContext.agent_model is empty")
+        name = a.ctx.agent_model
+    return a.model(component, name, **kwargs)
+
+
+def _policy_text(a: Assembly, component: str) -> str:
+    text = a.ctx.policy_text or a.ctx.system_prompt
+    if not text:
+        raise a.fail(component, "it reads the policy text, and RunContext has neither policy_text nor system_prompt")
+    return text
+
+
+def _run_tool_specs(a: Assembly) -> List[Dict[str, Any]]:
+    return [t for t in a.ctx.tool_specs if a.ctx.tools_in_run is None or t["name"] in a.ctx.tools_in_run]
+
+
+def _build_tool_notes(a: Assembly) -> Optional[Piece]:
+    from .tool_notes import ToolNotes, build_notes
+
+    cfg = a.cfg.notes.tool_notes
+    if not cfg.show:
+        raise a.fail("tool_notes", "notes.tool_notes is on with no kind of note to show")
+    specs = _run_tool_specs(a)
+    if not specs:
+        raise a.fail("tool_notes", "notes.tool_notes needs RunContext.tool_specs (the tools of the run)")
+    model = _own_model(a, "tool_notes", cfg.model, timeout=300, max_tokens=24000)
+    text = _policy_text(a, "tool_notes")
+    lists = a.cfg.authority.value_lists
+    notes = ToolNotes(lambda: build_notes(text, specs, model, cfg.unmet, cfg.cache_dir, lists), list(cfg.show))
+    return Piece(wrap_tools=notes.wrap_tools, target=notes)
+
+
+def _build_default_values(a: Assembly) -> Piece:
+    from .default_values import DefaultValueHooks, build_defaults
+    from .ruleset import is_write_tool
+
+    cfg = a.cfg.checkers.default_values
+    specs = _run_tool_specs(a)
+    if not specs:
+        raise a.fail("default_values", "checkers.default_values needs RunContext.tool_specs (the tools of the run)")
+    model = _own_model(a, "default_values", cfg.model, timeout=180, max_tokens=8000)
+    text = _policy_text(a, "default_values")
+    hook = DefaultValueHooks(lambda: build_defaults(text, specs, model, is_write_tool, cfg.cache_dir, cfg.scope))
+    return Piece(hooks=[hook])
+
+
+def _build_policy_lines(a: Assembly) -> Piece:
+    from .policy_lines import PolicyLines, build_lines
+    from .ruleset import is_write_tool
+
+    cfg = a.cfg.notes.policy_lines
+    specs = _run_tool_specs(a)
+    if not specs:
+        raise a.fail("policy_lines", "notes.policy_lines needs RunContext.tool_specs (the tools of the run)")
+    model = _own_model(a, "policy_lines", cfg.model, timeout=300, max_tokens=16000)
+    text = _policy_text(a, "policy_lines")
+    lines = PolicyLines(lambda: build_lines(text, specs, model, is_write_tool, cfg.cache_dir))
+    return Piece(wrap_tools=lines.wrap_tools, target=lines)
 
 
 def _build_gate(a: Assembly) -> Piece:
@@ -768,6 +852,9 @@ COMPONENTS: Dict[str, Component] = {
     "procedure_push": Component(lambda cfg: cfg.organizers.procedure_push.mode == "on", _build_procedure_push),
     "read_first": Component(lambda cfg: cfg.notes.read_first, _build_read_first),
     "work_method": Component(lambda cfg: bool(cfg.notes.work_method), _build_work_method),
+    "tool_notes": Component(lambda cfg: cfg.notes.tool_notes.mode == "on", _build_tool_notes),
+    "default_values": Component(lambda cfg: cfg.checkers.default_values.mode == "on", _build_default_values),
+    "policy_lines": Component(lambda cfg: cfg.notes.policy_lines.mode == "on", _build_policy_lines),
     "sop_tracker": Component(lambda cfg: cfg.organizers.sop_tracker.mode == "on", _build_sop_tracker),
     "navigator": Component(lambda cfg: cfg.organizers.navigator.mode == "on", _build_navigator),
     "obligations": Component(_ledger_on, _build_obligations),
