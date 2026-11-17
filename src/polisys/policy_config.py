@@ -80,6 +80,9 @@ class Authority:
     company_domains: List[str] = field(default_factory=list)  # sender domains whose messages are trusted
     may_change_rules: List[str] = field(default_factory=list)  # roles that may change a rule
     supersedes: bool = False  # a rule replaced by a newer one leaves the current list
+    # When the policy's list of allowed values for an argument differs from the tool's own list: which one is in force.
+    # Read by notes.tool_notes and the finish check of notes.work_method.
+    value_lists: Literal["policy", "tool"] = "policy"
 
 
 @dataclass
@@ -153,7 +156,20 @@ class Verifier:
 
 
 @dataclass
+class DefaultValues:
+    """Default values the policy states for arguments of write tools, listed once per policy text and tool set and
+    enforced by code: a write call that leaves such an argument out is blocked once with the default (``default_values.py``)."""
+
+    mode: Literal["off", "on"] = "off"
+    model: Optional[str] = None  # the model that lists the defaults; "agent": the model the agent runs on
+    cache_dir: Optional[str] = None
+    # stated: also the values the policy requires for an argument when the call sets another one
+    scope: Literal["defaults", "stated"] = "defaults"
+
+
+@dataclass
 class Checkers:
+    default_values: DefaultValues = field(default_factory=DefaultValues)
     rules: Mode = "auto"  # typed rules enforced by code (and Cedar for roles)
     compile: Optional[str] = None  # model that turns policy text found in data into rules
     narrow_questions: Optional[str] = None  # model for narrow yes/no questions
@@ -282,7 +298,36 @@ class Followups:
 
 
 @dataclass
+class ToolNotes:
+    """Notes on each tool, written once from the policy text and the tool list and shown in the tool descriptions
+    (``tool_notes.py``): what to check before the call, which values the policy fixes, what to do after."""
+
+    mode: Literal["off", "on"] = "off"
+    model: Optional[str] = None  # the model that writes the notes; "agent": the model the agent runs on
+    # A condition whose remedy the policy does not state: as_stated keeps no note for it; fix_with_tool keeps the note that
+    # names an available tool which makes the condition true. A decision of the deployment, not of the policy.
+    unmet: Literal["as_stated", "fix_with_tool"] = "as_stated"
+    cache_dir: Optional[str] = None  # folder for the notes of each policy text and tool set; None: asked in every run
+    # The kinds of note shown to the agent; all are written and cached either way. "conflict": the tool's list of allowed
+    # values is in force where the policy's list lacks a value of it (only with authority.value_lists: tool).
+    show: List[Literal["before", "values", "after", "conflict"]] = field(
+        default_factory=lambda: ["before", "values", "after", "conflict"]
+    )
+
+
+@dataclass
+class PolicyLines:
+    """The policy lines that govern each write tool, selected once per policy and shown word for word in the tool's
+    description (``policy_lines.py``)."""
+
+    mode: Literal["off", "on"] = "off"
+    model: Optional[str] = None  # the model that selects the lines; "agent": the model the agent runs on
+    cache_dir: Optional[str] = None
+
+
+@dataclass
 class Notes:
+    policy_lines: PolicyLines = field(default_factory=PolicyLines)
     reminders: Literal["tool_result", "system"] = "tool_result"  # where a reminder goes
     brief: Literal["system", "message", "off"] = "system"  # where the brief goes (agent setting), or off
     # The brief of the package's rules also lists the guidance rules that name no tool (the measured runs never showed them).
@@ -293,10 +338,23 @@ class Notes:
     # (read_first.py; needs RunContext.tool_apps).
     read_first: bool = False
     work_method: List[
-        Literal["worksheet", "actors", "request_scope", "cells", "idempotent", "sop_literal", "readback", "readback_sop"]
-    ] = field(
-        default_factory=list
-    )
+        Literal[
+            "worksheet",
+            "actors",
+            "request_scope",
+            "cells",
+            "idempotent",
+            "sop_literal",
+            "readback",
+            "readback_sop",
+            "lookup_retry",
+            "finish_check",
+            "literal_values",
+            "finish_ledger",
+            "literal_coverage",
+        ]
+    ] = field(default_factory=list)
+    tool_notes: ToolNotes = field(default_factory=ToolNotes)
 
 
 Shape = Literal[
