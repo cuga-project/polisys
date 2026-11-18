@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Dict, List, Optional
 
-from .llm import parse_json
+from polisys.llm import parse_json
 
 DEFAULT_PROFILE: Dict[str, Any] = {
     "headings": [

@@ -24,9 +24,9 @@ from typing import Any, Dict, List, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .model import Procedure, Step, step_text
-from .ruleset import is_write_tool
-from .trace import fresh
+from polisys.package.model import Procedure, Step, step_text
+from polisys.checks.rules import is_write_tool
+from polisys.runtime.trace import fresh
 
 REPLY = "reply"  # the action of a step that is an answer to the user, in a package written from a skill
 

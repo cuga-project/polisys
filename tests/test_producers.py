@@ -14,20 +14,20 @@ import pytest
 from langchain_core.tools import tool
 
 from polisys.hooks import AgentHooks
-from polisys.deliverables import obligations_from_request
-from polisys.dry_run import RecordingModels
-from polisys.model import Obligation, PolicyPackage, Procedure, Step
-from polisys.obligations import Case, ObligationLedger
-from polisys.package import from_build, obligations_from_package
-from polisys.policy_config import PolicyConfig, PolicyConfigError
-from polisys.procedure_monitor import ProcedureMonitor
-from polisys.ruleset import (
+from polisys.experimental.finish.request_checklist import obligations_from_request
+from polisys.runtime.dry_run import RecordingModels
+from polisys.package.model import Obligation, PolicyPackage, Procedure, Step
+from polisys.experimental.finish.ledger import Case, ObligationLedger
+from polisys.package.files import from_build, obligations_from_package
+from polisys.runtime.profile import PolicyConfig, PolicyConfigError
+from polisys.checks.procedure_monitor import ProcedureMonitor
+from polisys.checks.rules import (
     READ_VERBS,
     is_write_tool,
     obligations_from_duties,
 )
-from polisys.runtime import COMPONENTS, RunContext, RuntimeWiringError, build_runtime
-from polisys.store_gate import StoreGate
+from polisys.runtime.assembly import COMPONENTS, RunContext, RuntimeWiringError, build_runtime
+from polisys.experimental.checks.gate import StoreGate
 from polisys.tool_kind import READ_FIRST, acts
 try:  # the CUGA agent is optional: its real-loop tests are skipped without it
     from cuga.sdk import CugaAgent

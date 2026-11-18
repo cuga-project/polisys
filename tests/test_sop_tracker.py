@@ -3,7 +3,7 @@ evidence, are dropped; an escalation needs both quotes."""
 
 import json
 
-from polisys.sop_tracker import SopTracker
+from polisys.experimental.organizers.sop_tracker import SopTracker
 
 SOP = """# Service
 ## SIM

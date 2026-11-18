@@ -25,17 +25,17 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tupl
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .followups import CHECK_HEADER, LOOK_HEADER, REPLY_CHARS, REPLY_NOTE, required_actions
-from .facts import FACTS_CHARS, TOKEN, FactStore, call_tokens  # noqa: F401 (re-exported)
-from .handlers.prose import prose_rules
-from .handlers.tables import table_rules
-from .model import Document, PolicySet, Section, Statement, StatementType, Trust
-from .decisions import Decisions, action_text, has_limit
-from .guard_code import GuardCode, flatten_records
-from .references import ReferenceLedger
-from .trace import audited_failure, emit, fresh
-from .llm import today_line
-from .ruleset import RuleSetHooks, _walk, is_write_tool
+from polisys.finish.followups import CHECK_HEADER, LOOK_HEADER, REPLY_CHARS, REPLY_NOTE, required_actions
+from polisys.checks.facts import FACTS_CHARS, TOKEN, FactStore, call_tokens  # noqa: F401 (re-exported)
+from polisys.compile.handlers.prose import prose_rules
+from polisys.compile.handlers.tables import table_rules
+from polisys.package.model import Document, PolicySet, Section, Statement, StatementType, Trust
+from polisys.checks.decisions import Decisions, action_text, has_limit
+from polisys.experimental.checks.guard_code import GuardCode, flatten_records
+from polisys.sources.references import ReferenceLedger
+from polisys.runtime.trace import audited_failure, emit, fresh
+from polisys.llm import today_line
+from polisys.checks.rules import RuleSetHooks, _walk, is_write_tool
 
 _TYPE_VALUES = {t.value for t in StatementType}
 
@@ -316,16 +316,16 @@ class OnlinePolicyIntake(AgentHooks):
         self.track_supersedes = track_supersedes
         # (tool name, search(query) -> result) pairs run once per thread at the request (see DISCOVERY_QUERIES)
         self.discover = list(discover or [])
-        # () -> {source: [record, ...]}: every record of every app, read once per thread at the request (listing.py)
+        # () -> {source: [record, ...]}: every record of every app, read once per thread at the request (sources/listing.py)
         self.listing = listing
         self.listing_data = listing_data  # the listing also hands corrections and examples to the agent
-        # Narrow decision-model questions (decisions.py): rule changes without policy words, record exclusions and
+        # Narrow decision-model questions (checks/decisions.py): rule changes without policy words, record exclusions and
         # limits before writes, and whether a code rule applies before it denies.
         self.decisions = decisions
         # What a model verdict does: "remind" = a note after the write (it runs); "block_once" = the write is
         # stopped once with the reason, and the same call repeated goes through.
         self.model_effect = model_effect
-        self.voice, self.evidence = voice, evidence  # followups.py
+        self.voice, self.evidence = voice, evidence  # finish/followups.py
         # After the repeated-denial cap: "allow" lets the write through; "skip" keeps it blocked and tells the agent
         # to continue without it.
         self.cap_effect = cap_effect
@@ -348,7 +348,7 @@ class OnlinePolicyIntake(AgentHooks):
         self.flagged_ids: set = set()
         self.pending: List[Future] = []
         self.policies: List[Dict[str, Any]] = []
-        self.store = FactStore(match_phrases=self.record_checks)  # tool output seen in this thread (facts.py)
+        self.store = FactStore(match_phrases=self.record_checks)  # tool output seen in this thread (checks/facts.py)
         self.writes: List[str] = []
         self.own_texts: List[str] = []
         self.data_notes: List[Tuple[str, str, str]] = []  # (label, source, record text) from the listing  # text the agent wrote in this run (long string arguments of its writes)
@@ -776,7 +776,7 @@ class OnlinePolicyIntake(AgentHooks):
     def _run_listing(self) -> None:
         """Read every listed record; the model keeps those that state rules (tables always), and the kept records go
         through the normal extraction in the background. A failed listing leaves the online intake as it was."""
-        from . import listing as L
+        from polisys.sources import listing as L
 
         t0 = time.monotonic()
         try:
@@ -893,7 +893,7 @@ class OnlinePolicyIntake(AgentHooks):
         if self.own_texts:  # a record that carries text the agent wrote in this run is its own output, not a rule
             new, texts = [r for r in new if not self._own(r)], [r for r in texts if not self._own(r)]
         if self.listed is not None:  # the listing read these records already
-            from .listing import unlisted
+            from polisys.sources.listing import unlisted
 
             new, texts = unlisted(new, self.listed), unlisted(texts, self.listed)
         if not new and not texts:
@@ -980,7 +980,7 @@ class OnlinePolicyIntake(AgentHooks):
     def _guard_code(
         self, tool: str, args: Dict[str, Any], statements: List[Dict[str, Any]]
     ) -> Optional[HookResult]:
-        """Generated code checks (guard_code.py) for the statements that decide this tool. Sets ``self._guarded`` to
+        """Generated code checks (experimental/checks/guard_code.py) for the statements that decide this tool. Sets ``self._guarded`` to
         the statements whose check ran (they leave the model verifier's list). Returns a blocking result only in
         ``deny`` mode; in ``remind`` mode violations become a note for the next model call."""
         self._guarded: set = set()

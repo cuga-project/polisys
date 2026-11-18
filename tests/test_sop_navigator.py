@@ -1,6 +1,6 @@
 """SopNavigator: the walk follows reference links, and a hand-off gets a note only for open action statements."""
 
-from polisys.sop_navigator import SopNavigator
+from polisys.experimental.organizers.sop_navigator import SopNavigator
 
 POLICY = """# Messages
 ## Fix messages

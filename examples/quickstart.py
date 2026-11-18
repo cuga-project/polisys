@@ -11,7 +11,7 @@ from pathlib import Path
 
 from polisys.hooks import HookRegistry
 from polisys.package import load_package
-from polisys.policy_config import load_config
+from polisys.runtime.profile import load_config
 from polisys.runtime import RunContext, build_runtime
 
 HERE = Path(__file__).parent

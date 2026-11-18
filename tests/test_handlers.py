@@ -2,11 +2,11 @@
 
 import json
 
-from polisys.documents import load_document, split_policy
-from polisys.handlers.prose import prose_rules
-from polisys.handlers.tables import code_rules, table_rules
-from polisys.model import StatementType
-from polisys.ruleset import RuleSetHooks
+from polisys.compile.documents import load_document, split_policy
+from polisys.compile.handlers.prose import prose_rules
+from polisys.compile.handlers.tables import code_rules, table_rules
+from polisys.package.model import StatementType
+from polisys.checks.rules import RuleSetHooks
 
 SPECS = [
     {

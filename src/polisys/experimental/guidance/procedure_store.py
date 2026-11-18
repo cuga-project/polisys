@@ -24,7 +24,7 @@ import json
 import re
 from typing import Any, Dict, Iterable, List, Optional
 
-from .model import step_text
+from polisys.package.model import step_text
 
 TEMPLATE_REF = re.compile(r"Template\s+([A-Z]-\d+|\d+)")
 
@@ -47,7 +47,7 @@ class ProcedureStore:
     @classmethod
     def from_package(cls, pkg: Any) -> "ProcedureStore":
         """The store of a ``PolicyPackage``. A package from a store graph reads the same text as that graph."""
-        from .package import to_store_graph
+        from polisys.package.files import to_store_graph
 
         return cls(to_store_graph(pkg))
 

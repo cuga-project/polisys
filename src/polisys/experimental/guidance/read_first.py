@@ -12,7 +12,7 @@ import json
 import re
 from typing import Any, Callable, Dict, List, Optional, Set
 
-from .hooks import AgentHooks, HookResult
+from polisys.hooks import AgentHooks, HookResult
 
 SENDS = re.compile(r"(^|_)(send|post|reply|forward)(_|$)", re.I)  # tool-name words of a message to people
 CHANNEL = re.compile(r"(?<![\w#])#([a-z0-9][a-z0-9_-]{1,79})\b", re.I)

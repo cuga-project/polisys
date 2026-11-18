@@ -44,9 +44,9 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 from polisys.hooks import AgentHooks, HookResult
 from loguru import logger
 
-from .policy_config import PolicyConfig
-from .router import router_reads_opened
-from .trace import fresh, hook_failure
+from polisys.runtime.profile import PolicyConfig
+from polisys.checks.router import router_reads_opened
+from polisys.runtime.trace import fresh, hook_failure
 
 LEVELS = (0, 1, 2, 3)
 CHECKS = ("rules", "gate", "verifier", "decisions")
@@ -240,7 +240,7 @@ def _has_actions(pkg: Any) -> bool:
     """A step of the package names a tool, so the guide has one to stop on (the check ``_build_guide`` makes)."""
     if pkg is None:
         return False
-    from .package import procedure_dicts
+    from polisys.package.files import procedure_dicts
 
     return any(
         s.get("action") for p in procedure_dicts(pkg) for s in p.get("steps") or [] if isinstance(s, dict)
@@ -273,8 +273,8 @@ def resolve(
     """Replace every ``auto`` of the config by ``on`` or ``off``. Explicit modes stay. ``policy_text``: the SOP text of the
     task, for what reads the text and not a package (the SOP tracker, the gate on the whole SOP). ``tool_names``: the tools of
     the task, to check the patterns of ``risk.level3_tools`` against."""
-    from .package import runtime_rules
-    from .store_gate import _has_gate_rules
+    from polisys.package.files import runtime_rules
+    from polisys.experimental.checks.gate import _has_gate_rules
 
     out = copy.deepcopy(cfg)
     auto_checks = {n for n in ("rules", "gate", "verifier") if _get(out, n) == "auto"}

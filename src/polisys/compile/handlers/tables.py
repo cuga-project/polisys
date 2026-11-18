@@ -15,10 +15,10 @@ import json
 import re
 from typing import Any, Dict, List, Tuple
 
-from ..documents import LineSection as Section
-from ..documents import clean as _clean
-from ..model import Rule, Statement
-from ..ruleset import is_write_tool, norm
+from polisys.compile.documents import LineSection as Section
+from polisys.compile.documents import clean as _clean
+from polisys.package.model import Rule, Statement
+from polisys.checks.rules import is_write_tool, norm
 
 ARROW = re.compile(r"[`'\"]?([\w-]+)[`'\"]?\s*(?:→|->)\s*(.+)$")
 

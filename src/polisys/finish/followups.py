@@ -19,8 +19,8 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Dict, List, Tuple
 
-from .llm import parse_json, today_line
-from .validate import quote_ok
+from polisys.llm import parse_json, today_line
+from polisys.compile.validate import quote_ok
 
 CHECK_HEADER = (
     "AUTOMATED CHECK. This message comes from a checker, not from the user, and the checker can be wrong. Compare each item "

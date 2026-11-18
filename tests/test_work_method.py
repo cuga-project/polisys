@@ -2,8 +2,8 @@
 
 import pytest
 
-from polisys.policy_config import PolicyConfig, PolicyConfigError
-from polisys.work_method import METHODS, READBACK, ReadbackHooks, note
+from polisys.runtime.profile import PolicyConfig, PolicyConfigError
+from polisys.guidance.work_method import METHODS, READBACK, ReadbackHooks, note
 from tests.test_runtime_assembly import CTX, build, config
 
 
@@ -36,7 +36,7 @@ def test_the_runtime_adds_the_note_and_the_readback_hook():
 
 
 def test_gate_missing_needs_read_adds_the_rule_only_when_on():
-    from polisys.store_gate import MISSING_NEEDS_READ, USER, StoreGate
+    from polisys.experimental.checks.gate import MISSING_NEEDS_READ, USER, StoreGate
     from tests.test_runtime_assembly import GATE_ON, GRAPH, from_store_graph
 
     args = dict(label="L", rules="R", dates="", data="D", action="A")
@@ -50,9 +50,9 @@ def test_gate_missing_needs_read_adds_the_rule_only_when_on():
 
 
 def test_readback_sop_shows_the_opened_procedures_and_needs_one_form():
-    from polisys.package import from_store_graph
-    from polisys.procedure_store import ProcedureStore
-    from polisys.work_method import READBACK_SOP
+    from polisys.package.files import from_store_graph
+    from polisys.experimental.guidance.procedure_store import ProcedureStore
+    from polisys.guidance.work_method import READBACK_SOP
     from tests.test_runtime_assembly import GRAPH
 
     store = ProcedureStore.from_package(from_store_graph(GRAPH))
@@ -67,7 +67,7 @@ def test_readback_sop_shows_the_opened_procedures_and_needs_one_form():
 
 
 def test_gate_trigger_check_is_added_next_to_missing_needs_read():
-    from polisys.store_gate import MISSING_NEEDS_READ, TRIGGER_CHECK, StoreGate
+    from polisys.experimental.checks.gate import MISSING_NEEDS_READ, TRIGGER_CHECK, StoreGate
     from tests.test_runtime_assembly import GATE_ON, GRAPH, from_store_graph
 
     both = {"gate": {**GATE_ON["gate"], "missing_needs_read": True, "trigger_check": True}}
@@ -85,7 +85,7 @@ def _is_write(tool):
 
 
 def test_finish_check_is_sent_once_and_is_one_of_the_reply_turns():
-    from polisys.work_method import FINISH_CHECK, FinishCheckHooks
+    from polisys.guidance.work_method import FINISH_CHECK, FinishCheckHooks
 
     h = FinishCheckHooks()
     assert h.before_reply("done").message == FINISH_CHECK
@@ -95,7 +95,7 @@ def test_finish_check_is_sent_once_and_is_one_of_the_reply_turns():
 
 
 def test_a_failed_lookup_of_a_name_the_request_gives_gets_one_note():
-    from polisys.work_method import LookupRetryHooks
+    from polisys.guidance.work_method import LookupRetryHooks
 
     h = LookupRetryHooks("Add the staff of the Northern Depot Team to the roster.", _is_write)
     miss = {"error": {"detail": "not found"}}
@@ -106,7 +106,7 @@ def test_a_failed_lookup_of_a_name_the_request_gives_gets_one_note():
 
 
 def test_no_lookup_note_for_a_success_a_write_a_short_value_or_a_value_the_request_does_not_hold():
-    from polisys.work_method import LookupRetryHooks, named_in
+    from polisys.guidance.work_method import LookupRetryHooks, named_in
 
     h = LookupRetryHooks("Add the staff of the Northern Depot Team to the roster.", _is_write)
     miss = {"error": "not found"}
@@ -119,7 +119,7 @@ def test_no_lookup_note_for_a_success_a_write_a_short_value_or_a_value_the_reque
 
 
 def test_the_lookup_notes_stop_at_the_limit():
-    from polisys.work_method import LookupRetryHooks
+    from polisys.guidance.work_method import LookupRetryHooks
 
     h = LookupRetryHooks("Find Alpha Unit, Beta Unit, Gamma Unit and Delta Unit.", _is_write, max_notes=3)
     miss = {"error": "not found"}
@@ -128,7 +128,7 @@ def test_the_lookup_notes_stop_at_the_limit():
 
 
 def test_the_runtime_adds_the_two_new_hooks_only_when_listed():
-    from polisys.work_method import FinishCheckHooks, LookupRetryHooks
+    from polisys.guidance.work_method import FinishCheckHooks, LookupRetryHooks
 
     parts, _ = build(config(notes={"work_method": ["lookup_retry", "finish_check"]}), ctx=CTX)
     kinds = {type(h) for h in parts.hooks}
@@ -138,7 +138,7 @@ def test_the_runtime_adds_the_two_new_hooks_only_when_listed():
 
 
 def test_the_finish_check_says_that_the_tools_list_is_in_force_only_when_the_deployment_says_so():
-    from polisys.work_method import FINISH_CHECK, FINISH_CHECK_TOOL_LISTS, FinishCheckHooks
+    from polisys.guidance.work_method import FINISH_CHECK, FINISH_CHECK_TOOL_LISTS, FinishCheckHooks
 
     assert FinishCheckHooks().before_reply("done").message == FINISH_CHECK
     assert FinishCheckHooks("tool").before_reply("done").message == FINISH_CHECK + FINISH_CHECK_TOOL_LISTS

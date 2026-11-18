@@ -17,8 +17,8 @@ import re
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional
 
-from ..llm import parse_json
-from ..model import Procedure, Statement, Step
+from polisys.llm import parse_json
+from polisys.package.model import Procedure, Statement, Step
 
 OPTIONAL = re.compile(r"^(if|when|where)\b|\b(optional|optionally|may)\b", re.I)
 STEP_TEXT = re.compile(

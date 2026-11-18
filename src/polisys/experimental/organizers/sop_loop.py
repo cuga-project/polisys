@@ -27,10 +27,10 @@ from typing import Any, Callable, Dict, List, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .llm import parse_json
-from .model import step_text
-from .ruleset import is_write_tool
-from .trace import audited_failure, emit
+from polisys.llm import parse_json
+from polisys.package.model import step_text
+from polisys.checks.rules import is_write_tool
+from polisys.runtime.trace import audited_failure, emit
 
 READ_CHARS, DATA_CHARS, CASE_DATA_CHARS = 20_000, 120_000, 40_000
 MAX_CASES = 12
@@ -286,7 +286,7 @@ class SopLoop:
     @classmethod
     def from_package(cls, pkg: Any, model: Callable[[str, str], str], **kwargs: Any) -> "SopLoop":
         """A loop over the procedures of a ``PolicyPackage``. The other arguments are those of the constructor."""
-        from .package import procedure_dicts
+        from polisys.package.files import procedure_dicts
 
         return cls(model, procedure_dicts(pkg), **kwargs)
 
@@ -313,7 +313,7 @@ class SopLoop:
 
     async def run(self, agent: Any, request: str, thread_id: str, rec: LoopHooks, timeout: float) -> Any:
         if self.procs:
-            from .procedure_guide import ProcedureGuide
+            from polisys.experimental.guidance.procedure_guide import ProcedureGuide
 
             rec.which = ProcedureGuide(
                 self.procs, gate=False, templates=False

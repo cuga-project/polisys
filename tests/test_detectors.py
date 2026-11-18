@@ -4,7 +4,7 @@ import io
 import json
 import urllib.error
 
-from polisys import detectors
+from polisys.sources import detectors
 
 
 class _Resp(io.BytesIO):

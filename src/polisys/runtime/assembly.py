@@ -26,7 +26,7 @@ from typing import Any, Callable, Dict, FrozenSet, List, Optional, Tuple
 
 from loguru import logger
 
-from .levels import (
+from polisys.runtime.levels import (
     Resolution,
     Shadow,
     WriteChecks,
@@ -34,9 +34,9 @@ from .levels import (
     gate_strength,
     resolve,
 )
-from .model import PolicyPackage
-from .policy_config import PolicyConfig
-from .trace import AUDIT_FILE, AuditLog, PolicyTrace
+from polisys.package.model import PolicyPackage
+from polisys.runtime.profile import PolicyConfig
+from polisys.runtime.trace import AUDIT_FILE, AuditLog, PolicyTrace
 
 
 @dataclass
@@ -93,7 +93,7 @@ class RuntimeParts:
     ``components``: the object behind each component that is on, for what a runner reads after the run (the loop's
     receipts, the store's calls).
 
-    ``trace`` and ``audit``: the model-call events and the decision lines of the run (``trace.py``); ``None`` when the
+    ``trace`` and ``audit``: the model-call events and the decision lines of the run (``runtime/trace.py``); ``None`` when the
     config says ``trace: false`` and when no component is on (a baseline run has neither, and writes no file)."""
 
     hooks: List[Any] = field(default_factory=list)
@@ -118,12 +118,12 @@ class Models:
     """The real model factory. A dry run gives ``dry_run.RecordingModels`` instead."""
 
     def json_model(self, model: str, **kwargs: Any) -> Callable[[str, str], str]:
-        from .llm import openai_json_model
+        from polisys.llm import openai_json_model
 
         return openai_json_model(model, **kwargs)
 
     def openrouter_json_model(self, model: str, **kwargs: Any) -> Callable[[str, str], str]:
-        from .llm import openrouter_json_model
+        from polisys.llm import openrouter_json_model
 
         return openrouter_json_model(model, **kwargs)
 
@@ -133,13 +133,13 @@ class Models:
             raise ValueError(f"{model} needs OPENROUTER_API_KEY, and it is not set")
 
     def questions(self, model: str) -> Callable[..., Any]:
-        from .detectors import systemone_questions
+        from polisys.sources.detectors import systemone_questions
 
         self._need_key(model)
         return systemone_questions(model)
 
     def detector(self, model: str) -> Callable[..., Any]:
-        from .detectors import systemone_detector
+        from polisys.sources.detectors import systemone_detector
 
         self._need_key(model)
         return systemone_detector(model)
@@ -193,18 +193,18 @@ class Assembly:
     def store(self, component: str) -> Any:
         """The one ``ProcedureStore`` of this run. The gate learns from it what the agent opened through the tools."""
         if self._store is None:
-            from .procedure_store import ProcedureStore
+            from polisys.experimental.guidance.procedure_store import ProcedureStore
 
             self._store = ProcedureStore.from_package(self.package(component))
         return self._store
 
     def scope_reader(self, component: str) -> Any:
-        """The one ``ScopeReader`` of this run (``router.py``): the router and expander of ``checkers.router``, over the
+        """The one ``ScopeReader`` of this run (``checks/router.py``): the router and expander of ``checkers.router``, over the
         package and the shared store. The gate reads its scope from it (the ledger has no retrieval scope for now). A router
         that needs a model gets the traced one of ``checkers.router.model`` (``llm_cards``; the measured router had a timeout
         of 240 and 16000 tokens) or of ``checkers.narrow_questions`` (``bm25_kev``)."""
         if self._scope is None:
-            from .router import ScopeReader, make_expander, make_router, router_needs
+            from polisys.checks.router import ScopeReader, make_expander, make_router, router_needs
 
             r = self.cfg.checkers.router
             try:
@@ -262,7 +262,7 @@ class Assembly:
 
     def verifier_for(self, component: str) -> Callable[[str], Any]:
         """Model name -> verifier, for rule types whose measured best model differs."""
-        from .verifier import Verifier
+        from polisys.checks.verifier import Verifier
 
         cache: Dict[str, Any] = {}
 
@@ -318,9 +318,9 @@ def _rules_on_package(cfg: PolicyConfig) -> bool:
 
 
 def _build_rules(a: Assembly) -> Piece:
-    from .package import runtime_rules
-    from .ruleset import RuleSetHooks
-    from .verifier import Verifier
+    from polisys.package.files import runtime_rules
+    from polisys.checks.rules import RuleSetHooks
+    from polisys.checks.verifier import Verifier
 
     pkg = a.package("rules")
     rules = runtime_rules(pkg)
@@ -363,13 +363,13 @@ def _build_rules(a: Assembly) -> Piece:
 
 
 def _build_loop(a: Assembly) -> Piece:
-    from .sop_loop import LoopHooks, SopLoop
+    from polisys.experimental.organizers.sop_loop import LoopHooks, SopLoop
 
     cfg = a.cfg.organizers.loop
     index = None
     if cfg.style == "discovery":
-        from .package import to_build
-        from .sop_retrieval import SopIndex
+        from polisys.package.files import to_build
+        from polisys.checks.retrieval import SopIndex
 
         narrow = a.cfg.checkers.narrow_questions
         index = SopIndex(to_build(a.package("loop")), ask=a.questions("loop", narrow) if narrow else None)
@@ -395,7 +395,7 @@ def _build_loop(a: Assembly) -> Piece:
 
 
 def _build_monitor(a: Assembly) -> Optional[Piece]:
-    from .procedure_monitor import ProcedureMonitor
+    from polisys.checks.procedure_monitor import ProcedureMonitor
 
     pkg = a.package("procedure_monitor")
     if not pkg.procedures:  # most rule lists have no procedures: nothing to follow, as in the old wiring
@@ -411,8 +411,8 @@ def _build_monitor(a: Assembly) -> Optional[Piece]:
 
 
 def _build_intake(a: Assembly) -> Piece:
-    from .decisions import Decisions
-    from .intake import OnlinePolicyIntake
+    from polisys.checks.decisions import Decisions
+    from polisys.sources.intake import OnlinePolicyIntake
 
     checkers, decisions = a.cfg.checkers, a.cfg.decisions
     verify = checkers.verifier.mode == "on"
@@ -462,7 +462,7 @@ def _build_intake(a: Assembly) -> Piece:
 
 
 def _build_requirements_tracker(a: Assembly) -> Piece:
-    from .tracker import RequirementsTracker
+    from polisys.finish.requirements_tracker import RequirementsTracker
 
     cfg = a.cfg.organizers.requirements_tracker
     model = a.model("requirements_tracker", cfg.model, timeout=400, max_tokens=16000)
@@ -484,7 +484,7 @@ def _build_requirements_tracker(a: Assembly) -> Piece:
 
 
 def _build_guide(a: Assembly) -> Piece:
-    from .procedure_guide import ProcedureGuide
+    from polisys.experimental.guidance.procedure_guide import ProcedureGuide
 
     cfg = a.cfg.organizers.guide
     model = None
@@ -502,7 +502,7 @@ def _build_guide(a: Assembly) -> Piece:
 
 
 def _build_procedure_tools(a: Assembly) -> Piece:
-    from .procedure_store import POLICY_TOOLS_NOTE, policy_tools
+    from polisys.experimental.guidance.procedure_store import POLICY_TOOLS_NOTE, policy_tools
 
     store = a.store("procedure_tools")
     if not store.procs:
@@ -511,8 +511,8 @@ def _build_procedure_tools(a: Assembly) -> Piece:
 
 
 def _build_procedure_push(a: Assembly) -> Piece:
-    from .procedure_push import ProcedurePush
-    from .router import make_router
+    from polisys.experimental.guidance.procedure_push import ProcedurePush
+    from polisys.checks.router import make_router
 
     cfg = a.cfg.organizers.procedure_push
     store = a.store("procedure_push")
@@ -527,8 +527,8 @@ def _build_procedure_push(a: Assembly) -> Piece:
 
 
 def _build_read_first(a: Assembly) -> Piece:
-    from .read_first import ReadFirst
-    from .ruleset import is_write_tool
+    from polisys.experimental.guidance.read_first import ReadFirst
+    from polisys.checks.rules import is_write_tool
 
     if not a.ctx.tool_apps:
         raise a.fail("read_first", "notes.read_first needs RunContext.tool_apps (which app each tool belongs to)")
@@ -536,8 +536,8 @@ def _build_read_first(a: Assembly) -> Piece:
 
 
 def _build_work_method(a: Assembly) -> Piece:
-    from .ruleset import is_write_tool
-    from .work_method import REPLY_TURNS, FinishCheckHooks, LookupRetryHooks, ReadbackHooks, note
+    from polisys.checks.rules import is_write_tool
+    from polisys.guidance.work_method import REPLY_TURNS, FinishCheckHooks, LookupRetryHooks, ReadbackHooks, note
 
     names = list(a.cfg.notes.work_method)
     turns = [n for n in names if n in REPLY_TURNS]
@@ -550,7 +550,7 @@ def _build_work_method(a: Assembly) -> Piece:
     elif "finish_check" in names:
         hooks = [FinishCheckHooks(a.cfg.authority.value_lists)]
     elif "finish_ledger" in names:
-        from .work_method import FinishLedgerHooks
+        from polisys.guidance.work_method import FinishLedgerHooks
 
         hooks = [FinishLedgerHooks(a.cfg.authority.value_lists, is_write_tool)]
     else:
@@ -558,11 +558,11 @@ def _build_work_method(a: Assembly) -> Piece:
     if "lookup_retry" in names:
         hooks.append(LookupRetryHooks(a.ctx.request or "", is_write_tool))
     if "literal_values" in names:
-        from .work_method import LiteralValueHooks
+        from polisys.guidance.work_method import LiteralValueHooks
 
         hooks.append(LiteralValueHooks(a.ctx.request or "", is_write_tool))
     if "literal_coverage" in names:
-        from .work_method import LiteralCoverageHooks
+        from polisys.guidance.work_method import LiteralCoverageHooks
 
         hooks.append(LiteralCoverageHooks(a.ctx.request or ""))
     return Piece(hooks=hooks, system_note=note(names), target=hooks[0] if hooks else None)
@@ -589,7 +589,7 @@ def _run_tool_specs(a: Assembly) -> List[Dict[str, Any]]:
 
 
 def _build_tool_notes(a: Assembly) -> Optional[Piece]:
-    from .tool_notes import ToolNotes, build_notes
+    from polisys.experimental.guidance.tool_notes import ToolNotes, build_notes
 
     cfg = a.cfg.notes.tool_notes
     if not cfg.show:
@@ -605,8 +605,8 @@ def _build_tool_notes(a: Assembly) -> Optional[Piece]:
 
 
 def _build_default_values(a: Assembly) -> Piece:
-    from .default_values import DefaultValueHooks, build_defaults
-    from .ruleset import is_write_tool
+    from polisys.experimental.checks.default_values import DefaultValueHooks, build_defaults
+    from polisys.checks.rules import is_write_tool
 
     cfg = a.cfg.checkers.default_values
     specs = _run_tool_specs(a)
@@ -619,8 +619,8 @@ def _build_default_values(a: Assembly) -> Piece:
 
 
 def _build_policy_lines(a: Assembly) -> Piece:
-    from .policy_lines import PolicyLines, build_lines
-    from .ruleset import is_write_tool
+    from polisys.experimental.guidance.policy_lines import PolicyLines, build_lines
+    from polisys.checks.rules import is_write_tool
 
     cfg = a.cfg.notes.policy_lines
     specs = _run_tool_specs(a)
@@ -633,8 +633,8 @@ def _build_policy_lines(a: Assembly) -> Piece:
 
 
 def _build_gate(a: Assembly) -> Piece:
-    from .router import router_reads_opened
-    from .store_gate import StoreGate
+    from polisys.checks.router import router_reads_opened
+    from polisys.experimental.checks.gate import StoreGate
 
     cfg = a.cfg.checkers.gate
     cfg_router = a.cfg.checkers.router
@@ -669,7 +669,7 @@ def _build_gate(a: Assembly) -> Piece:
             None, model, sop_text=a.ctx.policy_text or a.ctx.system_prompt, today=today
         )
     if cfg.missing_needs_read or cfg.trigger_check:
-        from .store_gate import MISSING_NEEDS_READ, TRIGGER_CHECK
+        from polisys.experimental.checks.gate import MISSING_NEEDS_READ, TRIGGER_CHECK
 
         gate.extra = (MISSING_NEEDS_READ if cfg.missing_needs_read else "") + (TRIGGER_CHECK if cfg.trigger_check else "")
     if cfg.seed_request:
@@ -680,7 +680,7 @@ def _build_gate(a: Assembly) -> Piece:
 
 
 def _build_sop_tracker(a: Assembly) -> Piece:
-    from .sop_tracker import SopTracker
+    from polisys.experimental.organizers.sop_tracker import SopTracker
 
     model = a.model("sop_tracker", a.cfg.organizers.sop_tracker.model, timeout=90, max_tokens=8000)
     tracker = SopTracker(a.ctx.policy_text or a.ctx.system_prompt, model)
@@ -692,7 +692,7 @@ def _build_sop_tracker(a: Assembly) -> Piece:
 
 
 def _build_navigator(a: Assembly) -> Piece:
-    from .sop_navigator import HandoffGuard, SopNavigator
+    from polisys.experimental.organizers.sop_navigator import HandoffGuard, SopNavigator
 
     cfg = a.cfg.organizers.navigator
     names = [t["name"] for t in a.ctx.tool_specs]
@@ -728,10 +728,10 @@ def _build_navigator(a: Assembly) -> Piece:
 
 
 def _build_obligations(a: Assembly) -> Piece:
-    from .deliverables import obligations_from_request
-    from .obligations import CONVERSATION, ONE_REQUEST, SOP_LOOP, ObligationLedger, cards_of
-    from .package import obligations_from_package, runtime_rules
-    from .ruleset import obligations_from_duties
+    from polisys.experimental.finish.request_checklist import obligations_from_request
+    from polisys.experimental.finish.ledger import CONVERSATION, ONE_REQUEST, SOP_LOOP, ObligationLedger, cards_of
+    from polisys.package.files import obligations_from_package, runtime_rules
+    from polisys.checks.rules import obligations_from_duties
 
     cfg = a.cfg.obligations
     producers = set(cfg.producers)
@@ -921,7 +921,7 @@ def _check_settings(a: Assembly) -> None:
     for path, default in NOT_READ_YET.items():
         if _value(cfg, path) != default:
             raise a.fail(path, "is set, and nothing reads it yet")
-    from .router import UnknownMethod, check_names, expander_options, router_names, router_options
+    from polisys.checks.router import UnknownMethod, check_names, expander_options, router_names, router_options
 
     try:
         check_names(checkers.router.kind, checkers.router.expand)
@@ -1083,7 +1083,7 @@ def _check_settings(a: Assembly) -> None:
     if cfg.priority_classes and a.pkg is not None:
         # The ranks themselves decide a conflict when the package is validated or its conflicts are settled
         # (``validate_package`` and ``resolve_conflicts`` take the list); a run reports the documents it cannot rank.
-        from .validate import priority_findings
+        from polisys.compile.validate import priority_findings
 
         for found in priority_findings(a.pkg, cfg.priority_classes):
             a.notes.append(("priority_classes", found.message))
@@ -1116,7 +1116,7 @@ def build_runtime(
     needs one then raises. ``models``: the model factory, by default the real one; a dry run gives
     ``dry_run.RecordingModels``. Raises ``RuntimeWiringError`` on wiring that can have no effect.
 
-    The level switch (``levels.py``) runs first: it replaces every ``auto`` of the config by ``on`` or ``off`` from the control
+    The level switch (``runtime/levels.py``) runs first: it replaces every ``auto`` of the config by ``on`` or ``off`` from the control
     level of ``ctx.agent_model`` and the shapes of the policy sources, and what it decided goes to the audit. A profile that
     lists every component has no ``auto``, so nothing changes for it. At level 0 every hook is wrapped in ``Shadow``: it runs
     and says nothing to the agent."""

@@ -3,7 +3,7 @@
 import asyncio
 import json
 
-from polisys.sop_loop import LoopHooks, SopLoop
+from polisys.experimental.organizers.sop_loop import LoopHooks, SopLoop
 
 PROC = {
     "id": "p1",

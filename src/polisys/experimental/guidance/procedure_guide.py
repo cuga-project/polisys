@@ -1,6 +1,6 @@
 """Procedure guide: uses the SOP's procedure graph (offline intake) while the agent works.
 
-Input: the ``procedures`` of a build (``handlers/procedures.py`` + ``handlers/procedure_rules.py``): steps with the tool
+Input: the ``procedures`` of a build (``compile/handlers/procedures.py`` + ``compile/handlers/procedure_rules.py``): steps with the tool
 that does them, preconditions, exceptions, templates and escalations, each with a verbatim quote; plus the "General
 rules" entry for rules outside the procedures.
 
@@ -29,9 +29,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .llm import parse_json
-from .model import step_text
-from .trace import audited_failure, emit
+from polisys.llm import parse_json
+from polisys.package.model import step_text
+from polisys.runtime.trace import audited_failure, emit
 
 PLACEHOLDER = re.compile(r"\[[^\]]+\]|\{[^}]+\}|<[^>]+>")
 TAG = re.compile(
@@ -144,7 +144,7 @@ class ProcedureGuide(AgentHooks):
         self.gate_on, self.templates_on = gate, templates
         self.model = model
         if is_write is None:
-            from .ruleset import is_write_tool as is_write
+            from polisys.checks.rules import is_write_tool as is_write
         self.is_write = is_write
         self.reads: List[str] = []
         self.evidence: Dict[str, int] = {}  # procedure id -> evidence stops so far
@@ -157,7 +157,7 @@ class ProcedureGuide(AgentHooks):
     def from_package(cls, pkg: Any, **kwargs: Any) -> "ProcedureGuide":
         """A guide over the procedures of a ``PolicyPackage``. The guide finds a write's procedure by the tool of a step,
         so a package from a store graph (its steps name no tool) gives no procedure stops."""
-        from .package import procedure_dicts
+        from polisys.package.files import procedure_dicts
 
         return cls(procedure_dicts(pkg), **kwargs)
 

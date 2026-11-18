@@ -1,6 +1,6 @@
 """notes.read_first: until the first message to people, remind the agent of named sources it has not read."""
 
-from polisys.read_first import NOTE, ReadFirst
+from polisys.experimental.guidance.read_first import NOTE, ReadFirst
 
 APPS = {
     "gmail_find_email": "gmail",

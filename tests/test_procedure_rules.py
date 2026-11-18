@@ -2,9 +2,9 @@
 
 import json
 
-from polisys.handlers.procedure_rules import enrich_procedures, general_rules
-from polisys.handlers.procedures import procedures
-from polisys.model import Statement, StatementType
+from polisys.compile.handlers.procedure_rules import enrich_procedures, general_rules
+from polisys.compile.handlers.procedures import procedures
+from polisys.package.model import Statement, StatementType
 
 
 def st(i, sec, text, types=(StatementType.PROCEDURE,)):
@@ -98,7 +98,7 @@ def test_general_rules_go_to_the_procedure_they_affect_or_to_general():
 
 
 def test_labelled_bullets_are_steps_only_when_done_with_tools():
-    from polisys.documents import _Parser
+    from polisys.compile.documents import _Parser
 
     p = _Parser("sop")
     p.feed(

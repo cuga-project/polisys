@@ -14,7 +14,7 @@ import re
 from collections import Counter, defaultdict
 from typing import Any, Callable, Dict, List, Optional
 
-from .model import step_text
+from polisys.package.model import step_text
 
 STOP = set(
     "the and for with that this from must have has are not any all each into your when then than there their which "

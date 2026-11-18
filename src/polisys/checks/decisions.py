@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from typing import Any, Callable, Dict, Optional
 
-from .llm import today_line
+from polisys.llm import today_line
 
 LIMIT_WORDS = re.compile(
     r"\b(max(imum)?|at most|no more than|up to|limit(ed)?|only (one|two|three|\d+)|\d+\s*(per|a|each)\s+\w+|"

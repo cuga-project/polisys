@@ -1,4 +1,4 @@
-"""Offline builder: policy text + tool schemas → typed rule set (see ``ruleset.py``) and a coverage report.
+"""Offline builder: policy text + tool schemas → typed rule set (see ``checks/rules.py``) and a coverage report.
 
 Steps (policy-flow.html, "Graph methodology"):
 1. split    — sections by numbered headings; preamble kept; statements are bullets, paragraphs and table rows
@@ -22,10 +22,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from .documents import LineSection as Section, split_policy  # noqa: F401 (re-exported)
-from .llm import openai_json_model  # noqa: F401 (re-exported)
-from .validate import check_rule as validate  # noqa: F401 (moved; re-exported)
-from .handlers.tables import (  # noqa: F401 (moved; re-exported)
+from polisys.compile.documents import LineSection as Section, split_policy  # noqa: F401 (re-exported)
+from polisys.llm import openai_json_model  # noqa: F401 (re-exported)
+from polisys.compile.validate import check_rule as validate  # noqa: F401 (moved; re-exported)
+from polisys.compile.handlers.tables import (  # noqa: F401 (moved; re-exported)
     ARROW,
     _props,
     _required,
@@ -37,7 +37,7 @@ from .handlers.tables import (  # noqa: F401 (moved; re-exported)
     tool_catalog,
 )
 
-from .ruleset import RULE_TYPES
+from polisys.checks.rules import RULE_TYPES
 
 PROMPT_VERSION = "v2"
 HEADING = re.compile(r"^#{1,4}\s*\**\s*(\d+(?:\.\d+)*)\.?\s*(.*?)\**\s*$")
@@ -195,8 +195,8 @@ def outcome_kinds(coverage: List[Any], rules: List[Any], questions: List[Dict[st
     ``hard_rule``, ``judgment_rule`` or ``guidance`` by the class of the rules that name the statement, ``verify`` is
     ``judgment_rule``, ``step`` and ``procedure_rule`` are ``procedure_step``. Notes (``classify_fallback``,
     ``dangling_link``, ...) stay as they are. A statement that a policy question names also gets a ``question`` item."""
-    from .model import CoverageItem
-    from .package import rule_class
+    from polisys.package.model import CoverageItem
+    from polisys.package.files import rule_class
 
     classes: Dict[str, set] = {}
     for r in rules:
@@ -278,15 +278,15 @@ def build_policy_set(
 
     ``repair=False`` gives the build as it was before step 9 existed.
     """
-    from .classify import classify
-    from .handlers.links import drop_superseded, find_links, fold_exceptions
-    from .handlers.procedure_rules import enrich_procedures, general_rules
-    from .handlers.procedures import procedures
-    from .handlers.prose import prose_rules
-    from .handlers.tables import table_rules
-    from .model import CoverageItem, Definition, PolicyBuild, StatementType
-    from .rule_repair import repair_rules
-    from .validate import validate_build
+    from polisys.compile.classify import classify
+    from polisys.compile.handlers.links import drop_superseded, find_links, fold_exceptions
+    from polisys.compile.handlers.procedure_rules import enrich_procedures, general_rules
+    from polisys.compile.handlers.procedures import procedures
+    from polisys.compile.handlers.prose import prose_rules
+    from polisys.compile.handlers.tables import table_rules
+    from polisys.package.model import CoverageItem, Definition, PolicyBuild, StatementType
+    from polisys.compile.rule_repair import repair_rules
+    from polisys.compile.validate import validate_build
 
     m = cached_model(model, cache_dir)
     catalog = tool_catalog(specs)

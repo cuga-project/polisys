@@ -20,10 +20,10 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from .hooks import AgentHooks, HookResult
-from .tool_notes import _arguments, allowed_values, quoted_in, tool_lines
-from .work_method import call_key
-from .llm import parse_json
+from polisys.hooks import AgentHooks, HookResult
+from polisys.experimental.guidance.tool_notes import _arguments, allowed_values, quoted_in, tool_lines
+from polisys.guidance.work_method import call_key
+from polisys.llm import parse_json
 
 PROMPT_VERSION = "1"
 SYSTEM = "You list the default values that a written policy states for arguments of tools. Output JSON only."

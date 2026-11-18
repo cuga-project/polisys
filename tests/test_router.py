@@ -5,9 +5,9 @@ import json
 import pytest
 
 from polisys.hooks import HookRegistry
-from polisys import router as R
-from polisys.dry_run import RecordingModels
-from polisys.model import (
+from polisys.checks import router as R
+from polisys.runtime.dry_run import RecordingModels
+from polisys.package.model import (
     Document,
     Link,
     LinkType,
@@ -22,12 +22,12 @@ from polisys.model import (
     resolve_conflict,
     PolicySet,
 )
-from polisys.obligations import ObligationLedger
-from polisys.package import from_build, from_store_graph
-from polisys.procedure_store import ProcedureStore
-from polisys.runtime import RunContext, RuntimeWiringError, build_runtime
-from polisys.store_gate import StoreGate
-from polisys.validate import resolve_conflicts, validate_package
+from polisys.experimental.finish.ledger import ObligationLedger
+from polisys.package.files import from_build, from_store_graph
+from polisys.experimental.guidance.procedure_store import ProcedureStore
+from polisys.runtime.assembly import RunContext, RuntimeWiringError, build_runtime
+from polisys.experimental.checks.gate import StoreGate
+from polisys.compile.validate import resolve_conflicts, validate_package
 
 from .test_runtime_assembly import CTX, GATE_ON, config
 
@@ -282,7 +282,7 @@ def test_an_expander_registered_by_a_test_changes_the_scope_with_no_other_code_c
 def test_the_ledger_has_no_retrieval_scope_and_a_router_with_only_a_ledger_on_is_an_unread_setting():
     import inspect
 
-    from polisys.model import Obligation
+    from polisys.package.model import Obligation
 
     assert "scope" not in inspect.signature(ObligationLedger).parameters  # no router call for one audit line
     pkg = from_store_graph(GRAPH)
@@ -410,15 +410,15 @@ def test_a_router_runs_on_a_package_from_a_skill_whose_steps_have_text_and_no_qu
         }
     )
     assert R.make_router("bm25").select("close the ticket", pkg)[0] == "p1"
-    from polisys.package import to_build
-    from polisys.sop_retrieval import SopIndex
+    from polisys.package.files import to_build
+    from polisys.checks.retrieval import SopIndex
 
     assert [p["id"] for p in SopIndex(to_build(pkg)).rank("pay the refund")][0] == "p2"
 
 
 def test_a_search_router_on_a_package_of_a_graph_has_no_section_and_still_lists_a_checklist():
-    from polisys.package import to_build
-    from polisys.sop_retrieval import SopIndex
+    from polisys.package.files import to_build
+    from polisys.checks.retrieval import SopIndex
 
     index = SopIndex(
         to_build(from_store_graph(GRAPH))
@@ -623,7 +623,7 @@ def conflicting_package(first, second):
             "statement_ids": [f"{doc_id}:1:a"],
         }
 
-    from polisys.model import Rule
+    from polisys.package.model import Rule
 
     pkg = PolicyPackage(
         version="v1",
@@ -823,7 +823,7 @@ def test_llm_cards_gets_the_action_and_the_data_apart_in_the_measured_prompt():
 def test_a_method_that_is_not_the_default_shows_in_the_description_and_in_the_audit_and_the_default_does_not(
     dummy_methods,
 ):
-    from polisys.dry_run import describe_parts
+    from polisys.runtime.dry_run import describe_parts
 
     def attrs(router):
         parts, models = gate_runtime(router)

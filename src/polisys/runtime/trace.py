@@ -566,8 +566,8 @@ def _rule_fields(owner: Any, rec: Dict[str, Any]) -> Dict[str, Any]:
     rule_type = _text(rec.get("type") or (rule or {}).get("type"))
     if not rule_type:
         return {}
-    from .handlers.prose import CHECKER
-    from .package import rule_class
+    from polisys.compile.handlers.prose import CHECKER
+    from polisys.package.files import rule_class
 
     checker = ""
     if rule is not None:
@@ -610,7 +610,7 @@ def generic(rec: Dict[str, Any], owner: Any) -> Dict[str, Any]:
 
 def _gate(rec: Dict[str, Any], owner: Any) -> Dict[str, Any]:
     """The gate's record says what the model found; ``gate_verdict`` says what the gate did with it."""
-    from .store_gate import gate_verdict
+    from polisys.experimental.checks.gate import gate_verdict
 
     base = {"hook": "before_tool_call", "tool": rec.get("tool"), "checker": "model", "level": "block_once"}
     if rec.get("gate") == "error":
@@ -636,7 +636,7 @@ def _gate(rec: Dict[str, Any], owner: Any) -> Dict[str, Any]:
 def _navigator(rec: Dict[str, Any], owner: Any) -> Dict[str, Any]:
     """A hand-off check (``SopNavigator.check_handoff``). It blocks when steps of the chapter are still open: the
     navigator then gives a note, and the guard does not forward the hand-off."""
-    from .sop_navigator import holds
+    from polisys.experimental.organizers.sop_navigator import holds
 
     if "outcome" in rec:  # the navigator's or the guard's own decision (``emit``)
         return generic(rec, owner)

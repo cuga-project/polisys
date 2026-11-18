@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from polisys import policy_config
-from polisys.policy_config import (
+from polisys.runtime import profile as policy_config
+from polisys.runtime.profile import (
     KEV,
     PolicyConfig,
     PolicyConfigError,

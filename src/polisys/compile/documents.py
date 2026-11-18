@@ -1,4 +1,4 @@
-"""Read policy documents into the policy model (``model.py``).
+"""Read policy documents into the policy model (``package/model.py``).
 
 Formats: Markdown and plain text are parsed directly. PDF, DOCX and HTML are converted to Markdown by docling
 first (PDF page by page, so every statement keeps its page). The Markdown parser then finds:
@@ -11,7 +11,7 @@ first (PDF page by page, so every statement keeps its page). The Markdown parser
 ``load_policy_set`` reads several documents with their metadata (trust, effective date, authority rank).
 ``document_from_text`` turns a system prompt or an online record (email, sheet row) into a document.
 
-``LineSection`` and ``split_policy`` are the older line-based split that ``builder.py`` still uses.
+``LineSection`` and ``split_policy`` are the older line-based split that ``compile/builder.py`` still uses.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
-from .model import Document, PolicySet, Section, Statement, Trust
+from polisys.package.model import Document, PolicySet, Section, Statement, Trust
 
 HEADING = re.compile(r"^(#{1,6})\s*\**\s*(.*?)\**\s*$")
 SECTION_NO = re.compile(r"^(\d+(?:\.\d+)*)\.?\s+(.*)$|^(\d+(?:\.\d+)*)\.?$")
@@ -356,7 +356,7 @@ def _make(
     source: Dict[str, Any],
     model: Optional[Callable[[str, str], str]] = None,
 ) -> Document:
-    from .structure import learn_structure
+    from polisys.compile.structure import learn_structure
 
     pages = list(pages)
     profile = meta.get("structure") or learn_structure("\n".join(t for _, t in pages), model)
@@ -444,7 +444,7 @@ def document_from_text(
     return doc
 
 
-# -- older line-based split, used by builder.py ----------------------------------------------------------------------
+# -- older line-based split, used by compile/builder.py ----------------------------------------------------------------------
 
 LINE_HEADING = re.compile(r"^#{1,4}\s*\**\s*(\d+(?:\.\d+)*)\.?\s*(.*?)\**\s*$")
 

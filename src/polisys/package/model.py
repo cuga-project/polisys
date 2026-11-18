@@ -8,7 +8,7 @@ Objects: ``PolicySet`` → ``Document`` → ``Section`` → ``Statement``. A sta
 values and is turned into ``Rule``s, ``Procedure`` steps or ``Definition``s. ``Link``s connect any two objects, also
 across documents. ``Fact`` is data from a tool output; ``Verdict`` is the result of one check. ``PolicyBuild`` is
 the output of a build: what the runtime loads. ``PolicyPackage`` is the one file format that holds a policy with its
-rules, procedures and ``Obligation``s; ``package.py`` converts today's artifacts to it and back.
+rules, procedures and ``Obligation``s; ``package/files.py`` converts today's artifacts to it and back.
 """
 
 from __future__ import annotations
@@ -120,7 +120,7 @@ class Document:
     effective_date: Optional[str] = None  # ISO date; later wins when two statements conflict
     authority_rank: int = 0  # higher wins when dates are equal
     sections: List[Section] = field(default_factory=list)
-    structure: Dict[str, Any] = field(default_factory=dict)  # heading and reference patterns (structure.py)
+    structure: Dict[str, Any] = field(default_factory=dict)  # heading and reference patterns (compile/structure.py)
     source: Dict[str, Any] = field(default_factory=dict)
     quote: str = ""
     priority_class: Optional[str] = field(default=None, metadata=_PACKAGE_FIELD)  # design section 10
@@ -172,9 +172,9 @@ class PolicySet:
 
 @dataclass
 class Rule:
-    """A checkable form of one or more statements. ``rule`` is the typed rule dict that ``ruleset.py`` runs.
+    """A checkable form of one or more statements. ``rule`` is the typed rule dict that ``checks/rules.py`` runs.
 
-    ``cls`` (JSON key ``class``): hard, judgment or guidance. ``level``: observe, remind, block_once or deny. ``package.py``
+    ``cls`` (JSON key ``class``): hard, judgment or guidance. ``level``: observe, remind, block_once or deny. ``package/files.py``
     derives both for converted artifacts. ``RuleSetHooks`` reads ``level`` (see ``RuleSetHooks._level``); nothing at
     runtime reads ``cls`` yet.
     """
@@ -232,7 +232,7 @@ class Procedure:
     edges: List[Dict[str, Any]] = field(default_factory=list)
     source: Dict[str, Any] = field(default_factory=dict)
     quote: str = ""
-    # filled by handlers/procedure_rules.py, each item with a verbatim "quote":
+    # filled by compile/handlers/procedure_rules.py, each item with a verbatim "quote":
     preconditions: List[Dict[str, Any]] = field(
         default_factory=list
     )  # must hold before the procedure starts for a case
@@ -241,7 +241,7 @@ class Procedure:
     )  # cases where it must not run, stops, or changes
     templates: List[Dict[str, Any]] = field(default_factory=list)  # exact text a step's output must follow
     escalations: List[Dict[str, Any]] = field(default_factory=list)  # who to notify when a condition holds
-    # from the store graph (procedure_store.py); a build does not have them:
+    # from the store graph (experimental/guidance/procedure_store.py); a build does not have them:
     applies_when: str = field(default="", metadata=_PACKAGE_FIELD)
     inputs: List[Dict[str, Any]] = field(default_factory=list, metadata=_PACKAGE_FIELD)  # {fact, source}
     decisions: List[Dict[str, Any]] = field(
@@ -348,7 +348,7 @@ PACKAGE_SCHEMA = "policy-package/1"
 
 @dataclass
 class PolicyPackage:
-    """One policy in one file (design section 4). ``package.py`` loads, saves and converts it.
+    """One policy in one file (design section 4). ``package/files.py`` loads, saves and converts it.
 
     ``global_`` (JSON key ``global``): ``global_rules``, ``triage``, ``routing``, ``housekeeping``, ``priority``,
     ``escalation``, ``templates``, ``calendar`` as in a store graph, and ``definitions`` as a list of

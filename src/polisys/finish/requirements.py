@@ -22,9 +22,9 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional
 
-from .followups import REPLY_CHARS, REPLY_NOTE
-from .llm import parse_json, today_line
-from .validate import quote_ok
+from polisys.finish.followups import REPLY_CHARS, REPLY_NOTE
+from polisys.llm import parse_json, today_line
+from polisys.compile.validate import quote_ok
 
 KINDS = ("effect", "step", "guard", "format", "decision")
 MAX_POLICY_CHARS = 120_000

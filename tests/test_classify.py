@@ -2,9 +2,9 @@
 
 import json
 
-from polisys.classify import classify
-from polisys.documents import load_document
-from polisys.model import Modality, StatementType
+from polisys.compile.classify import classify
+from polisys.compile.documents import load_document
+from polisys.package.model import Modality, StatementType
 
 MATRIX = "## 3. Priority\n\n| Impact | Urgency | Priority |\n|---|---|---|\n| 1 | 1 | 1 - Critical |\n| 1 | 2 | 2 - High |\n"
 PROSE = (

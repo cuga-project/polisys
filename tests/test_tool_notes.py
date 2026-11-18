@@ -4,9 +4,9 @@ import json
 
 from langchain_core.tools import StructuredTool
 
-from polisys.tool_notes import HEADER, ToolNotes, build_notes, check_notes, describe, note_kind, quoted_in
+from polisys.experimental.guidance.tool_notes import HEADER, ToolNotes, build_notes, check_notes, describe, note_kind, quoted_in
 from tests.test_runtime_assembly import build, config
-from polisys.runtime import RunContext
+from polisys.runtime.assembly import RunContext
 
 POLICY = (
     "A shipment may be released only to a carrier that is on the approved list (if it is not, add it to the list first).\n"
@@ -197,7 +197,7 @@ def test_the_runtime_fills_wrap_tools_only_when_the_setting_is_on_and_wiring_ask
 def test_an_answer_with_no_list_of_notes_is_asked_again_and_is_never_cached_as_empty(tmp_path):
     import pytest
 
-    from polisys.tool_notes import NotesError
+    from polisys.experimental.guidance.tool_notes import NotesError
 
     answers = ['{"notes": [{"tool": "release_shipment", "kind": "before", "te', json.dumps({"notes": [GOOD]})]
 
@@ -228,7 +228,7 @@ def test_a_run_whose_notes_fail_goes_on_without_notes_and_says_so():
 
 
 def test_the_tool_list_of_a_prompt_gives_each_argument_with_its_allowed_values():
-    from polisys.tool_notes import tool_lines
+    from polisys.experimental.guidance.tool_notes import tool_lines
 
     spec = {
         "name": "set_size",

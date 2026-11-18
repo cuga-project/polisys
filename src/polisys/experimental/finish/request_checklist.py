@@ -31,8 +31,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .llm import parse_json
-from .ruleset import canon, is_write_tool
+from polisys.llm import parse_json
+from polisys.checks.rules import canon, is_write_tool
 
 SYSTEM = "You list what a user request asks to be done, so that code can check it was done. Output JSON only."
 USER = """Tools that change something (name(argument=[allowed values], ...)):
@@ -339,9 +339,9 @@ def obligations_from_request(
     name holds ``channel``). Any other target or value stays a value no pattern names, which the follow-up shows and code
     never compares. The items open at the user message. Raises what the model call or the parsing raises: the ledger writes
     that down and goes on with no request item (no checklist is better than a wrong one)."""
-    from .model import Obligation
-    from .obligations import _hay
-    from .obligations import _words as _owords
+    from polisys.package.model import Obligation
+    from polisys.experimental.finish.ledger import _hay
+    from polisys.experimental.finish.ledger import _words as _owords
 
     by_name = {t["name"]: t for t in specs if isinstance(t, dict) and t.get("name")}
     names = sorted(n for n in by_name if is_write(n))

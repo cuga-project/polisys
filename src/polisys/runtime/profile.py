@@ -14,7 +14,7 @@ A profile holds facts the deployment knows and method choices. It never holds ru
 - Every key must be one this module knows. An unknown key raises ``PolicyConfigError`` that names it with its full path
   (``policy.checkers.gate.modle``), at every nesting level. So does a value of the wrong type or outside its choices.
 - A duplicate key in the file raises too (YAML would keep the last one).
-- A component is ``auto``, ``on`` or ``off``. ``auto`` lets the control level decide (``levels.py``); a measured profile
+- A component is ``auto``, ``on`` or ``off``. ``auto`` lets the control level decide (``runtime/levels.py``); a measured profile
   lists every component as ``on`` or ``off``, and an explicit ``on`` or ``off`` always wins. A section whose fields include ``mode`` can be written as the mode alone
   (``guide: on``). YAML reads a bare ``on`` or ``off`` as a boolean; the loader accepts both forms.
 - A text field that can be empty takes ``null`` or ``none``.
@@ -70,7 +70,7 @@ class Sources:
 
     data: bool = False  # rules found in tool results while the agent runs (online intake)
     discovery: bool = False  # the layer searches the message sources for rules at the start
-    listing: bool = False  # the layer reads every record the host lists at the start (listing.py)
+    listing: bool = False  # the layer reads every record the host lists at the start (sources/listing.py)
     listing_data: bool = False  # the listing also keeps corrections and examples and shows them to the agent as data
     request: bool = False  # the user's request is read as a source of requirements
 
@@ -94,7 +94,7 @@ class Risk:
 
 @dataclass
 class Control:
-    """The control level (spec section 7): 0 observe, 1 advise, 2 check, 3 control. ``levels.py`` reads it.
+    """The control level (spec section 7): 0 observe, 1 advise, 2 check, 3 control. ``runtime/levels.py`` reads it.
 
     ``by_model`` is also the table of model strength: a lower level means a stronger model (a strong agent needs less
     control), and ``gate.min_strength`` compares the gate's model with the agent's by it. A model that is not in the table
@@ -113,7 +113,7 @@ class Control:
 
 @dataclass
 class Router:
-    """Which procedures are in scope for the gate and the ledger (spec section 11; ``router.py`` registers the names)."""
+    """Which procedures are in scope for the gate and the ledger (spec section 11; ``checks/router.py`` registers the names)."""
 
     kind: str = "agent_opened"  # which procedures apply; a registered router
     expand: str = "next_links"  # which procedures and rules come along; a registered expander
@@ -158,7 +158,7 @@ class Verifier:
 @dataclass
 class DefaultValues:
     """Default values the policy states for arguments of write tools, listed once per policy text and tool set and
-    enforced by code: a write call that leaves such an argument out is blocked once with the default (``default_values.py``)."""
+    enforced by code: a write call that leaves such an argument out is blocked once with the default (``experimental/checks/default_values.py``)."""
 
     mode: Literal["off", "on"] = "off"
     model: Optional[str] = None  # the model that lists the defaults; "agent": the model the agent runs on
@@ -291,7 +291,7 @@ class Decisions:
 
 @dataclass
 class Followups:
-    """What a check may say to the agent at the reply (``followups.py``)."""
+    """What a check may say to the agent at the reply (``finish/followups.py``)."""
 
     voice: Literal["order", "check"] = "order"  # check: says it is automated, and the checker sees the agent's reply
     evidence: Literal["off", "on"] = "off"  # on: an action goes to the agent only if a check finds it really required
@@ -300,7 +300,7 @@ class Followups:
 @dataclass
 class ToolNotes:
     """Notes on each tool, written once from the policy text and the tool list and shown in the tool descriptions
-    (``tool_notes.py``): what to check before the call, which values the policy fixes, what to do after."""
+    (``experimental/guidance/tool_notes.py``): what to check before the call, which values the policy fixes, what to do after."""
 
     mode: Literal["off", "on"] = "off"
     model: Optional[str] = None  # the model that writes the notes; "agent": the model the agent runs on
@@ -318,7 +318,7 @@ class ToolNotes:
 @dataclass
 class PolicyLines:
     """The policy lines that govern each write tool, selected once per policy and shown word for word in the tool's
-    description (``policy_lines.py``)."""
+    description (``experimental/guidance/policy_lines.py``)."""
 
     mode: Literal["off", "on"] = "off"
     model: Optional[str] = None  # the model that selects the lines; "agent": the model the agent runs on
@@ -332,10 +332,10 @@ class Notes:
     brief: Literal["system", "message", "off"] = "system"  # where the brief goes (agent setting), or off
     # The brief of the package's rules also lists the guidance rules that name no tool (the measured runs never showed them).
     brief_guidance: bool = False
-    # General rules for SOP work on many records, in the system prompt (work_method.py); "readback" adds one read-back turn
+    # General rules for SOP work on many records, in the system prompt (guidance/work_method.py); "readback" adds one read-back turn
     # before the final answer. Empty: none.
     # Before the first message to people, remind the agent of the sources the request names that it has not read
-    # (read_first.py; needs RunContext.tool_apps).
+    # (experimental/guidance/read_first.py; needs RunContext.tool_apps).
     read_first: bool = False
     work_method: List[
         Literal[

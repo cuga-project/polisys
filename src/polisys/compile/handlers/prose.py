@@ -1,6 +1,6 @@
 """Rules from prose statements: a model fills the slots of the fixed rule types, code checks every rule.
 
-Input: typed statements (``classify.py``) that code did not already turn into rules. One model call per section,
+Input: typed statements (``compile/classify.py``) that code did not already turn into rules. One model call per section,
 with the statements numbered and their types shown. A bare value in a ``when`` is first made a list
 (``rule_repair.normalize_when``). Every rule the model writes is then checked by ``validate.check_rule`` (tool and
 argument names, schema values, verbatim quote) and by ``rule_repair.partial_update_overreach``. What happens to a
@@ -24,11 +24,11 @@ import json
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from ..llm import parse_json
-from ..model import CoverageItem, Modality, Rule, Statement, StatementType
-from ..rule_repair import normalize_when, partial_update_overreach
-from ..validate import check_rule, slot_problem
-from .tables import tool_catalog
+from polisys.llm import parse_json
+from polisys.package.model import CoverageItem, Modality, Rule, Statement, StatementType
+from polisys.compile.rule_repair import normalize_when, partial_update_overreach
+from polisys.compile.validate import check_rule, slot_problem
+from polisys.compile.handlers.tables import tool_catalog
 
 CHECKER = {"role_permission": "cedar", "duty": "monitor", "guidance": "brief", "verify": "verifier"}
 

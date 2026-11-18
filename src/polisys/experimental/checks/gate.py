@@ -15,9 +15,9 @@ from typing import Any, Callable, Dict, List, Set, Tuple
 
 from polisys.hooks import AgentHooks
 
-from .llm import parse_json
-from .tool_kind import acts as _acts
-from .trace import audited_failure
+from polisys.llm import parse_json
+from polisys.tool_kind import acts as _acts
+from polisys.runtime.trace import audited_failure
 
 WINDOW = re.compile(
     r"within (?:the )?(?:last |past |preceding )?(\d+) (calendar days|business days|days|months|weeks|years)",
@@ -185,7 +185,7 @@ class StoreGate(AgentHooks):
           ``store.calls``, so a store of its own would never see them and the gate would not check anything;
         - ``sop_text``: the gate checks that whole text, as the constructor does with ``store=None``.
 
-        ``router`` and ``expander`` (``router.py``) say which procedures and rules are in scope; the defaults are the
+        ``router`` and ``expander`` (``checks/router.py``) say which procedures and rules are in scope; the defaults are the
         procedures the agent opened and their ``next`` links.
 
         Raises ``ValueError`` if neither or both are given, or if with ``store`` the package has nothing the gate can
@@ -195,7 +195,7 @@ class StoreGate(AgentHooks):
         if store is not None and not _has_gate_rules(pkg):
             raise ValueError("the package has no must-not rules, decisions or escalation must-nots to check")
         if store is not None:
-            from .router import ScopeReader, make_expander, make_router
+            from polisys.checks.router import ScopeReader, make_expander, make_router
 
             kwargs["scope"] = ScopeReader(
                 router or make_router("agent_opened"), expander or make_expander("next_links"), pkg, store
@@ -214,14 +214,14 @@ class StoreGate(AgentHooks):
         if (
             self._scope_reader is None and self.store is not None
         ):  # a gate made on a store alone: its own graph is the package
-            from .package import from_store_graph
-            from .router import default_reader
+            from polisys.package.files import from_store_graph
+            from polisys.checks.router import default_reader
 
             self._scope_reader = default_reader(from_store_graph(self.store.g), self.store)
         return self._scope_reader
 
     def _rules(self, query: str = "", action: str = "", context: str = "") -> List[str]:
-        """The rules the model checks an action against: from ``Scope`` (``router.py``), or the whole SOP text.
+        """The rules the model checks an action against: from ``Scope`` (``checks/router.py``), or the whole SOP text.
         ``query``: the action and the data read recently, for a router that searches; ``action`` and ``context``: the same,
         apart, for a router that reads a prompt."""
         if self.store is None:

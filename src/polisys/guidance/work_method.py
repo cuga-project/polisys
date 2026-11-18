@@ -26,7 +26,7 @@ import json
 import re
 from typing import Any, Callable, Dict, List, Optional
 
-from .hooks import AgentHooks, HookResult
+from polisys.hooks import AgentHooks, HookResult
 
 METHODS: Dict[str, str] = {
     "worksheet": (

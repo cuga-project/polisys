@@ -4,8 +4,8 @@ import copy
 
 import pytest
 
-from polisys.model import RULE_LEVELS, Step, Verdict, step_text
-from polisys.package import (
+from polisys.package.model import RULE_LEVELS, Step, Verdict, step_text
+from polisys.package.files import (
     from_build,
     from_store_graph,
     load_package,
@@ -14,12 +14,12 @@ from polisys.package import (
     save_package,
     to_store_graph,
 )
-from polisys.procedure_guide import ProcedureGuide
-from polisys.procedure_store import ProcedureStore
-from polisys.ruleset import RuleSetHooks
-from polisys.sop_loop import SopLoop, _proc_line
-from polisys.sop_navigator import SopNavigator
-from polisys.store_gate import StoreGate
+from polisys.experimental.guidance.procedure_guide import ProcedureGuide
+from polisys.experimental.guidance.procedure_store import ProcedureStore
+from polisys.checks.rules import RuleSetHooks
+from polisys.experimental.organizers.sop_loop import SopLoop, _proc_line
+from polisys.experimental.organizers.sop_navigator import SopNavigator
+from polisys.experimental.checks.gate import StoreGate
 
 from .test_sop_navigator import BUILD as NAVIGATOR_BUILD
 from .test_sop_navigator import POLICY as NAVIGATOR_POLICY

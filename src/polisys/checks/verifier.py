@@ -12,8 +12,8 @@ import json
 import time
 from typing import Any, Callable, Dict, List, Optional
 
-from .llm import parse_json
-from .model import Verdict
+from polisys.llm import parse_json
+from polisys.package.model import Verdict
 
 SYSTEM = "You check one planned action against company policy statements. Output JSON only."
 USER = """User request: {request}

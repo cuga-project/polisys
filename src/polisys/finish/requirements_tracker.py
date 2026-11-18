@@ -17,9 +17,9 @@ from typing import Any, Callable, Dict, List, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .followups import CHECK_HEADER, LOOK_HEADER, required_actions
-from .requirements import compile_requirements, gate
-from .ruleset import is_write_tool
+from polisys.finish.followups import CHECK_HEADER, LOOK_HEADER, required_actions
+from polisys.finish.requirements import compile_requirements, gate
+from polisys.checks.rules import is_write_tool
 
 PER_RESULT_CHARS = 80_000  # a whole SOP or handbook file the agent opened
 DATA_CHARS = 160_000
@@ -56,7 +56,7 @@ class RequirementsTracker(AgentHooks):
         # items judged "wrong": "off" = not shown (default: such judgments come from values the compiler inferred and
         # led the agent to change correct records); "verify" = ask to check by a read first; "fix"
         self.wrong_mode = wrong_mode
-        self.voice, self.evidence = voice, evidence  # followups.py
+        self.voice, self.evidence = voice, evidence  # finish/followups.py
         self.today = today  # the task's date: per-record decisions often depend on it
 
     def on_user_message(self, message: str, thread_id: Optional[str]) -> HookResult:

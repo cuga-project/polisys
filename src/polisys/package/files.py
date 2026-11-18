@@ -6,7 +6,7 @@ Three source shapes:
 - a **runner build file**: ``build`` and ``policy_set``, and sometimes flat ``rules``, ``procedures``, ``policy_hash``
   and other keys at the top;
 - a **builder output**: the fields of ``PolicyBuild`` at the top, where each rule is ``{id, type, rule: {...}, ...}``;
-- a **store graph** (``procedure_store.py``): global rules, triage, routing, procedures with string steps, templates.
+- a **store graph** (``experimental/guidance/procedure_store.py``): global rules, triage, routing, procedures with string steps, templates.
 
 **Round trip is per format.** ``to_build(from_build(x)) == x`` and ``to_store_graph(from_store_graph(x)) == x``,
 including key order. The two formats do not hold the same content, so conversion never merges them: one policy can have
@@ -35,8 +35,8 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 
-from .handlers.prose import CHECKER
-from .model import (
+from polisys.compile.handlers.prose import CHECKER
+from polisys.package.model import (
     CoverageItem,
     Document,
     Link,

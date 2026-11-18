@@ -37,9 +37,9 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from .llm import parse_json
-from .model import CoverageItem, Rule, Statement
-from .ruleset import is_write_tool
+from polisys.llm import parse_json
+from polisys.package.model import CoverageItem, Rule, Statement
+from polisys.checks.rules import is_write_tool
 
 VERBS = {
     "add",
@@ -55,7 +55,7 @@ VERBS = {
     "set",
     "submit",
 }
-WORKERS = 4  # model calls of one repair step at a time (as ``handlers/prose.py``)
+WORKERS = 4  # model calls of one repair step at a time (as ``compile/handlers/prose.py``)
 
 
 def _props(spec: Dict[str, Any]) -> Dict[str, Any]:
@@ -327,7 +327,7 @@ def retype_rule(
     """(the code-checkable rules that replace one ``verify`` rule, status). Ids are ``<verify id>_t<n>``. Status: ``"ok"``
     (empty list: none fits), ``"delayed"`` (a change after a delay: the system does it later, and no call of the agent
     breaks it; no call is made) or ``"failed"`` (the call raised or its answer has no ``rules``)."""
-    from .validate import DELAYED, check_rule, slot_problem
+    from polisys.compile.validate import DELAYED, check_rule, slot_problem
 
     text = rule.get("statement") or ""
     if DELAYED.search(text):
@@ -381,7 +381,7 @@ def _wrap(rule: Dict[str, Any], statement_ids: List[str], source: Dict[str, Any]
 
 def _as_guidance(r: Rule) -> Rule:
     """A ``verify`` rule shown to the agent instead of checked: the same statement, as a ``guidance`` rule."""
-    from .handlers.prose import CHECKER
+    from polisys.compile.handlers.prose import CHECKER
 
     text = r.rule.get("statement") or r.quote
     g = {"type": "guidance", "text": text, "tools": [], "quote": text, "by": "model", "from_verify": r.id}
@@ -395,7 +395,7 @@ def retype_verify(
     """Each ``verify`` rule is replaced by the typed rules ``retype_rule`` finds for it, or stays as it is; one about a
     change after a delay becomes ``guidance``. Returns (the rules, counts, statement ids by outcome: ``typed`` and
     ``delayed``). The calls run in parallel."""
-    from .handlers.prose import CHECKER
+    from polisys.compile.handlers.prose import CHECKER
 
     by_name = {s["name"]: s for s in specs}
     catalog = _write_catalog(specs)
@@ -450,7 +450,7 @@ def repair_rules(
     Returns (the rules, the coverage items of the statements whose outcome changed, policy questions, counts). A coverage
     item replaces any earlier one of the statement. A statement that says "must" or "must not" and ends as guidance with
     no check also gets a policy question. Without a ``model`` only the steps that need none run."""
-    from .handlers.prose import CHECKER
+    from polisys.compile.handlers.prose import CHECKER
 
     by_id = {s.id: s for s in statements}
     stats = {

@@ -16,7 +16,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Set, Tuple
 
-from .llm import parse_json
+from polisys.llm import parse_json
 
 ID_KEYS = ("id", "Id", "ID", "ts", "message_id")
 ISO_DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?")

@@ -13,8 +13,8 @@ import json
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from .llm import parse_json
-from .tool_notes import quoted_in, tool_lines
+from polisys.llm import parse_json
+from polisys.experimental.guidance.tool_notes import quoted_in, tool_lines
 
 PROMPT_VERSION = "1"
 HEADER = "Policy lines for this tool (word for word from the policy):"

@@ -2,7 +2,7 @@
 
 import json
 
-from polisys.procedure_guide import ProcedureGuide, literal_head, template_regex
+from polisys.experimental.guidance.procedure_guide import ProcedureGuide, literal_head, template_regex
 
 OFFBOARD = {
     "id": "d:12.1",

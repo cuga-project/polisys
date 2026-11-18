@@ -1,6 +1,6 @@
 """Typed policy rules and the hooks that enforce them at run time.
 
-A rule set is a list of rule dicts made by ``builder.py`` from policy text (offline) or by online intake. Each rule
+A rule set is a list of rule dicts made by ``compile/builder.py`` from policy text (offline) or by online intake. Each rule
 has a ``type`` with fixed slots, a ``source`` (section and line) and a verbatim ``quote``. ``RuleSetHooks`` runs
 them at the agent's lifecycle hooks; nothing in this file is specific to one benchmark or one policy.
 
@@ -36,8 +36,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .tool_kind import READ_FIRST, case_of
-from .trace import audited_failure, emit, fresh
+from polisys.tool_kind import READ_FIRST, case_of
+from polisys.runtime.trace import audited_failure, emit, fresh
 
 RULE_TYPES = (
     "required_args",
@@ -411,7 +411,7 @@ class RuleSetHooks(AgentHooks):
         ``exception_links`` (``package.exception_links``: a link joins statements, and the rules that hold them are
         joined), so the brief shows each rule with its exceptions. Off, a package's links are not read; an
         ``exception_links`` argument wins."""
-        from .package import exception_links, runtime_rules
+        from polisys.package.files import exception_links, runtime_rules
 
         if with_exceptions:
             kwargs.setdefault("exception_links", exception_links(pkg))
@@ -464,7 +464,7 @@ class RuleSetHooks(AgentHooks):
         # (rule id, case) of "block_once" rules that have stopped a call in this session: a rule stops once for each case
         self._blocked_once: set = set()
         self.called: List[str] = []
-        from .facts import FactStore
+        from polisys.checks.facts import FactStore
 
         self.store = FactStore()
         self.request = ""
@@ -676,7 +676,7 @@ class RuleSetHooks(AgentHooks):
             return HookResult()
         return self._decide(tool, args, self._checks(tool, args))
 
-    # -- the stages of ``WriteChecks`` (levels.py): the same decision as ``before_tool_call``, with the verifier apart ---------
+    # -- the stages of ``WriteChecks`` (runtime/levels.py): the same decision as ``before_tool_call``, with the verifier apart ---------
     @audited_failure
     def check_code(self, tool: str, args: Dict[str, Any]) -> HookResult:
         """The checks that code decides (typed rules and Cedar), with no model call: the first stage of the write checks."""
@@ -949,7 +949,7 @@ class RuleSetHooks(AgentHooks):
     def _check_record_condition(self, r, tool, args) -> Optional[Check]:
         if not _when(r.get("when"), args):
             return None
-        from .facts import call_tokens  # identifiers in the call's arguments
+        from polisys.checks.facts import call_tokens  # identifiers in the call's arguments
 
         fld, op, value = r.get("field", ""), r.get("op", "contains"), r.get("value")
         seen_any = False
@@ -1260,7 +1260,7 @@ class RuleSetHooks(AgentHooks):
         if not rules:
             return None
         try:
-            from .cedar_engine import CedarEngine
+            from polisys.checks.cedar import CedarEngine
         except ImportError:  # pragma: no cover
             return None
         text = ['@id("base_permit")\npermit(principal, action, resource);']
@@ -1338,7 +1338,7 @@ def obligations_from_duties(
     values or ``"*"`` is not compared. An exception of the rule (``unless``) stays in the text of the item, as in the old
     follow-up: the agent decides whether it applies. Nothing here reads data or secrets: only the rule. ``specs``: the tool
     specs of the run, for the tools of the same kind; ``level``: the level of the items."""
-    from .model import Obligation
+    from polisys.package.model import Obligation
 
     by_name = {t["name"]: t for t in specs or [] if isinstance(t, dict) and t.get("name")}
     out: List[Any] = []

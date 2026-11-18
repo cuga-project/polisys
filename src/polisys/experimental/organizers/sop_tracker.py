@@ -20,8 +20,8 @@ import json
 import re
 from typing import Any, Callable, Dict, List, Optional
 
-from .llm import parse_json
-from .validate import quote_ok
+from polisys.llm import parse_json
+from polisys.compile.validate import quote_ok
 
 HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 MAX_SECTIONS = 6

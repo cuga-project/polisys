@@ -1,7 +1,7 @@
 """SOP loop: a held case's normal-procedure writes are stopped (at most twice); other writes and SOP notices pass."""
 
-from polisys.procedure_guide import ProcedureGuide
-from polisys.sop_loop import LoopHooks
+from polisys.experimental.guidance.procedure_guide import ProcedureGuide
+from polisys.experimental.organizers.sop_loop import LoopHooks
 
 SUBMIT = {
     "id": "d:8.3",

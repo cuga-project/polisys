@@ -22,8 +22,8 @@ from __future__ import annotations
 import re
 from typing import Callable, Dict, List, Optional, Tuple
 
-from ..llm import parse_json
-from ..model import (
+from polisys.llm import parse_json
+from polisys.package.model import (
     CoverageItem,
     Document,
     Link,

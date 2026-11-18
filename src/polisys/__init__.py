@@ -14,10 +14,13 @@ hook objects that any agent host can run at its lifecycle hooks (``polisys.hooks
 Cedar needs the ``cedar`` extra (``cedarpy``). Model calls need the ``llm`` extra. Design: docs/design.md.
 """
 
-from .cedar_engine import CedarDecision, CedarEngine
-from .builder import BuildResult, build, openai_json_model, split_policy
-from .intake import OnlinePolicyIntake
-from .ruleset import RULE_TYPES, RuleSetHooks, is_write_tool
+from polisys import _aliases
+from polisys.checks.cedar import CedarDecision, CedarEngine
+from polisys.compile.builder import BuildResult, build, openai_json_model, split_policy
+from polisys.sources.intake import OnlinePolicyIntake
+from polisys.checks.rules import RULE_TYPES, RuleSetHooks, is_write_tool
+
+_aliases.install()  # old module paths of the flat layout keep working
 
 __all__ = [
     "BuildResult",

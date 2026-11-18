@@ -10,8 +10,8 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Dict
 
-from .model import PolicyPackage
-from .validate import OUTCOMES, statement_outcomes
+from polisys.package.model import PolicyPackage
+from polisys.compile.validate import OUTCOMES, statement_outcomes
 
 
 def package_counts(pkg: PolicyPackage) -> Dict[str, Any]:

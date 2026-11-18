@@ -1,4 +1,4 @@
-"""Compile an SOP document into a procedure-store graph (``procedure_store.py``) ahead of time (experimental).
+"""Compile an SOP document into a procedure-store graph (``experimental/guidance/procedure_store.py``) ahead of time (experimental).
 
 Same output format as a hand-built graph, so the two can be compared:
 
@@ -23,7 +23,7 @@ import datetime as dt
 import re
 from typing import Any, Callable, Dict, List, Optional
 
-from .llm import parse_json
+from polisys.llm import parse_json
 
 HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 PLACEHOLDER = re.compile(r"\[[^\]\n]{2,80}\]")

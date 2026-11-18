@@ -1,7 +1,7 @@
 """Typed rule set: builder code steps and RuleSetHooks checks, without a model."""
 
-from polisys.builder import build, split_policy, validate
-from polisys.ruleset import RuleSetHooks
+from polisys.compile.builder import build, split_policy, validate
+from polisys.checks.rules import RuleSetHooks
 
 POLICY = """# Policy
 Never assume or fabricate IDs. The same is the case of optional or default arguments.
@@ -213,7 +213,7 @@ def test_duty_not_opened_when_its_tool_is_missing():
 
 
 def test_no_assumed_data_rules_are_observed_unless_measured():
-    from polisys.ruleset import RuleSetHooks
+    from polisys.checks.rules import RuleSetHooks
 
     rules = [{"id": "g1", "type": "grounded_values", "source": "preamble"}]
     h = RuleSetHooks(rules, SPECS)
@@ -237,7 +237,7 @@ def test_no_assumed_data_rules_are_observed_unless_measured():
 
 
 def test_unicode_dashes_do_not_split_values_or_patterns():
-    from polisys.ruleset import RuleSetHooks
+    from polisys.checks.rules import RuleSetHooks
 
     specs = [
         {"name": "gmail_send_email", "inputSchema": {"properties": {"to": {"type": "string"}}}},
@@ -281,7 +281,7 @@ def test_unicode_dashes_do_not_split_values_or_patterns():
 
 
 def test_policy_tool_conflict_is_observed_not_shown():
-    from polisys.ruleset import RuleSetHooks
+    from polisys.checks.rules import RuleSetHooks
 
     rule = {
         "id": "c1",
@@ -356,7 +356,7 @@ def test_when_star_means_the_argument_is_given():
 
 
 def test_two_iso_dates_are_compared_as_dates_for_each_operator():
-    from polisys.ruleset import _condition
+    from polisys.checks.rules import _condition
 
     cases = [  # (record value, op, rule value, result)
         ("2025-12-31", "le", "2025-02-25", False),  # the first number says 2025 <= 2025
@@ -378,7 +378,7 @@ def test_two_iso_dates_are_compared_as_dates_for_each_operator():
 
 
 def test_numbers_and_other_forms_keep_the_first_number_reading():
-    from polisys.ruleset import _condition
+    from polisys.checks.rules import _condition
 
     assert _condition(5, "gt", 3) and not _condition("5", "lt", "3") and _condition("1,200", "gt", 1000)
     assert _condition("02/25/2025", "lt", "03/01/2025")  # not ISO: the first number, 2 < 3, as before

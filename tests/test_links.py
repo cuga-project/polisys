@@ -3,9 +3,9 @@
 import json
 from pathlib import Path
 
-from polisys.documents import load_document, load_policy_set
-from polisys.handlers.links import drop_superseded, find_links, fold_exceptions
-from polisys.model import LinkType, PolicySet, Rule
+from polisys.compile.documents import load_document, load_policy_set
+from polisys.compile.handlers.links import drop_superseded, find_links, fold_exceptions
+from polisys.package.model import LinkType, PolicySet, Rule
 
 FIX = Path(__file__).parent / "fixtures"
 
@@ -132,7 +132,7 @@ def test_learned_structure_for_an_unusual_style():
 
 
 def test_untrusted_exception_never_changes_a_trusted_rule():
-    from polisys.model import Trust
+    from polisys.package.model import Trust
 
     sop = load_document("## 1. Refunds\n\n1.1 Refunds above $500 need approval.\n", meta={"id": "sop"})
     mail = load_document(
@@ -141,7 +141,7 @@ def test_untrusted_exception_never_changes_a_trusted_rule():
     )
     ps = PolicySet(documents=[sop, mail])
     target = sop.statements[0]
-    link = __import__("polisys.model", fromlist=["Link"]).Link(
+    link = __import__("polisys.package.model", fromlist=["Link"]).Link(
         type=LinkType.EXCEPTION_OF, src=mail.statements[0].id, dst=target.id
     )
     rule = Rule(id="r", type="verify", rule={"type": "verify"}, statement_ids=[target.id])

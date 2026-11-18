@@ -316,7 +316,7 @@ class GuardCode:
         return hashlib.sha256(statement.encode()).hexdigest()[:16], tool
 
     def _compile_one(self, statement: str, tool: str, args: Dict[str, Any], data: List[Dict[str, Any]]):
-        from .llm import parse_json
+        from polisys.llm import parse_json
 
         raw = self.model(
             SYSTEM,

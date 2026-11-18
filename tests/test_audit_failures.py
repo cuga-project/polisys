@@ -6,22 +6,23 @@ import json
 import pytest
 
 from polisys.hooks import AgentHooks, HookRegistry, HookResult
-from polisys import sop_navigator, store_gate
-from polisys.decisions import Decisions
-from polisys.deliverables import DeliverablesHooks
-from polisys.dry_run import RecordingModels
-from polisys.intake import OnlinePolicyIntake
-from polisys.levels import Shadow, WriteChecks
-from polisys.package import from_build
-from polisys.procedure_monitor import ProcedureMonitor
-from polisys.ruleset import RuleSetHooks
-from polisys.sop_planner import SopPlanner
-from polisys.runtime import Assembly, Models, build_runtime
-from polisys.sop_navigator import SopNavigator
-from polisys.store_gate import StoreGate
-from polisys.tracker import RequirementsTracker
-from polisys.trace import AuditLog, PolicyTrace, audited_failure, hook_failure
-from polisys.verifier import Verifier
+from polisys.experimental.organizers import sop_navigator
+from polisys.experimental.checks import gate as store_gate
+from polisys.checks.decisions import Decisions
+from polisys.experimental.finish.request_checklist import DeliverablesHooks
+from polisys.runtime.dry_run import RecordingModels
+from polisys.sources.intake import OnlinePolicyIntake
+from polisys.runtime.levels import Shadow, WriteChecks
+from polisys.package.files import from_build
+from polisys.checks.procedure_monitor import ProcedureMonitor
+from polisys.checks.rules import RuleSetHooks
+from polisys.experimental.organizers.sop_planner import SopPlanner
+from polisys.runtime.assembly import Assembly, Models, build_runtime
+from polisys.experimental.organizers.sop_navigator import SopNavigator
+from polisys.experimental.checks.gate import StoreGate
+from polisys.finish.requirements_tracker import RequirementsTracker
+from polisys.runtime.trace import AuditLog, PolicyTrace, audited_failure, hook_failure
+from polisys.checks.verifier import Verifier
 
 from .test_audit import RULE, Scripted, ctx, lines_of
 from .test_procedure_guide import guide
@@ -279,7 +280,7 @@ def no_chapter_navigator():
 
 
 async def test_a_blocked_hand_off_tool_and_the_one_let_through_name_the_tool():
-    from polisys.sop_navigator import HandoffGuard
+    from polisys.experimental.organizers.sop_navigator import HandoffGuard
 
     from .test_runtime_assembly import async_tool
     from .test_sop_navigator import fake_ask

@@ -27,8 +27,8 @@ from collections import Counter, deque
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
-from .llm import parse_json
-from .model import PolicyPackage, Procedure, step_text
+from polisys.llm import parse_json
+from polisys.package.model import PolicyPackage, Procedure, step_text
 
 # The links a walk follows. ``next`` is not one of them: ``next_links`` already brings it.
 WALKED = ("refers_to", "exception_of", "supersedes")
@@ -260,8 +260,8 @@ class Bm25Kev(Router):
         self._index: Dict[int, Any] = {}
 
     def select(self, query: Any, pkg: PolicyPackage) -> List[str]:
-        from .package import to_build
-        from .sop_retrieval import SopIndex
+        from polisys.package.files import to_build
+        from polisys.checks.retrieval import SopIndex
 
         key = id(pkg)
         if key not in self._index:

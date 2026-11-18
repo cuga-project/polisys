@@ -10,13 +10,13 @@ from typing import Any, Dict, List
 
 import pytest
 
-from polisys.levels import components_for, resolve
-from polisys.model import PolicyPackage
-from polisys.package import exception_links, from_build
-from polisys.policy_config import PolicyConfig, PolicyConfigError
-from polisys.runtime import RunContext, RuntimeWiringError, build_runtime
-from polisys.ruleset import RuleSetHooks
-from polisys.validate import validate_package
+from polisys.runtime.levels import components_for, resolve
+from polisys.package.model import PolicyPackage
+from polisys.package.files import exception_links, from_build
+from polisys.runtime.profile import PolicyConfig, PolicyConfigError
+from polisys.runtime.assembly import RunContext, RuntimeWiringError, build_runtime
+from polisys.checks.rules import RuleSetHooks
+from polisys.compile.validate import validate_package
 
 TOOL = "change_booking"
 SPECS = [

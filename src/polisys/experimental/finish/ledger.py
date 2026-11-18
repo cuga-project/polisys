@@ -67,14 +67,14 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 
 from polisys.hooks import AgentHooks, HookResult
 
-from .handlers.tables import _props
-from .llm import parse_json
-from .model import Obligation
-from .procedure_store import _parse_date
-from .ruleset import _when, canon, is_write_tool
-from .tool_kind import ID_ARG
-from .trace import HOOK_FAILED, audited_failure, fresh
-from .tracker import _failed
+from polisys.compile.handlers.tables import _props
+from polisys.llm import parse_json
+from polisys.package.model import Obligation
+from polisys.experimental.guidance.procedure_store import _parse_date
+from polisys.checks.rules import _when, canon, is_write_tool
+from polisys.tool_kind import ID_ARG
+from polisys.runtime.trace import HOOK_FAILED, audited_failure, fresh
+from polisys.finish.requirements_tracker import _failed
 
 UNBOUND, OPEN, MET, NOT_APPLICABLE, HELD, UNKNOWN, WRONG = (
     "unbound",

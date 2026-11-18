@@ -14,9 +14,9 @@ import re
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from ..llm import parse_json
-from ..model import CoverageItem, Procedure, Statement
-from ..validate import quote_ok
+from polisys.llm import parse_json
+from polisys.package.model import CoverageItem, Procedure, Statement
+from polisys.compile.validate import quote_ok
 
 CONTEXT_CHARS = 14_000
 KINDS = ("preconditions", "exceptions", "templates", "escalations")

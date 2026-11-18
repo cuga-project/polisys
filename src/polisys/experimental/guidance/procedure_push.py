@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Set
 
-from .hooks import AgentHooks
-from .router import Query
+from polisys.hooks import AgentHooks
+from polisys.checks.router import Query
 
 NOTE = (
     "SOP procedures that govern the data just read (chosen by the policy system from the request and that data). Follow "
@@ -46,7 +46,7 @@ class ProcedurePush(AgentHooks):
         self.request = message or self.request
 
     def after_tool_call(self, tool: str, args: Dict[str, Any], result: Any) -> Optional[str]:
-        from .store_gate import _acts
+        from polisys.experimental.checks.gate import _acts
 
         text = str(result)
         if (

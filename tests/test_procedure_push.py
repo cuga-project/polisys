@@ -1,8 +1,8 @@
 """organizers.procedure_push: the system picks the procedures for the data just read and attaches their text once."""
 
-from polisys.package import from_store_graph
-from polisys.procedure_push import NOTE, ProcedurePush
-from polisys.procedure_store import ProcedureStore
+from polisys.package.files import from_store_graph
+from polisys.experimental.guidance.procedure_push import NOTE, ProcedurePush
+from polisys.experimental.guidance.procedure_store import ProcedureStore
 from tests.test_runtime_assembly import GRAPH
 
 

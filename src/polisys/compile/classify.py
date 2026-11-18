@@ -18,8 +18,8 @@ import json
 import re
 from typing import Callable, Dict, List, Optional
 
-from .llm import parse_json
-from .model import CoverageItem, Document, Modality, Section, Statement, StatementType
+from polisys.llm import parse_json
+from polisys.package.model import CoverageItem, Document, Modality, Section, Statement, StatementType
 
 ARROW = re.compile(r"(→|->)")
 SHORT_CELL_WORDS = 4

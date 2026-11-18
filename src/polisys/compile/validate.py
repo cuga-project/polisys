@@ -18,9 +18,9 @@ from enum import Enum
 from functools import lru_cache
 from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
 
-from .documents import clean as _clean
-from .handlers.tables import _props
-from .ruleset import FREE_TEXT, RULE_TYPES, _condition, _iso_moment, _number, canon, norm
+from polisys.compile.documents import clean as _clean
+from polisys.compile.handlers.tables import _props
+from polisys.checks.rules import FREE_TEXT, RULE_TYPES, _condition, _iso_moment, _number, canon, norm
 
 _FOLD = str.maketrans(
     {
@@ -196,7 +196,7 @@ def _check_rule(
 from dataclasses import dataclass  # noqa: E402
 import json  # noqa: E402
 
-from .model import (  # noqa: E402
+from polisys.package.model import (  # noqa: E402
     PACKAGE_SCHEMA,
     RULE_CLASSES,
     RULE_LEVELS,
@@ -268,7 +268,7 @@ def _cedar_error(rules: List[Rule]) -> Optional[ValidationError]:
     if not roles:
         return None
     try:
-        from .ruleset import RuleSetHooks
+        from polisys.checks.rules import RuleSetHooks
 
         RuleSetHooks._cedar(roles)
     except Exception as exc:  # cedar text that does not parse
@@ -362,7 +362,7 @@ LEGACY_OUTCOME = {
 # A quote of at least this many words ties an obligation, or a part of a procedure, to the statement it was taken from.
 MIN_QUOTE_WORDS = 4
 GLOBAL_TYPES = ("grounded_values", "id_provenance", "guidance")  # no trigger tool by design
-KNOWN_EXTRA = {"stats", "id"}  # package ``extra`` keys that ``package.py`` writes back to a source format
+KNOWN_EXTRA = {"stats", "id"}  # package ``extra`` keys that ``package/files.py`` writes back to a source format
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}([T ].*)?$")
 # Codes whose findings are always warnings. ``rule_conflict`` and the legacy gaps have their severity set where they arise.
 WARNING_CODES = {
@@ -500,7 +500,7 @@ GLOBAL_RULES = ("grounded_values", "id_provenance")  # apply to every write: a t
 _TRIGGER = {"tool": ("str", False), "when": _WHEN}
 _THEN = {"tool": ("str", True), "when": _WHEN}
 # What each type adds to ``COMMON_SLOTS``: name -> (kind, required). A nested table is an object with its own slots.
-# Types as in ``ruleset.py``.
+# Types as in ``checks/rules.py``.
 _OWN_SLOTS: Dict[str, Dict[str, Tuple[Any, bool]]] = {
     "required_args": {"args": ("strs", True)},
     "allowed_values": {"arg": ("str", True), "values": ("values", True)},
@@ -780,7 +780,7 @@ def _model_errors(obj: Any, path: str, out: List[PackageError]) -> None:
     for f in dataclasses.fields(obj):
         value, key = getattr(obj, f.name), json_key(f)
         if not _conforms(value, hints[f.name]):
-            want = str(hints[f.name]).replace("typing.", "").replace("polisys.model.", "")
+            want = str(hints[f.name]).replace("typing.", "").replace("polisys.package.model.", "")
             out.append(
                 PackageError(label, "invalid_field", f"{path}{key}: expected {want}, got {_show(value)}")
             )
@@ -1790,7 +1790,7 @@ def resolve_conflicts(
 
     A package that was converted from a legacy artifact (it has a ``_layout``), or has a field of the wrong type, is
     returned unchanged. The input is never changed."""
-    from .package import LAYOUT  # package.py reads handlers that import this module
+    from polisys.package.files import LAYOUT  # package/files.py reads handlers that import this module
 
     out = copy.deepcopy(pkg)
     if any(e.code == "invalid_field" for e in _structure_errors(out)):
@@ -1939,7 +1939,7 @@ def exception_findings(pkg: PolicyPackage) -> List[PackageError]:
     counts as held: the exception is then in the procedure, which another shape of the run shows."""
     if not pkg.rules:
         return []
-    from .package import _rules_by_statement
+    from polisys.package.files import _rules_by_statement
 
     held = set(_rules_by_statement(pkg)) | {
         getattr(step, "id", "") for proc in pkg.procedures for step in proc.steps

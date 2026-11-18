@@ -6,7 +6,7 @@ and their public attributes, the tools and the note the layer adds, which slots 
 with its name, ``timeout`` and ``max_tokens``, and whether the gate reads the store behind the agent's policy tools.
 
 - ``RecordingModels`` has the factory methods of ``runtime.Models``. It records what the real factory would get, with the
-  defaults of the real functions in ``llm.py`` and ``detectors.py``. Its models raise when called, so a dry run cannot
+  defaults of the real functions in ``llm.py`` and ``sources/detectors.py``. Its models raise when called, so a dry run cannot
   make a model call.
 - ``describe_wiring`` describes the parts; ``describe_parts`` describes a ``RuntimeParts``.
 
@@ -25,7 +25,8 @@ import json
 import types
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
-from . import detectors, llm
+from polisys.sources import detectors
+from polisys import llm
 
 SLOTS = ("run", "turn_note", "wrap_tools", "after_reply")
 SHORT_TEXT = 200  # a longer text is described by its length and hash
@@ -84,7 +85,7 @@ class RecordingModels:
         return self._make("questions", *args, **kwargs)
 
     def find(self, value: Any) -> Optional[Dict[str, Any]]:
-        """The entry of a model. The wrappers in ``trace.py`` keep the ``usage`` dict, so a wrapped model is found too."""
+        """The entry of a model. The wrappers in ``runtime/trace.py`` keep the ``usage`` dict, so a wrapped model is found too."""
         usage = getattr(value, "usage", None)
         return self._by_usage.get(id(usage)) if isinstance(usage, dict) else None
 

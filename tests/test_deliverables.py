@@ -2,7 +2,7 @@
 
 import json
 
-from polisys.deliverables import DeliverablesHooks
+from polisys.experimental.finish.request_checklist import DeliverablesHooks
 
 SPECS = [
     {"name": "gmail_send_email", "inputSchema": {"properties": {"to": {}, "body": {}}}},

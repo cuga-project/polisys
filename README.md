@@ -16,7 +16,7 @@ and does not contain one.
 | **Typed rules** | A wrong call is stopped before it runs, with a message that says what to do instead. 15 rule types, for example required arguments, allowed values, record state, role permission, thresholds | Code (and Cedar for hard rules). No model call |
 | **Procedures** | The steps, preconditions, exceptions and must-not rules of the SOP section that applies to the case, as tools and a brief | Code, plus a small model for judgement checks |
 | **Obligations** | At the final reply: "these required writes did not happen", with the values the policy prescribes. Never for work that a hook blocked | Code first; the ledger stays silent when unsure |
-| **Control levels** | Strong models get fewer checks than weak ones; one switch sets which checks run | `levels.py` |
+| **Control levels** | Strong models get fewer checks than weak ones; one switch sets which checks run | `runtime/levels.py` |
 | **Audit** | One line per decision: rule, source, evidence, package version, and each failure of a check | `audit.jsonl` |
 
 Everything is chosen by a **profile** (one YAML file). Policy switches in the environment do not exist. A profile never holds
@@ -40,7 +40,7 @@ at its lifecycle hooks. Nothing in polisys contains an agent, and the harness ne
 
 - **Compile** reads documents into statements and writes the package. Two routes: a Claude **skill**
   ([`skill/SKILL.md`](src/polisys/skill/SKILL.md), the better route in every comparison so far) and an open-model
-  **pipeline** (`builder.py`).
+  **pipeline** (`compile/builder.py`).
 - **Package** is one JSON file per policy. [`MODEL.md`](src/polisys/MODEL.md) describes it; `polisys validate` checks it
   against the tool schemas.
 - **Runtime** is `build_runtime`. It refuses wiring that can have no effect (a profile that needs a package and has none, a
@@ -79,7 +79,7 @@ create_ticket({'priority': 'normal'})
 
 ```python
 from polisys.package import load_package
-from polisys.policy_config import load_config
+from polisys.runtime.profile import load_config
 from polisys.runtime import RunContext, build_runtime
 
 cfg = load_config("profile.yaml")
@@ -95,7 +95,7 @@ If the harness can tell polisys what its hook registry offers, a profile that ne
 build time instead of running with a silent gap:
 
 ```python
-from polisys.adapters.cuga import host_features        # or polisys.hooks.host_features_of(your_registry)
+from polisys.hosts.cuga import host_features        # or polisys.hooks.host_features_of(your_registry)
 ctx = RunContext(task_id="t1", tool_specs=tool_specs, host_features=host_features())
 ```
 
@@ -103,7 +103,7 @@ With the obligation ledger on, `host_features` must include `tool_blocked`; othe
 (`None`) skips the check.
 
 A profile is plain YAML; see [`examples/profiles/`](examples/profiles/) and the field list in
-[`policy_config.py`](src/polisys/policy_config.py). An unknown key is an error that names it.
+[`runtime/profile.py`](src/polisys/runtime/profile.py). An unknown key is an error that names it.
 
 ### Models and keys
 
@@ -146,19 +146,24 @@ the evaluation work, which is not part of this repository. The design the code w
 
 ```
 src/polisys/
-  model.py, package.py, validate.py   the policy model, the package file, the validator
-  documents.py, builder.py, handlers/ read documents; the open-model compile pipeline
-  skill/SKILL.md                      the compile skill for an agent
-  policy_config.py, runtime.py        profiles and build_runtime
-  ruleset.py, cedar_engine.py         typed rules, with Cedar for hard rules
-  store_gate.py, procedure_*.py       procedures as tools, the judgement gate, the guide
-  obligations.py, deliverables.py     the obligation ledger and the request producer
-  levels.py, router.py                control levels and WriteChecks; swappable retrieval
-  trace.py, dry_run.py                audit lines; wiring description without a model
-  hooks.py, adapters/                 the hook contract and host glue
-tests/                                 the suite (offline; models are scripted)
-examples/                              a made-up policy, two profiles and a quickstart
-docs/                                  design, hook contract, components
+  package/        the policy model (model.py) and the package file (files.py)
+  compile/        documents to a package, offline: documents.py, builder.py, handlers/, validate.py
+  sources/        rules found in data during the run: intake.py, detectors.py, listing.py
+  checks/         checks of a tool call: rules.py (typed rules, Cedar in cedar.py), verifier.py, decisions.py, router.py
+  guidance/       notes the agent sees: work_method.py
+  finish/         checks at the final reply: requirements_tracker.py, followups.py
+  runtime/        profile.py (profiles), assembly.py (build_runtime), levels.py (control levels and WriteChecks),
+                  trace.py (audit lines), dry_run.py (wiring description without a model)
+  experimental/   components with no held-out gain yet, by role: the gate, procedures as tools and the guide,
+                  the obligation ledger, tool notes, the SOP loop (docs/components.md has the list and the evidence)
+  hosts/          glue for agent frameworks (cuga.py)
+  hooks.py        the hook contract
+  llm.py          small-model clients
+  skill/SKILL.md  the compile skill for an agent
+  _aliases.py     old module paths of the flat layout; they still import
+tests/            the suite (offline; models are scripted)
+examples/         a made-up policy, two profiles and a quickstart
+docs/             design, hook contract, components
 ```
 
 ## Development

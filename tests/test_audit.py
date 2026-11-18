@@ -7,11 +7,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from polisys.dry_run import RecordingModels, describe_parts
-from polisys.package import from_build
-from polisys.runtime import RunContext, build_runtime
-from polisys.ruleset import RuleSetHooks
-from polisys.trace import AUDIT_FIELDS, EVIDENCE_CHARS, REDACTED, AuditLog, PolicyTrace, Records
+from polisys.runtime.dry_run import RecordingModels, describe_parts
+from polisys.package.files import from_build
+from polisys.runtime.assembly import RunContext, build_runtime
+from polisys.checks.rules import RuleSetHooks
+from polisys.runtime.trace import AUDIT_FIELDS, EVIDENCE_CHARS, REDACTED, AuditLog, PolicyTrace, Records
 
 from .test_runtime_assembly import (
     NAV_CTX,
@@ -318,8 +318,8 @@ def test_the_procedure_monitor_and_the_rules_share_one_audit():
 
 
 def test_intake_deliverables_and_the_gate_are_read_through_the_same_path():
-    from polisys.deliverables import DeliverablesHooks
-    from polisys.intake import OnlinePolicyIntake
+    from polisys.experimental.finish.request_checklist import DeliverablesHooks
+    from polisys.sources.intake import OnlinePolicyIntake
 
     audit = AuditLog(task="task-9", package_version=VERSION)
     reply = {
@@ -356,7 +356,7 @@ def test_intake_deliverables_and_the_gate_are_read_through_the_same_path():
 )
 def test_an_intake_record_is_final_when_the_audit_reads_it_also_after_the_cap(cap_effect, verdicts):
     """The cap used to change the outcome of a record after it was appended. The line is written at the append."""
-    from polisys.intake import OnlinePolicyIntake
+    from polisys.sources.intake import OnlinePolicyIntake
 
     def model(system, user):
         return json.dumps({"violations": [{"statement": 1, "reason": "no", "fix": "stop"}]})
@@ -375,7 +375,7 @@ def test_an_intake_record_is_final_when_the_audit_reads_it_also_after_the_cap(ca
 
 
 def test_the_guard_code_cap_is_final_when_the_audit_reads_it():
-    from polisys.intake import OnlinePolicyIntake
+    from polisys.sources.intake import OnlinePolicyIntake
 
     from .test_guard_code import CHECK, ROWS
 
@@ -410,7 +410,7 @@ def test_the_guard_code_cap_is_final_when_the_audit_reads_it():
 
 
 def test_a_rule_line_says_who_checked_it_cedar_for_roles_the_verifier_for_judgment_and_code_for_the_rest():
-    from polisys.verifier import Verifier
+    from polisys.checks.verifier import Verifier
 
     rules = [
         {"id": "role", "type": "role_permission", "tools": [TOOL], "roles": ["agent"], "effect": "forbid"},
@@ -541,7 +541,7 @@ def test_every_model_of_a_run_is_made_by_a_method_of_the_assembly_that_wraps_it(
     import ast
     import inspect
 
-    from polisys import runtime
+    from polisys.runtime import assembly as runtime
 
     users = []
 

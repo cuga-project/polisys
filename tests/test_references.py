@@ -3,7 +3,7 @@ that names the source and holds rule text; dead-end searches kept; writes never 
 
 import json
 
-from polisys.references import ReferenceLedger, find_references
+from polisys.sources.references import ReferenceLedger, find_references
 
 ROWS = {
     "rows": [
@@ -87,7 +87,7 @@ def test_writes_never_read_and_empty_searches_are_kept():
 
 
 def test_intake_reminds_once_without_blocking_until_the_source_is_read():
-    from polisys.intake import OnlinePolicyIntake
+    from polisys.sources.intake import OnlinePolicyIntake
 
     hooks = OnlinePolicyIntake(lambda s, u: '{"policies": []}', check_reply=False)
     hooks.on_user_message("Process the registrants per our regional meeting policy.", None)
@@ -108,7 +108,7 @@ def test_intake_reminds_once_without_blocking_until_the_source_is_read():
 
 
 def test_block_once_stops_only_the_first_write():
-    from polisys.intake import OnlinePolicyIntake
+    from polisys.sources.intake import OnlinePolicyIntake
 
     hooks = OnlinePolicyIntake(
         lambda s, u: '{"policies": []}', check_reply=False, read_before_write="block_once"
@@ -121,7 +121,7 @@ def test_block_once_stops_only_the_first_write():
 
 
 def test_reminder_names_read_tools_not_used_yet():
-    from polisys.intake import OnlinePolicyIntake
+    from polisys.sources.intake import OnlinePolicyIntake
 
     specs = [
         {"name": n, "inputSchema": {}}

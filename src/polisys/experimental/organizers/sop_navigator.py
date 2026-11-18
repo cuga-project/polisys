@@ -27,7 +27,7 @@ import re
 from collections import defaultdict
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
-from .trace import emit
+from polisys.runtime.trace import emit
 
 YES = 0.5  # an answer of the decision model at or above this counts as yes; the audit reads the same line
 
@@ -137,8 +137,8 @@ class SopNavigator:
     ) -> "SopNavigator":
         """A navigator over the sections, links and escalations of a ``PolicyPackage``. ``policy_text``: the SOP text as
         for the constructor, because a package does not keep the heading levels."""
-        from .model import to_json
-        from .package import procedure_dicts
+        from polisys.package.model import to_json
+        from polisys.package.files import procedure_dicts
 
         build = {
             "policy_set": {"documents": to_json(pkg.documents)},

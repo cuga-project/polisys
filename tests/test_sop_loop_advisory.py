@@ -3,7 +3,7 @@
 import asyncio
 import json
 
-from polisys.sop_loop import LoopHooks, SopLoop, _grounded
+from polisys.experimental.organizers.sop_loop import LoopHooks, SopLoop, _grounded
 
 PROC = {
     "id": "p1",
@@ -161,7 +161,7 @@ BUILD = {
 
 
 def test_retrieval_picks_the_procedure_and_expands_links_and_templates():
-    from polisys.sop_retrieval import SopIndex
+    from polisys.checks.retrieval import SopIndex
 
     idx = SopIndex(BUILD)
     p = idx.choose("Onboard Ann", "new hire onboarding, welcome email")
@@ -173,7 +173,7 @@ def test_retrieval_picks_the_procedure_and_expands_links_and_templates():
 
 
 def test_discovery_mode_shows_checklists_in_one_turn_without_decisions():
-    from polisys.sop_retrieval import SopIndex
+    from polisys.checks.retrieval import SopIndex
 
     agent, rec = Agent(), LoopHooks()
     rec.after_tool_call("read_sheet", {}, {"rows": [{"name": "Ann"}, {"name": "Bo"}]})

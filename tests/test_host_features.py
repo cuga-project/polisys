@@ -8,13 +8,13 @@ import types
 
 import pytest
 
-from polisys.adapters import cuga as cuga_adapter
+from polisys.hosts import cuga as cuga_adapter
 from polisys.hooks import HOST_FEATURES, HookRegistry, host_features_of
-from polisys.model import Obligation
-from polisys.package import from_build
-from polisys.policy_config import PolicyConfig
-from polisys.runtime import RuntimeWiringError, build_runtime
-from polisys.dry_run import RecordingModels
+from polisys.package.model import Obligation
+from polisys.package.files import from_build
+from polisys.runtime.profile import PolicyConfig
+from polisys.runtime.assembly import RuntimeWiringError, build_runtime
+from polisys.runtime.dry_run import RecordingModels
 
 from .test_producers import CTX, STEPS
 
