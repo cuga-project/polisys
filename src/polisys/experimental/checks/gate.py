@@ -11,13 +11,34 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Callable, Dict, List, Set, Tuple
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional, Set, Tuple
 
 from polisys.hooks import AgentHooks
 
 from polisys.llm import parse_json
 from polisys.tool_kind import acts as _acts
 from polisys.runtime.trace import audited_failure
+from polisys.runtime.setting_types import Count, Mode
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """Model check before an acting call, over the rules in scope; blocks once with quoted evidence."""
+
+    mode: Mode = "auto"
+    model: Optional[str] = None
+    scope: Literal["active_procedures", "whole_sop"] = "active_procedures"
+    min_strength: Literal["agent", "none"] = "agent"  # none: the gate model may be weaker than the agent
+    seed_request: bool = False  # the user's request counts as data the agent read
+    max_tokens: Count = 4000  # one old runner gave gpt-oss models 16000
+    missing_needs_read: bool = False  # a "something is missing" block needs a read of the record that should hold it
+    trigger_check: bool = False  # a block needs the rule's trigger to hold for this record and stage, and its conditions checked
+
 
 WINDOW = re.compile(
     r"within (?:the )?(?:last |past |preceding )?(\d+) (calendar days|business days|days|months|weeks|years)",
@@ -349,3 +370,53 @@ class StoreGate(AgentHooks):
             f"Evidence in the data: \"{v.get('evidence')}\". {v.get('why') or ''} Follow the SOP for this case (hold, "
             "ask for the missing approval, or escalate as the SOP says). If the rule does not apply, say why and retry."
         )
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    from polisys.checks.router import router_reads_opened
+
+    from polisys.runtime.levels import gate_strength
+
+    cfg = a.cfg.checkers.gate
+    cfg_router = a.cfg.checkers.router
+    status, text = gate_strength(a.cfg, a.ctx.agent_model)
+    if status == "weaker":
+        raise a.fail("gate", f"{text}; write min_strength none to allow it")
+    if status == "unknown":  # not an error: the strength is not known, and the profile said on
+        a.notes.append(("gate_min_strength", f"the gate stays on because the profile says on: {text}"))
+    elif status == "ok":
+        a.notes.append(("gate_min_strength", text))
+    model = a.model("gate", cfg.model, timeout=180, max_tokens=cfg.max_tokens)
+    today = a.ctx.world_time[:10]
+    if cfg.scope == "active_procedures":
+        opens = a.cfg.organizers.procedure_tools == "on" or a.cfg.organizers.procedure_push.mode == "on"
+        if not opens and router_reads_opened(cfg_router.kind):
+            raise a.fail(
+                "gate",
+                "scope active_procedures with the router agent_opened needs organizers.procedure_tools or procedure_push: "
+                "nothing else opens a procedure (a router that searches does not need them)",
+            )
+        reader = a.scope_reader("gate")
+        gate = StoreGate.from_package(
+            a.package("gate"),
+            model,
+            store=a.store("gate"),
+            router=reader.router,
+            expander=reader.expander,
+            today=today,
+        )
+    else:
+        gate = StoreGate.from_package(
+            None, model, sop_text=a.ctx.policy_text or a.ctx.system_prompt, today=today
+        )
+    if cfg.missing_needs_read or cfg.trigger_check:
+
+        gate.extra = (MISSING_NEEDS_READ if cfg.missing_needs_read else "") + (TRIGGER_CHECK if cfg.trigger_check else "")
+    if cfg.seed_request:
+        if not a.ctx.request:
+            raise a.fail("gate", "seed_request is on, and the task gives no request")
+        gate.reads.append(f"user request: {a.ctx.request}")
+    return Piece(hooks=[gate])

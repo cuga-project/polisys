@@ -10,9 +10,14 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set
 
 from polisys.hooks import AgentHooks, HookResult
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
 
 SENDS = re.compile(r"(^|_)(send|post|reply|forward)(_|$)", re.I)  # tool-name words of a message to people
 CHANNEL = re.compile(r"(?<![\w#])#([a-z0-9][a-z0-9_-]{1,79})\b", re.I)
@@ -104,3 +109,14 @@ class ReadFirst(AgentHooks):
             except ValueError:
                 return
         self._learn_ids(result)
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    from polisys.checks.rules import is_write_tool
+
+    if not a.ctx.tool_apps:
+        raise a.fail("read_first", "notes.read_first needs RunContext.tool_apps (which app each tool belongs to)")
+    return Piece(hooks=[ReadFirst(a.ctx.tool_apps, is_write_tool, request=a.ctx.request or "")])

@@ -10,10 +10,28 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any, Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Literal, Optional
 
 from polisys.llm import parse_json
 from polisys.package.model import Verdict
+from polisys.runtime.setting_types import Mode
+
+
+@dataclass
+class Settings:
+    """Model check on policy statements; reminds unless ``may_deny``.
+
+    ``scope``: ``all_statements`` sends every statement that did not become a typed rule (every trusted statement that
+    did not compile, or every ``verify`` rule); ``specific_statements`` sends only those that name one tool and one
+    argument (spec section 7, principle 8). The measured runs used ``all_statements``.
+    """
+
+    mode: Mode = "auto"
+    model: Optional[str] = None
+    scope: Literal["specific_statements", "all_statements"] = "specific_statements"
+    may_deny: bool = False
+
 
 SYSTEM = "You check one planned action against company policy statements. Output JSON only."
 USER = """User request: {request}

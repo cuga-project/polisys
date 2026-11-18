@@ -20,13 +20,18 @@ never an empty description.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 
 from polisys.package.model import Procedure, Step, step_text
 from polisys.checks.rules import is_write_tool
 from polisys.runtime.trace import fresh
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
 
 REPLY = "reply"  # the action of a step that is an answer to the user, in a package written from a skill
 
@@ -137,3 +142,20 @@ class ProcedureMonitor(AgentHooks):
             + "\n".join(lines),
             details=details,
         )
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Optional[Piece]:
+    pkg = a.package("procedure_monitor")
+    if not pkg.procedures:  # most rule lists have no procedures: nothing to follow, as in the old wiring
+        return None
+    shapes = a.resolution.shapes
+    if "rules" in shapes and not {"procedures", "flow"} & set(shapes):
+        return None  # a declared rule list: its procedures are the policy's sections, and no step is "still missing"
+    return Piece(
+        hooks=[
+            ProcedureMonitor(pkg.procedures, tools_in_run=a.ctx.tools_in_run, follow_up=not a.ledger_on)
+        ]
+    )

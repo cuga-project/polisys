@@ -23,7 +23,8 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 
@@ -31,6 +32,22 @@ from polisys.llm import parse_json
 from polisys.package.model import step_text
 from polisys.checks.rules import is_write_tool
 from polisys.runtime.trace import audited_failure, emit
+from polisys.runtime.setting_types import Mode
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """SOP loop: explore, then one scoped turn per case."""
+
+    mode: Mode = "auto"
+    model: Optional[str] = None
+    style: Literal["control", "advisory", "discovery"] = "control"
+    rules_from_data: bool = True  # with no procedures, the loop asks the model for the rules in the data
+
 
 READ_CHARS, DATA_CHARS, CASE_DATA_CHARS = 20_000, 120_000, 40_000
 MAX_CASES = 12
@@ -610,3 +627,36 @@ class SopLoop:
                 "needs something different, do what the SOP says and state why in one line."
             )
         return "\n".join(lines)
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    cfg = a.cfg.organizers.loop
+    index = None
+    if cfg.style == "discovery":
+        from polisys.package.files import to_build
+        from polisys.checks.retrieval import SopIndex
+
+        narrow = a.cfg.checkers.narrow_questions
+        index = SopIndex(to_build(a.package("loop")), ask=a.questions("loop", narrow) if narrow else None)
+    options = {
+        "rules_from_data": cfg.rules_from_data,
+        "mode": cfg.style,
+        "require_evidence": a.cfg.decisions.require_evidence,
+        "index": index,
+    }
+    model = a.model("loop", cfg.model, timeout=300, max_tokens=8000)
+    if a.pkg is not None:
+        loop = SopLoop.from_package(a.package("loop"), model, **options)
+    else:  # with no package, the loop asks the model for the rules in the data
+        loop = SopLoop(model, [], **options)
+    a.loop = loop
+    rec = LoopHooks()
+
+    async def run(agent: Any, request: str, thread_id: str, timeout: float) -> Any:
+        return await loop.run(agent, request, thread_id, rec, timeout)
+
+    run.target = loop  # type: ignore[attr-defined]
+    return Piece(hooks=[rec], run=run, target=loop)

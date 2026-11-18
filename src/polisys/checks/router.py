@@ -29,6 +29,23 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 
 from polisys.llm import parse_json
 from polisys.package.model import PolicyPackage, Procedure, step_text
+from polisys.runtime.setting_types import Count
+
+
+@dataclass
+class Settings:
+    """Which procedures are in scope for the gate and the ledger (spec section 11; ``checks/router.py`` registers the names)."""
+
+    kind: str = "agent_opened"  # which procedures apply; a registered router
+    expand: str = "next_links"  # which procedures and rules come along; a registered expander
+    model: Optional[str] = (
+        None  # the JSON model of a router that reads cards (llm_cards); bm25_kev uses narrow_questions
+    )
+    top_k: Count = (
+        3  # procedures a searching router returns (agent_opened returns every one the agent opened)
+    )
+    hops: Count = 1  # k_hops: steps along refers_to, exception_of and supersedes
+
 
 # The links a walk follows. ``next`` is not one of them: ``next_links`` already brings it.
 WALKED = ("refers_to", "exception_of", "supersedes")

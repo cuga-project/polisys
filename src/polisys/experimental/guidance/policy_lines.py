@@ -11,10 +11,26 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional
 
 from polisys.llm import parse_json
 from polisys.experimental.guidance.tool_notes import quoted_in, tool_lines
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """The policy lines that govern each write tool, selected once per policy and shown word for word in the tool's
+    description (``experimental/guidance/policy_lines.py``)."""
+
+    mode: Literal["off", "on"] = "off"
+    model: Optional[str] = None  # the model that selects the lines; "agent": the model the agent runs on
+    cache_dir: Optional[str] = None
+
 
 PROMPT_VERSION = "1"
 HEADER = "Policy lines for this tool (word for word from the policy):"
@@ -138,3 +154,19 @@ class PolicyLines:
             note = self.text.get(getattr(tool, "name", ""))
             out.append(tool.model_copy(update={"description": f"{tool.description or ''}\n\n{note}".strip()}) if note else tool)
         return out
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    from polisys.checks.rules import is_write_tool
+
+    cfg = a.cfg.notes.policy_lines
+    specs = a.run_tool_specs()
+    if not specs:
+        raise a.fail("policy_lines", "notes.policy_lines needs RunContext.tool_specs (the tools of the run)")
+    model = a.own_model("policy_lines", cfg.model, timeout=300, max_tokens=16000)
+    text = a.policy_text("policy_lines")
+    lines = PolicyLines(lambda: build_lines(text, specs, model, is_write_tool, cfg.cache_dir))
+    return Piece(wrap_tools=lines.wrap_tools, target=lines)

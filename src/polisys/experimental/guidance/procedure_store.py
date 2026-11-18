@@ -22,9 +22,14 @@ from __future__ import annotations
 import datetime as dt
 import json
 import re
-from typing import Any, Dict, Iterable, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 
 from polisys.package.model import step_text
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
 
 TEMPLATE_REF = re.compile(r"Template\s+([A-Z]-\d+|\d+)")
 
@@ -289,3 +294,13 @@ POLICY_TOOLS_NOTE = (
     "at the start; for each case call policy__get_procedure with the ids that apply and follow its steps, decisions "
     "and must-not rules; use the exact template text it returns; use policy__add_days for business-day deadlines."
 )
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    store = a.store("procedure_tools")
+    if not store.procs:
+        raise a.fail("procedure_tools", "the package has no procedures for the agent to read")
+    return Piece(tools=policy_tools(store), system_note=POLICY_TOOLS_NOTE, target=store)

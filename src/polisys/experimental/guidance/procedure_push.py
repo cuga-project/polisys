@@ -11,10 +11,27 @@ Nothing here names a domain: the inputs are the request, the data the agent read
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Set
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
 from polisys.hooks import AgentHooks
 from polisys.checks.router import Query
+from polisys.runtime.setting_types import Count, Mode
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """The policy system picks the procedures that govern the data just read and attaches them to the tool result."""
+
+    mode: Mode = "off"
+    model: Optional[str] = None  # the llm_cards router's model
+    top_k: Count = 2
+    max_selections: Count = 15  # router calls per run
+
 
 NOTE = (
     "SOP procedures that govern the data just read (chosen by the policy system from the request and that data). Follow "
@@ -78,3 +95,21 @@ class ProcedurePush(AgentHooks):
         self.pushed.update(new)
         self.pushed.update((self.store.calls[-1] if self.store.calls else {}).get("expanded") or [])
         return NOTE + text
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    from polisys.checks.router import make_router
+
+    cfg = a.cfg.organizers.procedure_push
+    store = a.store("procedure_push")
+    if not store.procs:
+        raise a.fail("procedure_push", "the package has no procedures to hand over")
+    model = a.model("procedure_push", cfg.model, timeout=240, max_tokens=16000)
+    router = make_router("llm_cards", model=model, top_k=cfg.top_k)
+    push = ProcedurePush(
+        store, a.package("procedure_push"), router, request=a.ctx.request or "", max_selections=cfg.max_selections
+    )
+    return Piece(hooks=[push])

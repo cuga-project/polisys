@@ -24,9 +24,14 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from polisys.hooks import AgentHooks, HookResult
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
 
 METHODS: Dict[str, str] = {
     "worksheet": (
@@ -372,3 +377,35 @@ class LiteralCoverageHooks(AgentHooks):
         if not missing:
             return None
         return HookResult(message=COVERAGE.format(values="; ".join(repr(v) for v in missing[:8])))
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    from polisys.checks.rules import is_write_tool
+
+    names = list(a.cfg.notes.work_method)
+    turns = [n for n in names if n in REPLY_TURNS]
+    if len(turns) > 1:
+        raise a.fail("work_method", f"{' and '.join(turns)} each send the agent back before the reply; list one")
+    if "readback_sop" in names:
+        hooks: List[Any] = [ReadbackHooks(store=a.store("work_method"))]
+    elif "readback" in names:
+        hooks = [ReadbackHooks()]
+    elif "finish_check" in names:
+        hooks = [FinishCheckHooks(a.cfg.authority.value_lists)]
+    elif "finish_ledger" in names:
+
+        hooks = [FinishLedgerHooks(a.cfg.authority.value_lists, is_write_tool)]
+    else:
+        hooks = []
+    if "lookup_retry" in names:
+        hooks.append(LookupRetryHooks(a.ctx.request or "", is_write_tool))
+    if "literal_values" in names:
+
+        hooks.append(LiteralValueHooks(a.ctx.request or "", is_write_tool))
+    if "literal_coverage" in names:
+
+        hooks.append(LiteralCoverageHooks(a.ctx.request or ""))
+    return Piece(hooks=hooks, system_note=note(names), target=hooks[0] if hooks else None)

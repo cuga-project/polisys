@@ -17,10 +17,20 @@ If that check fails, the suggestions stay, as without it: a failed check must no
 from __future__ import annotations
 
 import re
-from typing import Any, Callable, Dict, List, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from polisys.llm import parse_json, today_line
 from polisys.compile.validate import quote_ok
+
+
+@dataclass
+class Settings:
+    """What a check may say to the agent at the reply (``finish/followups.py``)."""
+
+    voice: Literal["order", "check"] = "order"  # check: says it is automated, and the checker sees the agent's reply
+    evidence: Literal["off", "on"] = "off"  # on: an action goes to the agent only if a check finds it really required
+
 
 CHECK_HEADER = (
     "AUTOMATED CHECK. This message comes from a checker, not from the user, and the checker can be wrong. Compare each item "

@@ -25,9 +25,27 @@ from __future__ import annotations
 import json
 import re
 from collections import defaultdict
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from polisys.runtime.trace import emit
+from polisys.runtime.setting_types import Count, Mode
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """Hand-off check: a premature hand-off is blocked and the open actions are named."""
+
+    mode: Mode = "auto"
+    semantic_evidence: bool = False
+    max_blocks: Count = 2
+    handoff_text: List[str] = field(default_factory=list)  # phrases in a reply that hand the customer off
+    handoff_tools: List[str] = field(default_factory=list)  # tools that hand the customer off
+
 
 YES = 0.5  # an answer of the decision model at or above this counts as yes; the audit reads the same line
 
@@ -390,3 +408,40 @@ class HandoffGuard:
             t for t in live if t["role"] != "tool"
         )  # the runner has already added the tool calls to turns
         return f"[Policy note — your hand-off message was not sent]\n{note}"
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    cfg = a.cfg.organizers.navigator
+    names = [t["name"] for t in a.ctx.tool_specs]
+    if a.ctx.message_tool is None:
+        raise a.fail(
+            "navigator",
+            "the task does not say which tool sends a message in the middle of a turn; give RunContext.message_tool, "
+            'or "" when the benchmark has none',
+        )
+    if not cfg.handoff_text and not cfg.handoff_tools:
+        raise a.fail("navigator", "no hand-off phrase and no hand-off tool, so it can never fire")
+    in_run = set(names if a.ctx.tools_in_run is None else a.ctx.tools_in_run)
+    missing = sorted(set(cfg.handoff_tools) - in_run)
+    if missing:
+        raise a.fail("navigator", f"the hand-off tools {missing} are not in this run")
+    if cfg.max_blocks == 0:
+        raise a.fail("navigator", "max_blocks is 0, so it can never block")
+    navigator = SopNavigator.from_package(
+        a.package("navigator"),
+        a.ctx.policy_text or a.ctx.system_prompt,
+        names,
+        a.questions("navigator", a.cfg.checkers.narrow_questions),
+        semantic_evidence=cfg.semantic_evidence,
+    )
+    if not navigator.chapters:
+        raise a.fail(
+            "navigator", "no chapter of the policy holds enough actions, so no hand-off is ever open"
+        )
+    guard = HandoffGuard(navigator, cfg.handoff_text, cfg.handoff_tools, cfg.max_blocks, a.ctx.message_tool)
+    return Piece(
+        wrap_tools=guard.wrap_tools, after_reply=guard.after_reply, target=guard, audited=[navigator]
+    )

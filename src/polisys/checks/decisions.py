@@ -15,9 +15,24 @@ Nothing here names a benchmark, an app or a field.
 from __future__ import annotations
 
 import re
-from typing import Any, Callable, Dict, Optional
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Literal, Optional
 
 from polisys.llm import today_line
+from polisys.runtime.setting_types import Mode
+
+
+@dataclass
+class Settings:
+    """Narrow-question write checks and what a verdict does."""
+
+    mode: Mode = "auto"
+    effect: Literal["remind", "block_once"] = "remind"
+    after_repeated_denials: Literal["allow", "skip"] = "allow"
+    require_evidence: bool = False  # a stop needs quoted evidence about the case
+    record_checks: bool = False  # record signals, missing facts, content match
+    retry_effect: Literal["allow", "hold"] = "allow"  # what a recheck of a blocked call does
+
 
 LIMIT_WORDS = re.compile(
     r"\b(max(imum)?|at most|no more than|up to|limit(ed)?|only (one|two|three|\d+)|\d+\s*(per|a|each)\s+\w+|"

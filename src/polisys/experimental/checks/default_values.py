@@ -18,12 +18,30 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 from polisys.experimental.guidance.tool_notes import _arguments, allowed_values, quoted_in, tool_lines
 from polisys.guidance.work_method import call_key
 from polisys.llm import parse_json
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """Default values the policy states for arguments of write tools, listed once per policy text and tool set and
+    enforced by code: a write call that leaves such an argument out is blocked once with the default (``experimental/checks/default_values.py``)."""
+
+    mode: Literal["off", "on"] = "off"
+    model: Optional[str] = None  # the model that lists the defaults; "agent": the model the agent runs on
+    cache_dir: Optional[str] = None
+    # stated: also the values the policy requires for an argument when the call sets another one
+    scope: Literal["defaults", "stated"] = "defaults"
+
 
 PROMPT_VERSION = "1"
 SYSTEM = "You list the default values that a written policy states for arguments of tools. Output JSON only."
@@ -231,3 +249,19 @@ class DefaultValueHooks(AgentHooks):
             )
             return HookResult(message=BLOCK.format(**d))
         return None
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    from polisys.checks.rules import is_write_tool
+
+    cfg = a.cfg.checkers.default_values
+    specs = a.run_tool_specs()
+    if not specs:
+        raise a.fail("default_values", "checkers.default_values needs RunContext.tool_specs (the tools of the run)")
+    model = a.own_model("default_values", cfg.model, timeout=180, max_tokens=8000)
+    text = a.policy_text("default_values")
+    hook = DefaultValueHooks(lambda: build_defaults(text, specs, model, is_write_tool, cfg.cache_dir, cfg.scope))
+    return Piece(hooks=[hook])

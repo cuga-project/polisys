@@ -44,20 +44,28 @@ from typing import (
 
 import yaml
 
+from polisys.runtime.setting_types import Count, Mode, _AtLeast  # noqa: F401 (Count: a name of this module before)
+
+# The settings of a component are in the component's file, as ``Settings``. Here each one gets its name in the profile.
+from polisys.checks.decisions import Settings as Decisions
+from polisys.checks.router import Settings as Router
+from polisys.checks.verifier import Settings as Verifier
+from polisys.experimental.checks.default_values import Settings as DefaultValues
+from polisys.experimental.checks.gate import Settings as Gate
+from polisys.experimental.finish.ledger import Settings as Obligations
+from polisys.experimental.guidance.policy_lines import Settings as PolicyLines
+from polisys.experimental.guidance.procedure_guide import Settings as Guide
+from polisys.experimental.guidance.procedure_push import Settings as ProcedurePush
+from polisys.experimental.guidance.tool_notes import Settings as ToolNotes
+from polisys.experimental.organizers.sop_loop import Settings as Loop
+from polisys.experimental.organizers.sop_navigator import Settings as Navigator
+from polisys.experimental.organizers.sop_tracker import Settings as SopTracker
+from polisys.finish.followups import Settings as Followups
+from polisys.finish.requirements_tracker import Settings as RequirementsTracker
+
 KEV = "jaredpalmer/kev-4b"  # decision model for narrow yes/no questions (spec section 12)
 
-Mode = Literal["auto", "on", "off"]
 Level = Literal[0, 1, 2, 3, "by_model"]
-
-
-class _AtLeast:
-    """Marker for ``Annotated``: the whole number may not be below ``floor``."""
-
-    def __init__(self, floor: int):
-        self.floor = floor
-
-
-Count = Annotated[int, _AtLeast(0)]  # a number of blocks or follow-ups: 0 or more
 
 
 class PolicyConfigError(ValueError):
@@ -112,62 +120,6 @@ class Control:
 
 
 @dataclass
-class Router:
-    """Which procedures are in scope for the gate and the ledger (spec section 11; ``checks/router.py`` registers the names)."""
-
-    kind: str = "agent_opened"  # which procedures apply; a registered router
-    expand: str = "next_links"  # which procedures and rules come along; a registered expander
-    model: Optional[str] = (
-        None  # the JSON model of a router that reads cards (llm_cards); bm25_kev uses narrow_questions
-    )
-    top_k: Count = (
-        3  # procedures a searching router returns (agent_opened returns every one the agent opened)
-    )
-    hops: Count = 1  # k_hops: steps along refers_to, exception_of and supersedes
-
-
-@dataclass
-class Gate:
-    """Model check before an acting call, over the rules in scope; blocks once with quoted evidence."""
-
-    mode: Mode = "auto"
-    model: Optional[str] = None
-    scope: Literal["active_procedures", "whole_sop"] = "active_procedures"
-    min_strength: Literal["agent", "none"] = "agent"  # none: the gate model may be weaker than the agent
-    seed_request: bool = False  # the user's request counts as data the agent read
-    max_tokens: Count = 4000  # one old runner gave gpt-oss models 16000
-    missing_needs_read: bool = False  # a "something is missing" block needs a read of the record that should hold it
-    trigger_check: bool = False  # a block needs the rule's trigger to hold for this record and stage, and its conditions checked
-
-
-@dataclass
-class Verifier:
-    """Model check on policy statements; reminds unless ``may_deny``.
-
-    ``scope``: ``all_statements`` sends every statement that did not become a typed rule (every trusted statement that
-    did not compile, or every ``verify`` rule); ``specific_statements`` sends only those that name one tool and one
-    argument (spec section 7, principle 8). The measured runs used ``all_statements``.
-    """
-
-    mode: Mode = "auto"
-    model: Optional[str] = None
-    scope: Literal["specific_statements", "all_statements"] = "specific_statements"
-    may_deny: bool = False
-
-
-@dataclass
-class DefaultValues:
-    """Default values the policy states for arguments of write tools, listed once per policy text and tool set and
-    enforced by code: a write call that leaves such an argument out is blocked once with the default (``experimental/checks/default_values.py``)."""
-
-    mode: Literal["off", "on"] = "off"
-    model: Optional[str] = None  # the model that lists the defaults; "agent": the model the agent runs on
-    cache_dir: Optional[str] = None
-    # stated: also the values the policy requires for an argument when the call sets another one
-    scope: Literal["defaults", "stated"] = "defaults"
-
-
-@dataclass
 class Checkers:
     default_values: DefaultValues = field(default_factory=DefaultValues)
     rules: Mode = "auto"  # typed rules enforced by code (and Cedar for roles)
@@ -188,67 +140,6 @@ class Checkers:
 
 
 @dataclass
-class Guide:
-    """Procedure guide: stops for steps and preconditions of the procedure the agent is in."""
-
-    mode: Mode = "auto"
-    evidence_model: Optional[str] = (
-        None  # a model checks hard preconditions against evidence; none = no check
-    )
-    stop_first_write: bool = True  # stop the first write of a procedure
-    stop_templates: bool = True  # stop on a template mismatch
-
-
-@dataclass
-class ProcedurePush:
-    """The policy system picks the procedures that govern the data just read and attaches them to the tool result."""
-
-    mode: Mode = "off"
-    model: Optional[str] = None  # the llm_cards router's model
-    top_k: Count = 2
-    max_selections: Count = 15  # router calls per run
-
-
-@dataclass
-class Loop:
-    """SOP loop: explore, then one scoped turn per case."""
-
-    mode: Mode = "auto"
-    model: Optional[str] = None
-    style: Literal["control", "advisory", "discovery"] = "control"
-    rules_from_data: bool = True  # with no procedures, the loop asks the model for the rules in the data
-
-
-@dataclass
-class SopTracker:
-    """A progress note with each customer turn."""
-
-    mode: Mode = "auto"
-    model: Optional[str] = None
-
-
-@dataclass
-class Navigator:
-    """Hand-off check: a premature hand-off is blocked and the open actions are named."""
-
-    mode: Mode = "auto"
-    semantic_evidence: bool = False
-    max_blocks: Count = 2
-    handoff_text: List[str] = field(default_factory=list)  # phrases in a reply that hand the customer off
-    handoff_tools: List[str] = field(default_factory=list)  # tools that hand the customer off
-
-
-@dataclass
-class RequirementsTracker:
-    """A checklist of what the request and the policy require, checked at the reply."""
-
-    mode: Mode = "auto"
-    model: Optional[str] = None
-    wrong_items: Literal["off", "verify", "fix"] = "off"  # what to do with an item judged wrong
-    read_system_prompt: bool = False  # the checklist also reads the system prompt as policy text
-
-
-@dataclass
 class Organizers:
     procedure_tools: Mode = (
         "auto"  # the agent reads the procedures through tools; what it opens scopes the gate
@@ -259,70 +150,6 @@ class Organizers:
     sop_tracker: SopTracker = field(default_factory=SopTracker)
     navigator: Navigator = field(default_factory=Navigator)
     requirements_tracker: RequirementsTracker = field(default_factory=RequirementsTracker)
-
-
-@dataclass
-class Obligations:
-    # Empty: no ledger. Any producer turns the obligation ledger on, and then only the ledger sends follow-ups (the requirements
-    # tracker is refused; the procedure monitor and the duty rules only record).
-    producers: List[Literal["package", "request", "duty"]] = field(default_factory=list)
-    max_follow_ups: Count = 1
-    wrong_values: Literal["never", "known_origin_only"] = "known_origin_only"
-    model: Optional[str] = (
-        None  # model that lists the checklist of the request, and that binds the ledger's cases
-    )
-    # The level of every item of the ledger. None: ``build_runtime`` uses observe, so the level written in an obligation is not
-    # read in a run. ``show`` is accepted and not built: only follow_up items are sent, so it acts as observe. Packages say
-    # observe until a measurement chooses.
-    item_level: Optional[Literal["observe", "show", "follow_up"]] = None
-
-
-@dataclass
-class Decisions:
-    """Narrow-question write checks and what a verdict does."""
-
-    mode: Mode = "auto"
-    effect: Literal["remind", "block_once"] = "remind"
-    after_repeated_denials: Literal["allow", "skip"] = "allow"
-    require_evidence: bool = False  # a stop needs quoted evidence about the case
-    record_checks: bool = False  # record signals, missing facts, content match
-    retry_effect: Literal["allow", "hold"] = "allow"  # what a recheck of a blocked call does
-
-
-@dataclass
-class Followups:
-    """What a check may say to the agent at the reply (``finish/followups.py``)."""
-
-    voice: Literal["order", "check"] = "order"  # check: says it is automated, and the checker sees the agent's reply
-    evidence: Literal["off", "on"] = "off"  # on: an action goes to the agent only if a check finds it really required
-
-
-@dataclass
-class ToolNotes:
-    """Notes on each tool, written once from the policy text and the tool list and shown in the tool descriptions
-    (``experimental/guidance/tool_notes.py``): what to check before the call, which values the policy fixes, what to do after."""
-
-    mode: Literal["off", "on"] = "off"
-    model: Optional[str] = None  # the model that writes the notes; "agent": the model the agent runs on
-    # A condition whose remedy the policy does not state: as_stated keeps no note for it; fix_with_tool keeps the note that
-    # names an available tool which makes the condition true. A decision of the deployment, not of the policy.
-    unmet: Literal["as_stated", "fix_with_tool"] = "as_stated"
-    cache_dir: Optional[str] = None  # folder for the notes of each policy text and tool set; None: asked in every run
-    # The kinds of note shown to the agent; all are written and cached either way. "conflict": the tool's list of allowed
-    # values is in force where the policy's list lacks a value of it (only with authority.value_lists: tool).
-    show: List[Literal["before", "values", "after", "conflict"]] = field(
-        default_factory=lambda: ["before", "values", "after", "conflict"]
-    )
-
-
-@dataclass
-class PolicyLines:
-    """The policy lines that govern each write tool, selected once per policy and shown word for word in the tool's
-    description (``experimental/guidance/policy_lines.py``)."""
-
-    mode: Literal["off", "on"] = "off"
-    model: Optional[str] = None  # the model that selects the lines; "agent": the model the agent runs on
-    cache_dir: Optional[str] = None
 
 
 @dataclass
@@ -385,6 +212,18 @@ class PolicyConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         return dataclasses.asdict(self)
+
+
+def ledger_on(cfg: PolicyConfig) -> bool:
+    """The obligation ledger is on when the profile names a producer. Then it is the only part that sends follow-ups: the
+    requirements tracker is refused (``runtime/settings_check.py``), the procedure monitor and the duty rules keep their records and send
+    nothing, the intake's check of the reply is off (its write checks stay), and the old request checklist (``deliverables``)
+    is the producer ``request``."""
+    return bool(cfg.obligations.producers)
+
+
+def rules_on_package(cfg: PolicyConfig) -> bool:
+    return cfg.checkers.rules == "on" and (bool(cfg.package) or not cfg.sources.data)
 
 
 def _kind(value: Any) -> str:

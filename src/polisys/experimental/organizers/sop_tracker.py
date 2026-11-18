@@ -18,10 +18,25 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from polisys.llm import parse_json
 from polisys.compile.validate import quote_ok
+from polisys.runtime.setting_types import Mode
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """A progress note with each customer turn."""
+
+    mode: Mode = "auto"
+    model: Optional[str] = None
+
 
 HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 MAX_SECTIONS = 6
@@ -237,3 +252,16 @@ class SopTracker:
             return None  # same as the last note: say nothing new
         self._last = text
         return text
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    model = a.model("sop_tracker", a.cfg.organizers.sop_tracker.model, timeout=90, max_tokens=8000)
+    tracker = SopTracker(a.ctx.policy_text or a.ctx.system_prompt, model)
+    if not tracker.sections:
+        raise a.fail(
+            "sop_tracker", "the task's policy text has no sections, so the tracker has nothing to say"
+        )
+    return Piece(turn_note=tracker.note, target=tracker)

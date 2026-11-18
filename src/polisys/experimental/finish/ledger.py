@@ -63,7 +63,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Literal, Optional, Sequence, Set, Tuple
 
 from polisys.hooks import AgentHooks, HookResult
 
@@ -75,6 +75,28 @@ from polisys.checks.rules import _when, canon, is_write_tool
 from polisys.tool_kind import ID_ARG
 from polisys.runtime.trace import HOOK_FAILED, audited_failure, fresh
 from polisys.finish.requirements_tracker import _failed
+from polisys.runtime.setting_types import Count
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    # Empty: no ledger. Any producer turns the obligation ledger on, and then only the ledger sends follow-ups (the requirements
+    # tracker is refused; the procedure monitor and the duty rules only record).
+    producers: List[Literal["package", "request", "duty"]] = field(default_factory=list)
+    max_follow_ups: Count = 1
+    wrong_values: Literal["never", "known_origin_only"] = "known_origin_only"
+    model: Optional[str] = (
+        None  # model that lists the checklist of the request, and that binds the ledger's cases
+    )
+    # The level of every item of the ledger. None: ``build_runtime`` uses observe, so the level written in an obligation is not
+    # read in a run. ``show`` is accepted and not built: only follow_up items are sent, so it acts as observe. Packages say
+    # observe until a measurement chooses.
+    item_level: Optional[Literal["observe", "show", "follow_up"]] = None
+
 
 UNBOUND, OPEN, MET, NOT_APPLICABLE, HELD, UNKNOWN, WRONG = (
     "unbound",
@@ -1771,3 +1793,116 @@ def _identity(args: Dict[str, Any]) -> Dict[str, str]:
         if not _is_free_text(k) and len(_as_text(v)) <= IDENTITY_CHARS
     }
     return short or {k: fold(_as_text(v)) for k, v in (args or {}).items()}
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    from polisys.experimental.finish.request_checklist import obligations_from_request
+    from polisys.package.files import obligations_from_package, runtime_rules
+    from polisys.checks.rules import obligations_from_duties
+
+    cfg = a.cfg.obligations
+    producers = set(cfg.producers)
+    if not a.ctx.tool_specs:
+        raise a.fail("obligations", "the task gives no tool specs, so no argument test can be chosen")
+    specs = [{k: v for k, v in t.items() if k != "app"} for t in a.ctx.tool_specs]
+    if a.ctx.tools_in_run is not None:
+        in_run = set(a.ctx.tools_in_run)
+        specs = [t for t in specs if t["name"] in in_run]
+    # The producers `package` and `duty` read the package; `request` reads the request, at the user message.
+    pkg = a.package("obligations") if producers & {"package", "duty"} else a.pkg
+    made: List[Any] = []
+    if "package" in producers:
+        made += obligations_from_package(pkg)
+        if not made:
+            raise a.fail("obligations", "the package has no obligations, so the ledger has nothing to check")
+    if "duty" in producers:  # a policy may have no duty rule: that is no error while another producer is on
+        made += obligations_from_duties(runtime_rules(pkg), specs)
+    if not made and "request" not in producers:
+        raise a.fail(
+            "obligations",
+            "the producers give no obligation (the package has no duty rule), so the ledger has nothing to check",
+        )
+    # The items of a request and of duties are `observe` until a measurement writes a level (Task 4.3), as the package's are.
+    # With no `obligations.item_level` the level switch decides, and the ledger is on at `observe`: it records and sends
+    # nothing until a replay allows it (spec section 5). An explicit `item_level` is what the profile asks for.
+    effective_item = cfg.item_level or "observe"
+    nav = a.cfg.organizers.navigator
+    run_type = ONE_REQUEST
+    if nav.handoff_tools or nav.handoff_text:
+        if a.cfg.organizers.loop.mode == "on":
+            raise a.fail(
+                "obligations", "a run with hand-off phrases or tools and a loop has no one final reply"
+            )
+        if a.ctx.message_tool is None:
+            raise a.fail(
+                "obligations",
+                "the task does not say which tool sends a message in the middle of a turn; give "
+                'RunContext.message_tool, or "" when the benchmark has none',
+            )
+        in_run = set(
+            [t["name"] for t in a.ctx.tool_specs] if a.ctx.tools_in_run is None else a.ctx.tools_in_run
+        )
+        missing = sorted(set(nav.handoff_tools) - in_run)
+        if missing:
+            raise a.fail("obligations", f"the hand-off tools {missing} are not in this run")
+        run_type = CONVERSATION
+    elif a.ctx.message_tool:
+        raise a.fail(
+            "obligations",
+            "the task is a conversation, and there is no hand-off phrase and no hand-off tool, so the ledger would act on an "
+            "ordinary turn; give organizers.navigator.handoff_text or handoff_tools",
+        )
+    elif a.cfg.organizers.loop.mode == "on":
+        run_type = SOP_LOOP
+    # The ledger's level limits its follow-ups (0 and 1: none, 2: one, 3: two). Under the level switch that is the run's level.
+    # An explicit `item_level` keeps the earlier reading, which the profiles written for it depend on: the level of the items
+    # says what the ledger may do.
+    if cfg.item_level:
+        level = {"observe": 0, "show": 1}.get(cfg.item_level, 3 if cfg.max_follow_ups >= 2 else 2)
+    else:
+        level = a.level
+    policy_text = "\n".join(
+        st.text
+        for d in (pkg.documents if pkg is not None else [])
+        for s in d.sections
+        for st in s.statements
+        if st.text
+    )
+    request_producer = None
+    if "request" in producers:
+        if run_type == CONVERSATION:
+            raise a.fail(
+                "obligations",
+                "the producer request reads one request, and a conversation has none: turn it off",
+            )
+        ask = a.model("obligations", cfg.model)
+        request_producer = lambda text: obligations_from_request(ask, text, specs)  # noqa: E731
+    bindable = any(o.origin in ("package", "data") for o in made)
+    ledger = ObligationLedger(
+        made,
+        a.model("obligations", cfg.model, timeout=300, max_tokens=16000) if bindable else None,
+        cards=cards_of(made, pkg.procedures if pkg is not None else ()),
+        tool_specs=a.ctx.tool_specs,
+        tools_in_run=a.ctx.tools_in_run,
+        run_type=run_type,
+        level=level,
+        max_follow_ups=cfg.max_follow_ups,
+        wrong_values=cfg.wrong_values,
+        item_level=effective_item,
+        request=a.ctx.request,
+        store=a.store("obligations") if pkg is not None else None,
+        today=a.ctx.world_time[:10],
+        policy_text=policy_text,
+        handoff_tools=nav.handoff_tools,
+        handoff_text=nav.handoff_text,
+        message_tool=a.ctx.message_tool or "",
+        request_producer=request_producer,
+    )
+    if a.loop is not None:
+        a.loop._phase_listener = ledger.loop_phase
+    return Piece(
+        hooks=[ledger], after_reply=ledger.after_reply if run_type == CONVERSATION else None, target=ledger
+    )

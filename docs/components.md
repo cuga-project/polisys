@@ -44,7 +44,8 @@ by code (`compile/handlers/tables.py`) → step graphs (`compile/handlers/proced
 ## Run time
 
 A profile (a YAML file, `runtime/profile.py`) sets every component, and a policy package holds the rules. `build_runtime`
-gives the hooks, the tools and the notes for one task. Policy switches in the environment do not exist; only secrets and
+gives the hooks, the tools and the notes for one task. The components are listed in `runtime/registry.py`; each one's settings
+(`Settings`) and its `build` function are in its own file. Policy switches in the environment do not exist; only secrets and
 the gateway address come from there.
 
 ```python

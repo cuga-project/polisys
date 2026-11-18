@@ -25,13 +25,32 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from polisys.hooks import AgentHooks, HookResult
 
 from polisys.llm import parse_json
 from polisys.package.model import step_text
 from polisys.runtime.trace import audited_failure, emit
+from polisys.runtime.setting_types import Mode
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """Procedure guide: stops for steps and preconditions of the procedure the agent is in."""
+
+    mode: Mode = "auto"
+    evidence_model: Optional[str] = (
+        None  # a model checks hard preconditions against evidence; none = no check
+    )
+    stop_first_write: bool = True  # stop the first write of a procedure
+    stop_templates: bool = True  # stop on a template mismatch
+
 
 PLACEHOLDER = re.compile(r"\[[^\]]+\]|\{[^}]+\}|<[^>]+>")
 TAG = re.compile(
@@ -396,3 +415,22 @@ def guide_from_build(path: str, **kw: Any) -> ProcedureGuide:
     data = json.loads(open(path).read())
     build = data.get("build", data)
     return ProcedureGuide(build.get("procedures") or [], **kw)
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    cfg = a.cfg.organizers.guide
+    model = None
+    if cfg.evidence_model:
+        model = a.model("guide", cfg.evidence_model, timeout=180)
+    guide = ProcedureGuide.from_package(
+        a.package("guide"), model=model, gate=cfg.stop_first_write, templates=cfg.stop_templates
+    )
+    if not any(s.get("action") for p in guide.procs for s in p.get("steps") or [] if isinstance(s, dict)):
+        raise a.fail(
+            "guide",
+            "no step of the package names a tool, so the guide has no tool to stop on (a graph package?)",
+        )
+    return Piece(hooks=[guide])

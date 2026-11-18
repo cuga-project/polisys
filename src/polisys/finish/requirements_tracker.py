@@ -13,13 +13,30 @@ The hook reads only what the agent itself read; it never opens a source.
 from __future__ import annotations
 
 import json
-from typing import Any, Callable, Dict, List, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 
 from polisys.finish.followups import CHECK_HEADER, LOOK_HEADER, required_actions
 from polisys.finish.requirements import compile_requirements, gate
 from polisys.checks.rules import is_write_tool
+from polisys.runtime.setting_types import Mode
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """A checklist of what the request and the policy require, checked at the reply."""
+
+    mode: Mode = "auto"
+    model: Optional[str] = None
+    wrong_items: Literal["off", "verify", "fix"] = "off"  # what to do with an item judged wrong
+    read_system_prompt: bool = False  # the checklist also reads the system prompt as policy text
+
 
 PER_RESULT_CHARS = 80_000  # a whole SOP or handbook file the agent opened
 DATA_CHARS = 160_000
@@ -169,3 +186,26 @@ class RequirementsTracker(AgentHooks):
             lines.append(LOOK_HEADER)
             lines += [f"- {it['text']}" for it in look]
         return HookResult(message="\n".join(lines), details=[rec])
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    cfg = a.cfg.organizers.requirements_tracker
+    model = a.model("requirements_tracker", cfg.model, timeout=400, max_tokens=16000)
+    policy = a.ctx.system_prompt if cfg.read_system_prompt else ""
+    if cfg.read_system_prompt and not policy:
+        raise a.fail("requirements_tracker", "read_system_prompt is on, and the task gives no system prompt")
+    return Piece(
+        hooks=[
+            RequirementsTracker(
+                model,
+                policy=policy,
+                wrong_mode=cfg.wrong_items,
+                voice=a.cfg.followups.voice,
+                evidence=a.cfg.followups.evidence,
+                today=a.ctx.world_time[:10],
+            )
+        ]
+    )

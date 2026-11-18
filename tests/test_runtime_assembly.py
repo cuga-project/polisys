@@ -875,7 +875,7 @@ ALLOWED_READS = {
     ("runtime/trace.py", "AuditLog.__init__"): set(),
     ("sources/detectors.py", "systemone_detector"): {"OPENROUTER_API_KEY"},
     ("sources/detectors.py", "systemone_questions"): {"OPENROUTER_API_KEY"},
-    ("runtime/assembly.py", "Models._need_key"): {"OPENROUTER_API_KEY"},
+    ("runtime/models.py", "Models._need_key"): {"OPENROUTER_API_KEY"},
     ("llm.py", "openai_json_model"): {"OPENAI_BASE_URL"},
 }
 
@@ -951,7 +951,7 @@ def test_the_layer_reads_no_policy_switch(name):
 
 
 def test_the_scan_covers_the_modules_that_read_the_environment_and_the_allowed_list_has_no_stale_entry():
-    assert {"llm.py", "sources/detectors.py", "package/files.py", "checks/retrieval.py", "runtime/assembly.py"} <= set(MODULES)
+    assert {"llm.py", "sources/detectors.py", "package/files.py", "checks/retrieval.py", "runtime/models.py"} <= set(MODULES)
     found = {
         (name, function) for name in MODULES for function, _ in environment_reads((LAYER / name).read_text())
     }

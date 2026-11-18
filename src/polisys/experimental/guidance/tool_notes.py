@@ -27,11 +27,34 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional
 
 from polisys.llm import parse_json
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
+
+@dataclass
+class Settings:
+    """Notes on each tool, written once from the policy text and the tool list and shown in the tool descriptions
+    (``experimental/guidance/tool_notes.py``): what to check before the call, which values the policy fixes, what to do after."""
+
+    mode: Literal["off", "on"] = "off"
+    model: Optional[str] = None  # the model that writes the notes; "agent": the model the agent runs on
+    # A condition whose remedy the policy does not state: as_stated keeps no note for it; fix_with_tool keeps the note that
+    # names an available tool which makes the condition true. A decision of the deployment, not of the policy.
+    unmet: Literal["as_stated", "fix_with_tool"] = "as_stated"
+    cache_dir: Optional[str] = None  # folder for the notes of each policy text and tool set; None: asked in every run
+    # The kinds of note shown to the agent; all are written and cached either way. "conflict": the tool's list of allowed
+    # values is in force where the policy's list lacks a value of it (only with authority.value_lists: tool).
+    show: List[Literal["before", "values", "after", "conflict"]] = field(
+        default_factory=lambda: ["before", "values", "after", "conflict"]
+    )
+
 
 PROMPT_VERSION = "5"
 KINDS = ("before", "values", "after")
@@ -330,3 +353,20 @@ class ToolNotes:
                 continue
             out.append(tool.model_copy(update={"description": f"{tool.description or ''}\n\n{note}".strip()}))
         return out
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Optional[Piece]:
+    cfg = a.cfg.notes.tool_notes
+    if not cfg.show:
+        raise a.fail("tool_notes", "notes.tool_notes is on with no kind of note to show")
+    specs = a.run_tool_specs()
+    if not specs:
+        raise a.fail("tool_notes", "notes.tool_notes needs RunContext.tool_specs (the tools of the run)")
+    model = a.own_model("tool_notes", cfg.model, timeout=300, max_tokens=24000)
+    text = a.policy_text("tool_notes")
+    lists = a.cfg.authority.value_lists
+    notes = ToolNotes(lambda: build_notes(text, specs, model, cfg.unmet, cfg.cache_dir, lists), list(cfg.show))
+    return Piece(wrap_tools=notes.wrap_tools, target=notes)

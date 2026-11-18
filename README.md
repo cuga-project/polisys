@@ -152,7 +152,8 @@ src/polisys/
   checks/         checks of a tool call: rules.py (typed rules, Cedar in cedar.py), verifier.py, decisions.py, router.py
   guidance/       notes the agent sees: work_method.py
   finish/         checks at the final reply: requirements_tracker.py, followups.py
-  runtime/        profile.py (profiles), assembly.py (build_runtime), levels.py (control levels and WriteChecks),
+  runtime/        profile.py (profiles), registry.py (the list of components), assembly.py (build_runtime),
+                  settings_check.py (settings that cannot work), levels.py (control levels and WriteChecks),
                   trace.py (audit lines), dry_run.py (wiring description without a model)
   experimental/   components with no held-out gain yet, by role: the gate, procedures as tools and the guide,
                   the obligation ledger, tool notes, the SOP loop (docs/components.md has the list and the evidence)

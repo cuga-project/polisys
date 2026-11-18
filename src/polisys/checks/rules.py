@@ -32,12 +32,17 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from polisys.hooks import AgentHooks, HookResult
 
 from polisys.tool_kind import READ_FIRST, case_of
 from polisys.runtime.trace import audited_failure, emit, fresh
+from polisys.runtime.context import Piece
+
+if TYPE_CHECKING:
+    from polisys.runtime.assembly import Assembly
+
 
 RULE_TYPES = (
     "required_args",
@@ -1379,3 +1384,50 @@ def obligations_from_duties(
             )
         )
     return out
+
+
+# -- wiring: what build_runtime adds to a run for this component (runtime/registry.py) ----------------------------------
+
+
+def build(a: Assembly) -> Piece:
+    from polisys.package.files import runtime_rules
+    from polisys.checks.verifier import Verifier
+
+    pkg = a.package("rules")
+    rules = runtime_rules(pkg)
+    if not rules:
+        raise a.fail("rules", "the package has no rules")
+    if not a.ctx.tool_specs:
+        raise a.fail("rules", "the task gives no tool specs, so no rule can be matched to a call")
+    choice = a.method_choice()
+    verifier = verifier_for = None
+    check = a.cfg.checkers.verifier
+    specific = check.scope == "specific_statements"
+    # specific_statements: only a judgment rule of the package, on a tool it names (spec section 4: a general statement never
+    # goes to a per-call model); a package with none builds no verifier.
+    if check.mode == "on" and any(
+        r.get("type") == "verify"
+        and (not specific or (not r.get("routed_from") and (r.get("tools") or r.get("tool"))))
+        for r in rules
+    ):
+        verifier = Verifier(a.model("verifier", check.model))
+        verifier_for = a.verifier_for("verifier") if choice else None
+    hooks = RuleSetHooks.from_package(
+        pkg,
+        a.ctx.tool_specs,
+        principal=a.ctx.principal,
+        tools_in_run=a.ctx.tools_in_run,
+        method_choice=choice,
+        verifier=verifier,
+        verifier_for=verifier_for,
+        verifier_may_deny=check.may_deny,
+        brief=a.brief(),
+        brief_guidance=a.cfg.notes.brief_guidance,
+        # a rule list shows each rule with its exceptions (spec section 8); other shapes keep the brief as measured
+        with_exceptions="rules" in a.resolution.shapes,
+        note_channel=a.note_channel(),
+        cap_effect=a.cfg.decisions.after_repeated_denials,
+        duty_follow_up=not a.ledger_on,  # with a producer, only the ledger sends follow-ups
+        verify_scope=check.scope,
+    )
+    return Piece(hooks=[hooks])
