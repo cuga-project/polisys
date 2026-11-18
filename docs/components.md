@@ -75,6 +75,38 @@ agent = MyAgent(tools=tools + parts.tools, hooks=parts.hooks)  # any host that r
 
 Nothing in this package is specific to a benchmark or a document type.
 
+## Core and experimental components (2026-11-19)
+
+A component is **core** when it is on in a profile whose gain over the agent alone was shown on a held-out task set, by a
+decision rule written before the run. The evidence belongs to the profile: no run measured one of its components alone.
+Every other component is **experimental**: a profile can turn it on, and it is not a recommended default.
+
+Profiles with a held-out gain:
+
+| Profile | Components on | Held-out result (agent alone → with the profile) |
+|---|---|---|
+| Rules from data | typed rules, online intake with discovery, verifier, write decisions, read-before-write reminder, requirements tracker | AutomationBench, 42 tasks x 3 trials, gpt-oss-120b: strict 4.0 → 11.9 (p 0.032), partial 38.4 → 48.0 |
+| Listing and read-back | online intake with listing, superseded rules dropped, read-back note | Same set, gpt-oss-120b: strict 4.0 → 15.9 (p 0.004), partial 38.4 → 54.4. Haiku 5.5: no gain shown, no harm |
+| Read-back | read-back note | EnterpriseOps-Gym HR, 80 tasks x 3 trials, Haiku 5.5: strict 15.8 → 19.6 (p 0.025), partial 52.5 → 56.5 |
+
+| Component | Profile key | Status | Why |
+|---|---|---|---|
+| Typed rules, procedure monitor | `checkers.rules` | Core | In "Rules from data". Role rules made from grant tables failed the no-harm check on two service-desk domains: keep them at `remind` |
+| Online intake, detectors, listing | `sources.data`, `sources.listing` | Core | In both AutomationBench profiles |
+| Verifier, write decisions | `checkers.verifier`, `decisions` | Core | In "Rules from data" |
+| Requirements tracker | `organizers.requirements_tracker` | Core | In "Rules from data". Alone it was neutral, and harmful when its items were wrong |
+| Read-back note | `notes.work_method: [readback]` | Core | Held-out gain on HR |
+| Other work-method notes (finish check, lookup retry, quoted values) | `notes.work_method` | Experimental | Tuning gain on 5 HR tasks; held-out gain not shown; no harm |
+| Gate | `checkers.gate` | Experimental | Gain only in-sample (3 tasks with written SOPs) |
+| Procedure guide, procedure tools, procedure push | `organizers.guide`, `organizers.procedure_tools`, `organizers.procedure_push` | Experimental | Guide: gain only in-sample. Tools alone: no gain |
+| Obligation ledger, request checklist | `obligations` | Experimental | Held-out gain not shown; no harm |
+| Tool notes, default values, policy lines, code guards | `notes.tool_notes`, `checkers.default_values`, `notes.policy_lines`, `checkers.guard_code` | Experimental | Held-out gain not shown; no harm |
+| Read-first note | `notes.read_first` | Experimental | In-sample: fewer guardrail breaks and a lower strict score |
+| SOP loop | `organizers.loop` | Experimental | Gain only in-sample; neutral or harmful on tasks without an SOP |
+| SOP tracker | `organizers.sop_tracker` | Experimental | τ² Telecom: +12 points, not significant (p 0.15); harm on the airline domain |
+| Navigator | `organizers.navigator` | Experimental | Offline replay only |
+| SOP planner, procedure compiler | none | Experimental | Nothing imports them; the planner is a dropped spike |
+
 ## SOP adherence (added 2026-11-02)
 
 Measured on one benchmark with written SOPs, 3 public tasks, paired with the agent alone, in-sample (details are in the
