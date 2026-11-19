@@ -30,7 +30,8 @@ with an audit sink writes a `hook_failed` line. This is deliberate and it is a f
 ## Running them
 
 ```python
-from polisys.hooks import HookRegistry, wrap_tools_with_hooks
+from polisys.hooks import HookRegistry
+from polisys.hosts.langchain import wrap_tools_with_hooks
 
 registry = HookRegistry(parts.hooks)               # parts = build_runtime(...)
 tools = wrap_tools_with_hooks(tools, registry)     # LangChain tools: before/after_tool_call around each call

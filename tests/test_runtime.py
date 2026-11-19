@@ -85,7 +85,8 @@ def test_remind_only_type_goes_to_note_not_deny():
 def test_reminder_does_not_block_the_hooked_tool_but_a_deny_does():
     from langchain_core.tools import StructuredTool
 
-    from polisys.hooks import HookBlocked, HookRegistry, wrap_tools_with_hooks
+    from polisys.hooks import HookBlocked, HookRegistry
+    from polisys.hosts.langchain import wrap_tools_with_hooks
 
     ran = []
 

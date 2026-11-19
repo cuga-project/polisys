@@ -1,9 +1,10 @@
-"""The hook contract: ``AgentHooks`` (nine lifecycle hooks and ``tool_blocked``), the registry that runs them, and the glue
-for LangChain tools (``wrap_tools_with_hooks``) and model callbacks (``HooksCallback``).
+"""The hook contract: ``AgentHooks`` (nine lifecycle hooks and ``tool_blocked``) and the registry that runs them.
 
 This module is the contract between a host agent and the policy components. It started as a copy of
 ``cuga.backend.hooks`` of the CUGA agent (policy/stable-v1), and the two are structurally the same: a hook object written
-against either works in the other host. The CUGA-only glue lives in ``polisys.adapters.cuga``."""
+against either works in the other host. It imports no agent framework. The glue for LangChain tools and model callbacks
+(``wrap_tools_with_hooks``, ``HooksCallback``) is in ``polisys.hosts.langchain``; the CUGA-only glue is in
+``polisys.hosts.cuga``."""
 
 from __future__ import annotations
 
@@ -11,9 +12,12 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from langchain_core.callbacks import BaseCallbackHandler
-from langchain_core.tools import BaseTool, StructuredTool
 from loguru import logger
+
+from polisys._aliases import names_of
+
+# The LangChain glue was in this file before 2026-11: its names are still names of this module, read on first use.
+__getattr__ = names_of(__name__, "polisys.hosts.langchain")
 
 HOOK_NAMES = (
     "session_start",
@@ -245,58 +249,6 @@ class HookRegistry:
 
 def _fmt_call(tool: str, args: Dict[str, Any]) -> str:
     return f"{tool}({', '.join(f'{k}={v!r}' for k, v in args.items())})"[:200]
-
-
-def wrap_tools_with_hooks(tools: List[BaseTool], registry: HookRegistry) -> List[BaseTool]:
-    """before_tool_call / after_tool_call around each tool. A block raises HookBlocked with the hook's message."""
-
-    def wrap(tool: BaseTool) -> BaseTool:
-        schema = tool.args_schema
-        order = list(getattr(schema, "model_fields", {}) or {}) if isinstance(schema, type) else []
-
-        async def _hooked(*pos: Any, **kwargs: Any) -> Any:
-            # CodeAct calls the coroutine directly, so positional arguments arrive here; map them to
-            # the schema fields in signature order (an unwrapped tool accepts them the same way).
-            if len(pos) > len(order):
-                raise TypeError(
-                    f"{tool.name}() takes at most {len(order)} positional arguments ({len(pos)} given)"
-                )
-            kwargs = {**dict(zip(order, pos)), **kwargs}
-            args = {
-                k: v for k, v in kwargs.items() if v is not None
-            }  # schema defaults are not part of the call
-            blocked = registry.before_tool_call(tool.name, args)
-            if blocked:
-                raise HookBlocked(blocked)
-            result = await tool.ainvoke(args)
-            note = registry.after_tool_call(tool.name, args, result)
-            return registry.attach_note(result, note) if note else result
-
-        return StructuredTool.from_function(
-            coroutine=_hooked,
-            name=tool.name,
-            description=tool.description,
-            args_schema=tool.args_schema,
-            metadata={**(tool.metadata or {}), "polisys_hooks": True},
-        )
-
-    return [wrap(t) for t in tools]
-
-
-class HooksCallback(BaseCallbackHandler):
-    """Reports each model output to after_llm_call (observe only)."""
-
-    def __init__(self, registry: HookRegistry):
-        self.registry = registry
-
-    def on_llm_end(self, response: Any, **kwargs: Any) -> None:
-        try:
-            gen = response.generations[0][0]
-            text = getattr(getattr(gen, "message", None), "content", None) or getattr(gen, "text", "")
-        except Exception:
-            return
-        if isinstance(text, str) and text.strip():
-            self.registry.after_llm_call(text)
 
 
 def host_features_of(registry: Any) -> frozenset:

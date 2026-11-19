@@ -8,7 +8,8 @@ from typing import Any, Dict, List
 
 from langchain_core.tools import BaseTool
 
-from polisys.hooks import HookRegistry, host_features_of, wrap_tools_with_hooks
+from polisys.hooks import HookRegistry, host_features_of
+from polisys.hosts.langchain import wrap_tools_with_hooks
 
 
 def wrap_provider_with_hooks(provider: Any, registry: HookRegistry) -> Any:
