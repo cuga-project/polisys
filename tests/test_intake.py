@@ -2,7 +2,7 @@
 
 import json
 
-from polisys.intake import OnlinePolicyIntake
+from polisys.sources.intake import OnlinePolicyIntake
 
 RULES = {"subject": "Response Priority Rules", "body": "RESPOND: questions (High). SKIP: generic mentions."}
 UPDATE = {
@@ -195,7 +195,7 @@ def test_detector_below_threshold_means_no_extraction_call():
 
 
 def test_call_identifiers_skip_plain_numbers_and_dates():
-    from polisys.intake import call_tokens
+    from polisys.sources.intake import call_tokens
 
     args = {
         "to": "safety.officer@example.com",

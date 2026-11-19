@@ -6,8 +6,8 @@ import shutil
 from pathlib import Path
 
 
-from polisys.documents import document_from_text, load_document, load_policy_set
-from polisys.model import Trust
+from polisys.compile.documents import document_from_text, load_document, load_policy_set
+from polisys.package.model import Trust
 
 FIX = Path(__file__).parent / "fixtures"
 
@@ -78,14 +78,14 @@ def test_document_from_text_for_online_records():
 
 
 def test_split_policy_still_importable_from_builder():
-    from polisys.builder import Section, split_policy
+    from polisys.compile.builder import Section, split_policy
 
     secs = split_policy("## 1. Scope\nAll incidents.\n## 2. Rules\n- Never assume urgency.")
     assert [s.sid for s in secs] == ["1", "2"] and isinstance(secs[0], Section)
 
 
 def test_a_learned_pattern_that_matches_restarting_list_numbers_is_rejected():
-    from polisys.structure import _valid_heading
+    from polisys.compile.structure import _valid_heading
 
     lines = [
         "## 5.1 Intake",
@@ -108,7 +108,7 @@ def test_a_learned_pattern_that_matches_restarting_list_numbers_is_rejected():
 
 
 def test_a_clause_pattern_colliding_with_heading_numbers_is_dropped():
-    from polisys.structure import _drop_colliding_clauses
+    from polisys.compile.structure import _drop_colliding_clauses
 
     lines = [
         "# 1 Purpose",
@@ -128,7 +128,7 @@ def test_a_clause_pattern_colliding_with_heading_numbers_is_dropped():
 
 
 def test_a_title_before_a_name_does_not_end_a_sentence():
-    from polisys.documents import sentences
+    from polisys.compile.documents import sentences
 
     text = "Send the notice to Dr. Rivera and to Mr. Hall. The notice names Prof. Lee. Ms. Cho signs it."
     assert sentences(text) == [
@@ -142,7 +142,7 @@ def test_dashes_of_an_html_document_stay_and_a_leading_dash_is_still_a_bullet(tm
     pytest.importorskip("docling")
     """docling folds en and em dashes to a hyphen. They are kept, except one that starts a line, which stays the hyphen it
     always became (a list bullet), so no statement or id moves."""
-    from polisys.documents import _hold_dashes, _restore_dashes
+    from polisys.compile.documents import _hold_dashes, _restore_dashes
 
     held = _hold_dashes("Mon &ndash; Fri — open &#8211; late")
     assert "–" not in held and "&ndash;" not in held and "—" not in held
@@ -162,7 +162,7 @@ def test_dashes_of_an_html_document_stay_and_a_leading_dash_is_still_a_bullet(tm
 
 
 def test_html_that_is_not_utf8_is_read_as_it_is():
-    from polisys.documents import _held_html
+    from polisys.compile.documents import _held_html
 
     assert _held_html("<p>a – b</p>".encode("cp1252")) is None  # not UTF-8
     assert _held_html('<meta charset="windows-1252"><p>a &ndash; b</p>'.encode()) is None  # another charset

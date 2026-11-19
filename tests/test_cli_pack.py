@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 from polisys import cli
-from polisys.dry_run import RecordingModels
-from polisys.package import load_package
-from polisys.policy_config import PolicyConfig
-from polisys.procedure_store import ProcedureStore
-from polisys.runtime import RunContext, build_runtime
-from polisys.store_gate import StoreGate
+from polisys.runtime.dry_run import RecordingModels
+from polisys.package.files import load_package
+from polisys.runtime.profile import PolicyConfig
+from polisys.experimental.guidance.procedure_store import ProcedureStore
+from polisys.runtime.assembly import RunContext, build_runtime
+from polisys.experimental.checks.gate import StoreGate
 
 SKILL = Path(cli.__file__).parent / "skill" / "SKILL.md"
 
@@ -477,7 +477,7 @@ def test_a_graph_without_parts_gives_the_same_procedure_text_and_a_package_with_
 
 
 def test_the_sop_index_reads_the_text_of_a_step_that_has_no_quote():
-    from polisys.sop_retrieval import proc_text
+    from polisys.checks.retrieval import proc_text
 
     assert "Read the record." in proc_text({"name": "n", "steps": [{"id": "s", "text": "Read the record."}]})
     assert "From a build." in proc_text({"name": "n", "steps": [{"quote": "From a build.", "text": "other"}]})
@@ -485,9 +485,9 @@ def test_the_sop_index_reads_the_text_of_a_step_that_has_no_quote():
 
 def test_one_skill_package_serves_the_gate_and_the_guide(tmp_path):
     """Steps with ``action`` give the guide its tools; the SOP index reads the step text (a step has no ``quote``)."""
-    from polisys.package import to_build
-    from polisys.procedure_guide import ProcedureGuide
-    from polisys.sop_retrieval import SopIndex
+    from polisys.package.files import to_build
+    from polisys.experimental.guidance.procedure_guide import ProcedureGuide
+    from polisys.checks.retrieval import SopIndex
 
     _files(tmp_path)
     assert _pack(tmp_path) == 0
@@ -500,7 +500,7 @@ def test_one_skill_package_serves_the_gate_and_the_guide(tmp_path):
         "send_message",
     ]
     index = SopIndex(to_build(pkg))
-    from polisys.sop_retrieval import proc_text
+    from polisys.checks.retrieval import proc_text
 
     assert "Set the asset status to in_transit" in proc_text(index.procs[0])
 
@@ -609,7 +609,7 @@ def test_a_must_not_that_cannot_be_read_alone_is_a_warning(tmp_path, capsys):
 
 
 def test_a_dash_or_a_curly_quote_does_not_make_a_quote_differ(tmp_path, capsys):
-    from polisys.validate import _fold
+    from polisys.compile.validate import _fold
 
     assert _fold("Mon \u2013 Fri, \u201cdone\u201d") == _fold('mon - fri, "done"')
     _files(tmp_path)
@@ -660,8 +660,8 @@ def test_a_priority_is_shown_to_the_agent_and_a_graph_without_one_is_unchanged()
 
 
 def _text(*statements):
-    from polisys.model import Document, PolicyPackage, Section, Statement
-    from polisys.validate import _Text
+    from polisys.package.model import Document, PolicyPackage, Section, Statement
+    from polisys.compile.validate import _Text
 
     doc = Document(
         id="d",
@@ -695,7 +695,7 @@ def test_an_obligation_id_with_dots_can_be_named_in_open_values(tmp_path, capsys
 
 
 def test_an_optional_boolean_or_enum_argument_is_not_looked_up(tmp_path, capsys):
-    from polisys.validate import _tool_typed
+    from polisys.compile.validate import _tool_typed
 
     assert _tool_typed({"anyOf": [{"type": "boolean"}, {"type": "null"}]})
     assert _tool_typed({"type": ["boolean", "null"]})

@@ -2,7 +2,7 @@
 
 import pytest
 
-from polisys.model import (
+from polisys.package.model import (
     Document,
     Link,
     LinkType,

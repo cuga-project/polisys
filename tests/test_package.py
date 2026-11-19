@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from polisys.model import (
+from polisys.package.model import (
     Obligation,
     PolicyBuild,
     PolicyPackage,
@@ -18,7 +18,7 @@ from polisys.model import (
     from_json,
     to_json,
 )
-from polisys.package import (
+from polisys.package.files import (
     from_build,
     from_store_graph,
     load_package,
@@ -28,8 +28,8 @@ from polisys.package import (
     to_build,
     to_store_graph,
 )
-from polisys.procedure_store import ProcedureStore
-from polisys.ruleset import RuleSetHooks
+from polisys.experimental.guidance.procedure_store import ProcedureStore
+from polisys.checks.rules import RuleSetHooks
 
 SOURCE = {"document": "policy-abc", "section": "4.2", "page": None, "line": 65}
 

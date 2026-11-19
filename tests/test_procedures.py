@@ -1,8 +1,8 @@
 """Procedures: numbered steps become a step graph; the monitor reminds, warns on order, and follows up once."""
 
-from polisys.documents import load_document
-from polisys.handlers.procedures import procedures
-from polisys.procedure_monitor import ProcedureMonitor
+from polisys.compile.documents import load_document
+from polisys.compile.handlers.procedures import procedures
+from polisys.checks.procedure_monitor import ProcedureMonitor
 
 SOP = """## 4. Invoices
 

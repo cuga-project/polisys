@@ -2,10 +2,10 @@
 
 import json
 
-from polisys.decisions import Decisions, has_limit
-from polisys.intake import OnlinePolicyIntake
-from polisys.ruleset import MAX_SAME_DENY, RuleSetHooks
-from polisys.trace import PolicyTrace
+from polisys.checks.decisions import Decisions, has_limit
+from polisys.sources.intake import OnlinePolicyIntake
+from polisys.checks.rules import MAX_SAME_DENY, RuleSetHooks
+from polisys.runtime.trace import PolicyTrace
 
 RULES = {
     "subject": "RTO policy",
@@ -155,7 +155,7 @@ def test_trace_records_llm_and_decision_calls():
 
 
 def test_record_signal_is_checked_even_without_rules():
-    from polisys.intake import OnlinePolicyIntake as Intake
+    from polisys.sources.intake import OnlinePolicyIntake as Intake
 
     ask = ask_with({"record_says_skip": 0.9})
     h = Intake(
@@ -195,7 +195,7 @@ def test_model_violation_twice_is_held_with_hold_effect():
 
 
 def test_fact_store_finds_records_by_short_text_values_only_when_enabled():
-    from polisys.facts import FactStore, call_phrases
+    from polisys.checks.facts import FactStore, call_phrases
 
     rows = {"tickets": [{"subject": "Internal test ticket", "status": "open"}, {"subject": "Login fails"}]}
     on, off = FactStore(match_phrases=True), FactStore()

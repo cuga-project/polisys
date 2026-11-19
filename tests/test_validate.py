@@ -6,8 +6,8 @@ import json
 import pytest
 
 from polisys import cli
-from polisys.documents import load_document
-from polisys.model import (
+from polisys.compile.documents import load_document
+from polisys.package.model import (
     CoverageItem,
     Document,
     Link,
@@ -25,8 +25,8 @@ from polisys.model import (
     Trust,
     to_json,
 )
-from polisys.package import save_package
-from polisys.validate import diff_builds, resolve_conflicts, validate_build, validate_package
+from polisys.package.files import save_package
+from polisys.compile.validate import diff_builds, resolve_conflicts, validate_build, validate_package
 
 SPECS = [
     {
@@ -410,7 +410,7 @@ def test_rules_without_statements_cannot_show_coverage():
 
 
 def test_statement_outcomes_give_each_statement_the_outcomes_that_coverage_reads():
-    from polisys.validate import statement_outcomes
+    from polisys.compile.validate import statement_outcomes
 
     pkg = _coverage_package(coverage=[CoverageItem("d:1:2", "out_of_scope", "not for the agent")])
     outcomes = statement_outcomes(pkg)
@@ -679,7 +679,7 @@ def test_a_date_that_is_not_a_date_is_an_error():
 def test_duplicate_rule_ids_and_unknown_fields():
     pkg = _clean_package()
     pkg.rules.append(copy.deepcopy(pkg.rules[0]))
-    pkg.extra["obligatons"] = []  # a typo goes to ``extra``; the keys package.py keeps are fine
+    pkg.extra["obligatons"] = []  # a typo goes to ``extra``; the keys package/files.py keeps are fine
     pkg.extra["stats"] = {}
     pkg.extra["_layout"] = {}
     found = validate_package(pkg, TOOLS)
@@ -764,10 +764,10 @@ def test_cli_still_validates_a_build_and_needs_tools_for_it(tmp_path, capsys):
 
 # -- fix round 1 -------------------------------------------------------------------------------------------------------
 
-from polisys.model import from_json  # noqa: E402
-from polisys.ruleset import RuleSetHooks  # noqa: E402
-from polisys.validate import RULE_SLOTS, _is_broken, _slot_findings, _trigger_tools  # noqa: E402
-from polisys.verifier import Verifier  # noqa: E402
+from polisys.package.model import from_json  # noqa: E402
+from polisys.checks.rules import RuleSetHooks  # noqa: E402
+from polisys.compile.validate import RULE_SLOTS, _is_broken, _slot_findings, _trigger_tools  # noqa: E402
+from polisys.checks.verifier import Verifier  # noqa: E402
 
 
 @pytest.mark.parametrize(

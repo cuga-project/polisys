@@ -6,7 +6,7 @@ This is how polisys represents a policy after reading it. The same model is used
 - **online intake**, for policies found during the run (an email, a sheet, a rule in the user's request);
 - the **runtime checks** at the host agent's hooks.
 
-Code: `model.py`. Every object has a `source` (document, section, page, line or record id) and a verbatim
+Code: `package/model.py`. Every object has a `source` (document, section, page, line or record id) and a verbatim
 `quote`. So every check can name the text it enforces.
 
 ```mermaid
@@ -32,7 +32,7 @@ flowchart LR
 | `Document` | One source: a file, a system prompt, an email, a sheet, a user message | `id`, `kind`, `title`, `trust`, `effective_date`, `authority_rank`, `sections`, `hash` |
 | `Section` | A numbered or titled part of a document | `id` (`4.2`, `preamble`), `title`, `page`, `parent`, `statements` |
 | `Statement` | One sentence, bullet or table row that says something | `id`, `text`, `types` (at most 2), `modality` |
-| `Rule` | A checkable form of statements | `type`, `rule` (the typed rule dict that `ruleset.py` runs), `statement_ids`, `checker`, `may_deny` |
+| `Rule` | A checkable form of statements | `type`, `rule` (the typed rule dict that `checks/rules.py` runs), `statement_ids`, `checker`, `may_deny` |
 | `Procedure` | An SOP as a step graph | `trigger`, `steps`, `edges` |
 | `Step` | One step of a procedure | `action` (tool name or `reply`), `required`, `condition` |
 | `Definition` | The meaning of a term | `term`, `meaning`, `used_by` |
@@ -57,13 +57,13 @@ unchanged:
 - `extra` on `Rule`, `Step`, `Procedure`, `Document`, `Section`, `Statement`, `Link`, `CoverageItem`: what a source
   artifact has and the model does not.
 
-`router.py` registers the retrieval methods by name (design section 11): `Router.select(query, package)` gives procedure ids,
+`checks/router.py` registers the retrieval methods by name (design section 11): `Router.select(query, package)` gives procedure ids,
 `Expander.expand(ids, package)` gives a `Scope` (procedures and rules). The gate reads `Scope.rules`; the ledger reads the ids of
 `Scope.procedures` at binding and writes them to the audit. `checkers.router.kind` and `checkers.router.expand` choose the
 methods; a registered name is all a new method needs. `model.authority_of` gives a document's rank from the config's
 `priority_classes` (highest first), and `validate_package(..., priority_classes=...)` warns about an unknown class.
 
-`package.py` has `load_package`, `save_package`, `from_build`, `to_build`, `from_store_graph` and `to_store_graph`. Round
+`package/files.py` has `load_package`, `save_package`, `from_build`, `to_build`, `from_store_graph` and `to_store_graph`. Round
 trip is per format: `to_build(from_build(x)) == x` and `to_store_graph(from_store_graph(x)) == x`. Conversion does not
 merge the two formats.
 
@@ -107,14 +107,14 @@ contain its statement, an unknown draft key or modality, or a test with no `tool
 writes the statements with no modality to `<output>.unmarked.txt`. `validate` (without `--legacy`) then decides whether the
 package is complete and whether it is the policy's own words.
 
-**What counts as the outcome of a `must` or `must_not` statement** (`validate.py`, `_coverage_errors`): a rule that lists
+**What counts as the outcome of a `must` or `must_not` statement** (`compile/validate.py`, `_coverage_errors`): a rule that lists
 the statement in `statement_ids` (its `class` gives hard, judgment or guidance); a procedure step whose `id` is the
 statement id; a procedure `preconditions`, `exceptions`, `templates` or `escalations` item, or an obligation
 `source.quote`, that copies at least 4 words of it; a `global.definitions` item with `source.statement`; a policy
 question that lists it; or a `coverage` item `out_of_scope` with a reason. A procedure's `must_not` and `decisions` and
 everything under `global` are read at run time but do not count: the same statement also has a step or a rule.
 
-**Text the package must come from** (`validate.py`, `_invented_errors`; `quote_not_verbatim`): an obligation
+**Text the package must come from** (`compile/validate.py`, `_invented_errors`; `quote_not_verbatim`): an obligation
 `source.quote`, a part's `quote`, a step's `text` and every must-not are checked against the documents' text, whitespace and
 emphasis marks aside. A step `text` may join a statement with the one the converter split from it. A must-not is verbatim, or
 a condition and a prohibition of at least 3 words each, each verbatim. A role of a role rule must be named in the text.
@@ -145,7 +145,7 @@ answer gives `unknown`, not sent), preferably the id of a procedure decision. A 
 ["<obligation id>.<value name>"]`; only a `literal` named there is refused (`literal_open_question`). A value with no origin
 is not asserted. A skill package sets `origin: package`, `check: code`, `level: observe`.
 
-**Words the checks compare** (`validate.py`): text is compared after folding spaces, emphasis marks, case, every dash to a
+**Words the checks compare** (`compile/validate.py`): text is compared after folding spaces, emphasis marks, case, every dash to a
 hyphen and curly quotes to straight ones. `not_in_text` and `bare_must_not` are warnings: global rules, the `rule` of each decision, escalation
 and triage steps, definitions, notes and `applies_when` are verbatim or up to three runs of at least 3 verbatim words;
 template text, literal values (not on enum or boolean arguments) and the fixed parts of template values are verbatim; a

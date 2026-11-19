@@ -36,7 +36,7 @@ from collections import Counter
 from pathlib import Path
 from typing import List, Optional
 
-from .model import PACKAGE_SCHEMA, Modality, PolicyBuild, PolicyPackage, PolicySet, from_json, to_json
+from polisys.package.model import PACKAGE_SCHEMA, Modality, PolicyBuild, PolicyPackage, PolicySet, from_json, to_json
 
 WARN_ONLY = {"schema_conflict"}
 PACKAGE_KEYS = {
@@ -52,7 +52,7 @@ PACKAGE_KEYS = {
 def _model(name: Optional[str]):
     if not name:
         return None
-    from .llm import openai_json_model, openrouter_json_model
+    from polisys.llm import openai_json_model, openrouter_json_model
 
     return (
         openrouter_json_model(name.split(":", 1)[1])
@@ -67,7 +67,7 @@ def _tools(path: str) -> List[dict]:
 
 
 def cmd_convert(a: argparse.Namespace) -> int:
-    from .documents import load_policy_set
+    from polisys.compile.documents import load_policy_set
 
     meta = json.loads(Path(a.meta).read_text()) if a.meta else {}
     ps = load_policy_set([Path(f) for f in a.files], meta, model=_model(a.model))
@@ -79,7 +79,7 @@ def cmd_convert(a: argparse.Namespace) -> int:
 
 
 def cmd_build(a: argparse.Namespace) -> int:
-    from .builder import build_policy_set
+    from polisys.compile.builder import build_policy_set
 
     ps = from_json(PolicySet, json.loads(Path(a.set).read_text()))
     model = _model(a.model)
@@ -109,7 +109,7 @@ def _fail(message: str) -> int:
 
 
 def cmd_validate(a: argparse.Namespace) -> int:
-    from .validate import validate_build, validate_package
+    from polisys.compile.validate import validate_build, validate_package
 
     try:
         data = json.loads(Path(a.build).read_text(encoding="utf-8"))
@@ -171,7 +171,7 @@ TEST_VERDICTS = ("allow", "deny")
 def _draft_rule(raw: object) -> object:
     """A draft rule may leave out what the other fields already say: ``type`` (from ``rule``), the id inside ``rule``, the
     ``checker`` and the quote inside ``rule``. Anything that is not an object is left as it is, for ``validate``."""
-    from .handlers.prose import CHECKER
+    from polisys.compile.handlers.prose import CHECKER
 
     if not isinstance(raw, dict) or not isinstance(raw.get("rule"), dict):
         return raw
@@ -209,7 +209,7 @@ def _fill_steps(draft: dict, ps: PolicySet) -> None:
 
 def _structure_problems(draft: dict, ps: PolicySet) -> List[str]:
     """Ids inside procedures, obligations, questions and definitions that point at nothing."""
-    from .validate import _fold
+    from polisys.compile.validate import _fold
 
     text = {st.id: _fold(st.text) for d in ps.documents for st in d.statements}
     problems: List[str] = []
@@ -346,7 +346,7 @@ def cmd_pack(a: argparse.Namespace) -> int:
         pkg = from_json(PolicyPackage, data)
     except Exception as exc:  # a shape the decoder cannot read (an unknown link type, a number for a list)
         return _fail(f"cannot read the draft: {type(exc).__name__}: {exc}")
-    from .package import save_package
+    from polisys.package.files import save_package
 
     save_package(pkg, a.output)
     statements = [st for d in pkg.documents for st in d.statements]
@@ -396,8 +396,8 @@ def cmd_coverage(a: argparse.Namespace) -> int:
 
 def cmd_counts(a: argparse.Namespace) -> int:
     """One JSON object per package file: what it holds (``counts.package_counts``). No model, no tool schema."""
-    from .counts import package_counts
-    from .package import load_package
+    from polisys.compile.counts import package_counts
+    from polisys.package.files import load_package
 
     out = {}
     for path in a.packages:

@@ -2,7 +2,7 @@
 
 import json
 
-from polisys.intake import OnlinePolicyIntake
+from polisys.sources.intake import OnlinePolicyIntake
 
 SOP = {
     "subject": "Conversion SOP",

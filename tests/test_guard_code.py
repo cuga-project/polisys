@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from polisys.guard_code import compile_check, flatten_records, is_safe, run_check
+from polisys.experimental.checks.guard_code import compile_check, flatten_records, is_safe, run_check
 
 CHECK = '''def check(call, data, today):
     out = []
@@ -57,7 +57,7 @@ def test_runaway_check_is_stopped():
 
 
 def test_intake_reminds_by_default_and_denies_in_deny_mode():
-    from polisys.intake import OnlinePolicyIntake
+    from polisys.sources.intake import OnlinePolicyIntake
 
     def model(system, user):
         if "Python check" in system:

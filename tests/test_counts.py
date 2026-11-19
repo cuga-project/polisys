@@ -3,10 +3,10 @@
 import json
 
 from polisys import cli
-from polisys.counts import package_counts
-from polisys.documents import load_document
-from polisys.model import CoverageItem, PolicyPackage, Rule
-from polisys.package import save_package
+from polisys.compile.counts import package_counts
+from polisys.compile.documents import load_document
+from polisys.package.model import CoverageItem, PolicyPackage, Rule
+from polisys.package.files import save_package
 
 
 def _package():

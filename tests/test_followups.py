@@ -1,9 +1,9 @@
-"""What a check says at the reply: voice and evidence (followups.py)."""
+"""What a check says at the reply: voice and evidence (finish/followups.py)."""
 
 import json
 
-from polisys.followups import CHECK_HEADER, LOOK_HEADER, required_actions
-from polisys.tracker import RequirementsTracker
+from polisys.finish.followups import CHECK_HEADER, LOOK_HEADER, required_actions
+from polisys.finish.requirements_tracker import RequirementsTracker
 
 ITEM = {"kind": "effect", "text": "Send the report to the team.", "quote": "send the report", "when": "", "check": {}}
 

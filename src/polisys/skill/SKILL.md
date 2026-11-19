@@ -58,7 +58,7 @@ must-not gate read `procedures` and `global` (as a store graph: steps as text, `
 1. **Convert.** `python -m polisys.cli convert <files...> -o set.json [--meta meta.json]`.
    Read `set.json`: check that sections and statement ids look right (numbers, letters, "Article II", appendices). A
    numbered subsection's title is its statement `:1`; the text follows from `:2`. If a document numbers its parts in a way
-   the converter missed, write a structure profile for it (heading and reference patterns, see `structure.py`) into
+   the converter missed, write a structure profile for it (heading and reference patterns, see `compile/structure.py`) into
    `meta.json` as `"structure"` and convert again.
 2. **Mark the statements.** Read every statement. In `draft.json` set `"modality": {"<statement id>": "must" | "must_not"
    | "may" | "should"}`. `must` and `must_not` are the statements that need an outcome (step 3), so mark one only if it

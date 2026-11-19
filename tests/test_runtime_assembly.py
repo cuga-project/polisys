@@ -10,11 +10,11 @@ from pathlib import Path
 import pytest
 
 from polisys.hooks import AgentHooks
-from polisys.dry_run import DryRunModelCall, RecordingModels, describe_parts
-from polisys.package import from_build, from_store_graph
-from polisys.policy_config import PolicyConfig
-from polisys.procedure_store import POLICY_TOOLS_NOTE
-from polisys.runtime import (
+from polisys.runtime.dry_run import DryRunModelCall, RecordingModels, describe_parts
+from polisys.package.files import from_build, from_store_graph
+from polisys.runtime.profile import PolicyConfig
+from polisys.experimental.guidance.procedure_store import POLICY_TOOLS_NOTE
+from polisys.runtime.assembly import (
     COMPONENTS,
     Assembly,
     Component,
@@ -24,8 +24,8 @@ from polisys.runtime import (
     RuntimeWiringError,
     build_runtime,
 )
-from polisys.sop_navigator import HandoffGuard, SopNavigator
-from polisys.store_gate import StoreGate
+from polisys.experimental.organizers.sop_navigator import HandoffGuard, SopNavigator
+from polisys.experimental.checks.gate import StoreGate
 
 from .test_from_package import _navigator_build
 from .test_sop_navigator import POLICY as NAVIGATOR_POLICY
@@ -425,7 +425,7 @@ def test_gate_and_policy_tools_share_one_store_and_the_description_says_so():
 
 
 def test_the_description_shows_a_store_that_is_not_shared(monkeypatch):
-    from polisys.procedure_store import ProcedureStore
+    from polisys.experimental.guidance.procedure_store import ProcedureStore
 
     monkeypatch.setattr(Assembly, "store", lambda self, component: ProcedureStore.from_package(self.pkg))
     cfg = config(GATE_ON, {"procedure_tools": "on"}, package="p.json")
@@ -448,7 +448,7 @@ def test_the_store_verifier_is_gone():
     with pytest.raises(ImportError):
         importlib.import_module("polisys.store_verifier")
     assert "store_verifier" not in COMPONENTS
-    import polisys.runtime as runtime
+    import polisys.runtime.assembly as runtime
 
     assert not hasattr(runtime, "STORE_VERIFIER_MODEL") and not hasattr(runtime, "_build_store_verifier")
 
@@ -598,7 +598,7 @@ def test_a_component_registered_in_components_reaches_the_run_with_no_other_chan
 
 
 def test_the_loop_slot_runs_the_loop_with_the_recorder_that_is_also_a_hook(monkeypatch):
-    from polisys.sop_loop import LoopHooks, SopLoop
+    from polisys.experimental.organizers.sop_loop import LoopHooks, SopLoop
 
     seen = {}
 
@@ -787,8 +787,8 @@ def test_the_description_is_the_same_for_two_builds_and_differs_when_a_rule_chan
 
 
 def test_a_rule_from_a_package_is_described_like_the_same_rule_from_a_build():
-    from polisys.dry_run import describe_wiring
-    from polisys.ruleset import RuleSetHooks
+    from polisys.runtime.dry_run import describe_wiring
+    from polisys.checks.rules import RuleSetHooks
 
     parts, models = build(
         config({"rules": "on"}, package="p.json"), from_build({"rules": [RULE], "procedures": []})
@@ -800,7 +800,7 @@ def test_a_rule_from_a_package_is_described_like_the_same_rule_from_a_build():
 
 
 def test_a_slot_with_a_plain_function_still_shows_as_used():
-    from polisys.dry_run import slot_target
+    from polisys.runtime.dry_run import slot_target
 
     fn = lambda turns: None  # noqa: E731
     assert slot_target(fn) is fn and slot_target(None) is None
@@ -828,7 +828,7 @@ def test_recording_models_raise_when_called_and_record_the_defaults_of_the_real_
 
 
 def test_recording_models_find_a_model_behind_a_trace_wrapper():
-    from polisys.trace import PolicyTrace
+    from polisys.runtime.trace import PolicyTrace
 
     models = RecordingModels()
     model = models.json_model("m/x")
@@ -865,17 +865,17 @@ def test_build_runtime_with_no_factory_uses_the_real_one(monkeypatch):
 # -- no switch read ----------------------------------------------------------------------------------------------------
 
 
-LAYER = Path(inspect.getfile(build_runtime)).parent
+LAYER = Path(inspect.getfile(build_runtime)).parents[1]  # src/polisys
 MODULES = sorted(p.relative_to(LAYER).as_posix() for p in LAYER.rglob("*.py") if "tests" not in p.parts)
 # Every read of the environment in the layer: (module, function) -> the names it may read. Only secrets and the address of
 # the gateway come from the environment. The audit reads the values of every variable with a secret-looking name (names: none),
 # to keep them out of its lines. ``openai_json_model`` also reads the key whose name its caller gives (``api_key_env``), which is
 # no upper-case name in the statement.
 ALLOWED_READS = {
-    ("trace.py", "AuditLog.__init__"): set(),
-    ("detectors.py", "systemone_detector"): {"OPENROUTER_API_KEY"},
-    ("detectors.py", "systemone_questions"): {"OPENROUTER_API_KEY"},
-    ("runtime.py", "Models._need_key"): {"OPENROUTER_API_KEY"},
+    ("runtime/trace.py", "AuditLog.__init__"): set(),
+    ("sources/detectors.py", "systemone_detector"): {"OPENROUTER_API_KEY"},
+    ("sources/detectors.py", "systemone_questions"): {"OPENROUTER_API_KEY"},
+    ("runtime/models.py", "Models._need_key"): {"OPENROUTER_API_KEY"},
     ("llm.py", "openai_json_model"): {"OPENAI_BASE_URL"},
 }
 
@@ -951,16 +951,16 @@ def test_the_layer_reads_no_policy_switch(name):
 
 
 def test_the_scan_covers_the_modules_that_read_the_environment_and_the_allowed_list_has_no_stale_entry():
-    assert {"llm.py", "detectors.py", "package.py", "sop_retrieval.py", "runtime.py"} <= set(MODULES)
+    assert {"llm.py", "sources/detectors.py", "package/files.py", "checks/retrieval.py", "runtime/models.py"} <= set(MODULES)
     found = {
         (name, function) for name in MODULES for function, _ in environment_reads((LAYER / name).read_text())
     }
     assert found == set(ALLOWED_READS)
 
 
-@pytest.mark.parametrize("name", ["runtime.py", "dry_run.py"])
+@pytest.mark.parametrize("name", ["runtime/assembly.py", "runtime/dry_run.py"])
 def test_the_assembly_names_no_benchmark_and_imports_nothing_from_the_eval_repo(name):
-    text = (Path(inspect.getfile(build_runtime)).parent / name).read_text().lower()
+    text = (LAYER / name).read_text().lower()
     for word in ("automationbench", "handbook", "itsm", "tau2", "enterpriseops", "telecom", "policy_eval"):
         assert word not in text
 

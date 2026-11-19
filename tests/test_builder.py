@@ -6,9 +6,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from polisys.builder import build, build_policy_set
-from polisys.documents import load_document, load_policy_set
-from polisys.model import PolicySet, to_json
+from polisys.compile.builder import build, build_policy_set
+from polisys.compile.documents import load_document, load_policy_set
+from polisys.package.model import PolicySet, to_json
 
 FIX = Path(__file__).parent / "fixtures"
 SPECS = [

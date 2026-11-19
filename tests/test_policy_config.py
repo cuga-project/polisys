@@ -1,12 +1,15 @@
 """Policy config: the loader names a bad key or value, and defaults load."""
 
+import dataclasses
+import inspect
 import re
+import typing
 from pathlib import Path
 
 import pytest
 
-from polisys import policy_config
-from polisys.policy_config import (
+from polisys.runtime import profile as policy_config
+from polisys.runtime.profile import (
     KEV,
     PolicyConfig,
     PolicyConfigError,
@@ -242,8 +245,32 @@ def test_an_error_names_the_file(tmp_path):
         load_config(path)
 
 
+def settings_classes(cls=PolicyConfig):
+    """Every dataclass of the profile: the sections of ``profile.py`` and each component's ``Settings``."""
+    out = [cls]
+    for f in dataclasses.fields(cls):
+        tp = typing.get_type_hints(cls)[f.name]
+        if dataclasses.is_dataclass(tp):
+            out += settings_classes(tp)
+    return out
+
+
+def profile_source():
+    """The text of ``profile.py`` and of every ``Settings`` class that lives in a component's file."""
+    own = policy_config.__name__
+    return Path(policy_config.__file__).read_text() + "".join(
+        inspect.getsource(cls) for cls in settings_classes() if cls.__module__ != own
+    )
+
+
+def test_the_profile_is_made_of_the_sections_and_the_settings_of_15_components():
+    classes = settings_classes()
+    assert len([c for c in classes if c.__module__ != policy_config.__name__]) == 15
+    assert all(c.__name__ == "Settings" for c in classes if c.__module__ != policy_config.__name__)
+
+
 def test_the_module_names_no_benchmark():
-    text = Path(policy_config.__file__).read_text()
+    text = profile_source()
     found = sorted(
         {
             m.group(0).lower()
@@ -258,7 +285,7 @@ def test_the_module_names_no_benchmark():
 
 
 def test_the_module_reads_no_environment_and_has_no_function_of_the_old_switches():
-    text = Path(policy_config.__file__).read_text()
+    text = profile_source()
     assert "environ" not in text and "getenv" not in text
     for name in ("config_from_env", "migration_table"):
         assert not hasattr(policy_config, name)

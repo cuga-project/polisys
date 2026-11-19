@@ -9,9 +9,9 @@ import pytest
 from langchain_core.tools import tool
 
 from polisys.hooks import AgentHooks, HookRegistry
-from polisys.dry_run import DryRunModelCall, RecordingModels, describe_parts
-from polisys.model import Document, Obligation, PolicyPackage, Procedure, Section, Statement
-from polisys.obligations import (
+from polisys.runtime.dry_run import DryRunModelCall, RecordingModels, describe_parts
+from polisys.package.model import Document, Obligation, PolicyPackage, Procedure, Section, Statement
+from polisys.experimental.finish.ledger import (
     BindingError,
     Case,
     ObligationLedger,
@@ -31,11 +31,11 @@ from polisys.obligations import (
     resolve_values,
     stated_id,
 )
-from polisys.policy_config import PolicyConfig
-from polisys.procedure_store import ProcedureStore
-from polisys.runtime import RunContext, RuntimeWiringError, build_runtime
-from polisys.sop_loop import LoopHooks, SopLoop
-from polisys.trace import AuditLog
+from polisys.runtime.profile import PolicyConfig
+from polisys.experimental.guidance.procedure_store import ProcedureStore
+from polisys.runtime.assembly import RunContext, RuntimeWiringError, build_runtime
+from polisys.experimental.organizers.sop_loop import LoopHooks, SopLoop
+from polisys.runtime.trace import AuditLog
 from tests.cuga_agent_loop import load_agent_loop
 try:  # the CUGA agent is optional: its real-loop tests are skipped without it
     from cuga.sdk import CugaAgent
@@ -752,7 +752,7 @@ def test_a_block_that_cannot_be_recorded_leaves_the_ledger_silent_for_the_run_wi
     def broken(args):
         raise RuntimeError("cannot read")
 
-    monkeypatch.setattr("polisys.obligations._readable_call", broken)
+    monkeypatch.setattr("polisys.experimental.finish.ledger._readable_call", broken)
     assert reg.before_tool_call("create_ticket", {"summary": "x"})  # the block itself stands
     assert led.blocks == []
     assert led.before_reply("done").message is None  # no follow-up that asks for the stopped work
@@ -1847,7 +1847,7 @@ def test_item_level_says_the_level_of_every_item():
 
 
 def test_a_long_list_is_cut_and_says_so():
-    from polisys.obligations import Item
+    from polisys.experimental.finish.ledger import Item
 
     items = [Item(ob=ticket(id=f"o{n}"), case=Case(name="c")) for n in range(45)]
     text = follow_up_text(items)

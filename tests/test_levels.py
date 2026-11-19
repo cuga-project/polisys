@@ -14,8 +14,8 @@ import yaml
 from langchain_core.tools import tool
 
 from polisys.hooks import AgentHooks, HookRegistry
-from polisys.dry_run import RecordingModels
-from polisys.levels import (
+from polisys.runtime.dry_run import RecordingModels
+from polisys.runtime.levels import (
     COMPONENTS,
     FIRST_LEVEL,
     SHAPES,
@@ -27,14 +27,14 @@ from polisys.levels import (
     resolve_level,
     shapes_of,
 )
-from polisys.model import Obligation, PolicyPackage
-from polisys.obligations import ObligationLedger
-from polisys.package import from_build, from_store_graph
-from polisys.policy_config import PolicyConfig
-from polisys.runtime import RunContext, RuntimeWiringError, build_runtime
-from polisys.ruleset import RuleSetHooks
-from polisys.store_gate import StoreGate
-from polisys.verifier import Verifier
+from polisys.package.model import Obligation, PolicyPackage
+from polisys.experimental.finish.ledger import ObligationLedger
+from polisys.package.files import from_build, from_store_graph
+from polisys.runtime.profile import PolicyConfig
+from polisys.runtime.assembly import RunContext, RuntimeWiringError, build_runtime
+from polisys.checks.rules import RuleSetHooks
+from polisys.experimental.checks.gate import StoreGate
+from polisys.checks.verifier import Verifier
 from tests.cuga_agent_loop import load_agent_loop
 try:  # the CUGA agent is optional: its real-loop tests are skipped without it
     from cuga.sdk import CugaAgent
@@ -306,7 +306,7 @@ def test_auto_follows_the_level_and_names_why_a_component_is_off():
 
 
 def _mode(cfg, name):
-    from polisys.levels import MODE_PATH
+    from polisys.runtime.levels import MODE_PATH
 
     node = cfg
     for key in MODE_PATH[name]:
@@ -1003,7 +1003,7 @@ async def test_a_real_agent_loop_at_level_0_the_write_runs_and_the_audit_says_it
 def test_the_write_checks_are_off_unless_a_profile_asks_so_and_the_module_names_no_benchmark():
     from pathlib import Path
 
-    from polisys import levels
+    from polisys.runtime import levels
 
     assert (
         PolicyConfig().checkers.write_checks == "auto"

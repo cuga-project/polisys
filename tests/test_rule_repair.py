@@ -2,14 +2,14 @@
 
 import json
 
-from polisys import rule_repair
-from polisys.builder import build_policy_set
-from polisys.documents import load_document
-from polisys.model import PolicySet, to_json
-from polisys.package import from_build, to_build
-from polisys.rule_repair import normalize_when, partial_update_overreach
-from polisys.ruleset import RuleSetHooks
-from polisys.validate import validate_package
+from polisys.compile import rule_repair
+from polisys.compile.builder import build_policy_set
+from polisys.compile.documents import load_document
+from polisys.package.model import PolicySet, to_json
+from polisys.package.files import from_build, to_build
+from polisys.compile.rule_repair import normalize_when, partial_update_overreach
+from polisys.checks.rules import RuleSetHooks
+from polisys.compile.validate import validate_package
 
 
 def _tool(name, *args):
@@ -430,7 +430,7 @@ ITEM_SPECS = [
 
 
 def test_a_list_of_values_cannot_fit_an_identifier_argument():
-    from polisys.validate import check_rule
+    from polisys.compile.validate import check_rule
 
     by_name = {s["name"]: s for s in ITEM_SPECS}
     statement = "Only items with status in_use or maintenance can be linked."
@@ -461,7 +461,7 @@ def test_validate_package_reports_a_list_of_values_on_an_identifier_argument():
 
 
 def test_role_rows_take_table_rows_that_have_no_role_header():
-    from polisys.model import Statement, StatementType
+    from polisys.package.model import Statement, StatementType
 
     row = Statement(
         id="s1",
@@ -520,13 +520,13 @@ def test_a_delayed_verify_rule_with_tools_becomes_guidance():
 
 
 def test_the_prose_prompt_lists_membership():
-    from polisys.handlers import prose
+    from polisys.compile.handlers import prose
 
     assert "- membership:" in prose.RULE_GUIDE
 
 
 def test_a_rule_with_an_empty_slot_is_not_kept():
-    from polisys.validate import slot_problem
+    from polisys.compile.validate import slot_problem
 
     assert "values" in slot_problem(
         {"type": "allowed_values", "tool": "create_order", "arg": "tier", "values": []}
@@ -562,7 +562,7 @@ def test_a_rule_with_an_empty_slot_is_not_kept():
 
 
 def test_a_row_that_grants_every_tool_is_not_out_of_scope_when_a_rule_already_names_it():
-    from polisys.model import Statement
+    from polisys.package.model import Statement
 
     row = Statement(
         id="s1",
