@@ -27,7 +27,8 @@ from polisys.package.files import from_build, from_store_graph
 from polisys.experimental.guidance.procedure_store import ProcedureStore
 from polisys.runtime.assembly import RunContext, RuntimeWiringError, build_runtime
 from polisys.experimental.checks.gate import StoreGate
-from polisys.compile.validate import resolve_conflicts, validate_package
+from polisys.compile.validate.conflicts import resolve_conflicts
+from polisys.compile.validate.whole_package import validate_package
 
 from .test_runtime_assembly import CTX, GATE_ON, config
 

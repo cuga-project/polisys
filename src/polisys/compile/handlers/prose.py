@@ -27,7 +27,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from polisys.llm import parse_json
 from polisys.package.model import CoverageItem, Modality, Rule, Statement, StatementType
 from polisys.compile.rule_repair import normalize_when, partial_update_overreach
-from polisys.compile.validate import check_rule, slot_problem
+from polisys.compile.validate.rule import check_rule
+from polisys.compile.validate.slots import slot_problem
 from polisys.compile.handlers.tables import tool_catalog
 
 CHECKER = {"role_permission": "cedar", "duty": "monitor", "guidance": "brief", "verify": "verifier"}

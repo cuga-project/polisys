@@ -283,7 +283,7 @@ def _priority_classes_can_rank(a: Assembly) -> None:
     if cfg.priority_classes and a.pkg is not None:
         # The ranks themselves decide a conflict when the package is validated or its conflicts are settled
         # (``validate_package`` and ``resolve_conflicts`` take the list); a run reports the documents it cannot rank.
-        from polisys.compile.validate import priority_findings
+        from polisys.compile.validate.whole_package import priority_findings
 
         for found in priority_findings(a.pkg, cfg.priority_classes):
             a.notes.append(("priority_classes", found.message))

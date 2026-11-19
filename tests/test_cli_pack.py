@@ -609,7 +609,7 @@ def test_a_must_not_that_cannot_be_read_alone_is_a_warning(tmp_path, capsys):
 
 
 def test_a_dash_or_a_curly_quote_does_not_make_a_quote_differ(tmp_path, capsys):
-    from polisys.compile.validate import _fold
+    from polisys.compile.validate.rule import _fold
 
     assert _fold("Mon \u2013 Fri, \u201cdone\u201d") == _fold('mon - fri, "done"')
     _files(tmp_path)
@@ -661,7 +661,7 @@ def test_a_priority_is_shown_to_the_agent_and_a_graph_without_one_is_unchanged()
 
 def _text(*statements):
     from polisys.package.model import Document, PolicyPackage, Section, Statement
-    from polisys.compile.validate import _Text
+    from polisys.compile.validate.invented import _Text
 
     doc = Document(
         id="d",
@@ -695,7 +695,7 @@ def test_an_obligation_id_with_dots_can_be_named_in_open_values(tmp_path, capsys
 
 
 def test_an_optional_boolean_or_enum_argument_is_not_looked_up(tmp_path, capsys):
-    from polisys.compile.validate import _tool_typed
+    from polisys.compile.validate.invented import _tool_typed
 
     assert _tool_typed({"anyOf": [{"type": "boolean"}, {"type": "null"}]})
     assert _tool_typed({"type": ["boolean", "null"]})

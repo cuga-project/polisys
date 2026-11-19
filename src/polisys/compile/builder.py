@@ -24,7 +24,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from polisys.compile.documents import LineSection as Section, split_policy  # noqa: F401 (re-exported)
 from polisys.llm import openai_json_model  # noqa: F401 (re-exported)
-from polisys.compile.validate import check_rule as validate  # noqa: F401 (moved; re-exported)
+from polisys.compile.validate.rule import check_rule as validate  # noqa: F401 (moved; re-exported)
 from polisys.compile.handlers.tables import (  # noqa: F401 (moved; re-exported)
     ARROW,
     _props,
@@ -286,7 +286,7 @@ def build_policy_set(
     from polisys.compile.handlers.tables import table_rules
     from polisys.package.model import CoverageItem, Definition, PolicyBuild, StatementType
     from polisys.compile.rule_repair import repair_rules
-    from polisys.compile.validate import validate_build
+    from polisys.compile.validate.build import validate_build
 
     m = cached_model(model, cache_dir)
     catalog = tool_catalog(specs)

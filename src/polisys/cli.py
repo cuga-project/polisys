@@ -109,7 +109,8 @@ def _fail(message: str) -> int:
 
 
 def cmd_validate(a: argparse.Namespace) -> int:
-    from polisys.compile.validate import validate_build, validate_package
+    from polisys.compile.validate.build import validate_build
+    from polisys.compile.validate.whole_package import validate_package
 
     try:
         data = json.loads(Path(a.build).read_text(encoding="utf-8"))
@@ -209,7 +210,7 @@ def _fill_steps(draft: dict, ps: PolicySet) -> None:
 
 def _structure_problems(draft: dict, ps: PolicySet) -> List[str]:
     """Ids inside procedures, obligations, questions and definitions that point at nothing."""
-    from polisys.compile.validate import _fold
+    from polisys.compile.validate.rule import _fold
 
     text = {st.id: _fold(st.text) for d in ps.documents for st in d.statements}
     problems: List[str] = []

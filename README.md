@@ -147,7 +147,7 @@ the evaluation work, which is not part of this repository. The design the code w
 ```
 src/polisys/
   package/        the policy model (model.py) and the package file (files.py)
-  compile/        documents to a package, offline: documents.py, builder.py, handlers/, validate.py
+  compile/        documents to a package, offline: documents.py, builder.py, handlers/, validate/
   sources/        rules found in data during the run: intake.py, detectors.py, listing.py
   checks/         checks of a tool call: rules.py (typed rules, Cedar in cedar.py), verifier.py, decisions.py, router.py
   guidance/       notes the agent sees: work_method.py

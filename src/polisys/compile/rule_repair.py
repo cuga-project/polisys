@@ -327,7 +327,8 @@ def retype_rule(
     """(the code-checkable rules that replace one ``verify`` rule, status). Ids are ``<verify id>_t<n>``. Status: ``"ok"``
     (empty list: none fits), ``"delayed"`` (a change after a delay: the system does it later, and no call of the agent
     breaks it; no call is made) or ``"failed"`` (the call raised or its answer has no ``rules``)."""
-    from polisys.compile.validate import DELAYED, check_rule, slot_problem
+    from polisys.compile.validate.rule import DELAYED, check_rule
+    from polisys.compile.validate.slots import slot_problem
 
     text = rule.get("statement") or ""
     if DELAYED.search(text):

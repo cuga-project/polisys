@@ -99,7 +99,7 @@ flowchart LR
 |---|---|---|---|
 | Lifecycle hooks | 9 hooks in `CugaAgent`; no hooks = same behavior as before | `backend/hooks/` | Built; PR #1103 open. The audit is not written at `on_task_end` (section 6) |
 | **Policy package** | One versioned file per policy version; replaces two formats | `package/files.py`, `package/model.py` | Built: 84 package files (15 made from text with the skill; the others converted), `validate` and `counts` read them |
-| Offline build, Claude skill | Document → package | `skill/SKILL.md`, `cli.py`, `compile/validate.py` | Built for rules, procedures, obligations and policy questions; decision tests come from a second agent that does not read the rules (Task 3.4) |
+| Offline build, Claude skill | Document → package | `skill/SKILL.md`, `cli.py`, `compile/validate/` | Built for rules, procedures, obligations and policy questions; decision tests come from a second agent that does not read the rules (Task 3.4) |
 | Offline build, pipeline | Same output, no human | `compile/builder.py`, `compile/handlers/`, `compile/rule_repair.py`, `experimental/compile/procedure_compiler.py` | Built and measured on 7 documents with 2 models: it does not replace the skill today (`packages/PIPELINE_VS_SKILL.md`, change 135). `compile_sop` has a known defect: `STEP_LINE` misses `**Step 1:**` and `*` bullets |
 | Online intake + discovery | Rules found in data; trust; newer rule wins | `sources/intake.py`, `sources/detectors.py` | Built |
 | Listing (`sources.listing`) | At the request, read every record the host lists; a model keeps the records that state rules (tables always); those go to the online intake's extraction. Records the listing read skip the online intake later | `sources/listing.py`, `sources/intake.py` | Built, off by default. AutomationBench fresh3 (tuning set), 3 trials: gold rule records found 93.7% vs 28.6% with discovery; strict +11.4 on gpt-oss, no gain and no harm on Haiku 5.5. Notes in single table rows are often lost in extraction. The host gives the records (`RunContext.data_list`); a general crawler over any host's read tools is deferred (below) |
@@ -140,7 +140,7 @@ skill then makes one merged package per SOP (plan Task 3.4). Profiles move to it
 | `global` | `global_rules`, `routing`, `triage`, `housekeeping`, `escalation`, `definitions`, `calendar`, `templates` | store graph |
 | `links` | `next`, `refers_to`, `exception_of`, `defines`, `supersedes`, `depends_on`, `source_of_truth` | `PolicyBuild.links` |
 | `coverage` | At least one outcome per statement (section 9) | `CoverageItem`, extended |
-| `validation` | Errors and warnings, including `rule_conflict` | `compile/validate.py`, extended |
+| `validation` | Errors and warnings, including `rule_conflict` | `compile/validate/`, extended |
 | `policy_questions` | Ambiguities for the policy owner: statement ids, the question, the safe default level | **new** |
 | `tests` | Decision tests written from the text, blind to the rules | `rule_audit.py` output, moved in |
 

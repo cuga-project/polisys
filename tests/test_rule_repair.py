@@ -9,7 +9,7 @@ from polisys.package.model import PolicySet, to_json
 from polisys.package.files import from_build, to_build
 from polisys.compile.rule_repair import normalize_when, partial_update_overreach
 from polisys.checks.rules import RuleSetHooks
-from polisys.compile.validate import validate_package
+from polisys.compile.validate.whole_package import validate_package
 
 
 def _tool(name, *args):
@@ -430,7 +430,7 @@ ITEM_SPECS = [
 
 
 def test_a_list_of_values_cannot_fit_an_identifier_argument():
-    from polisys.compile.validate import check_rule
+    from polisys.compile.validate.rule import check_rule
 
     by_name = {s["name"]: s for s in ITEM_SPECS}
     statement = "Only items with status in_use or maintenance can be linked."
@@ -526,7 +526,7 @@ def test_the_prose_prompt_lists_membership():
 
 
 def test_a_rule_with_an_empty_slot_is_not_kept():
-    from polisys.compile.validate import slot_problem
+    from polisys.compile.validate.slots import slot_problem
 
     assert "values" in slot_problem(
         {"type": "allowed_values", "tool": "create_order", "arg": "tier", "values": []}
