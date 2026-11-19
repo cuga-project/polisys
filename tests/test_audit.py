@@ -319,7 +319,7 @@ def test_the_procedure_monitor_and_the_rules_share_one_audit():
 
 def test_intake_deliverables_and_the_gate_are_read_through_the_same_path():
     from polisys.experimental.finish.request_checklist import DeliverablesHooks
-    from polisys.sources.intake import OnlinePolicyIntake
+    from polisys.sources.intake.online_intake import OnlinePolicyIntake
 
     audit = AuditLog(task="task-9", package_version=VERSION)
     reply = {
@@ -356,7 +356,7 @@ def test_intake_deliverables_and_the_gate_are_read_through_the_same_path():
 )
 def test_an_intake_record_is_final_when_the_audit_reads_it_also_after_the_cap(cap_effect, verdicts):
     """The cap used to change the outcome of a record after it was appended. The line is written at the append."""
-    from polisys.sources.intake import OnlinePolicyIntake
+    from polisys.sources.intake.online_intake import OnlinePolicyIntake
 
     def model(system, user):
         return json.dumps({"violations": [{"statement": 1, "reason": "no", "fix": "stop"}]})
@@ -375,7 +375,7 @@ def test_an_intake_record_is_final_when_the_audit_reads_it_also_after_the_cap(ca
 
 
 def test_the_guard_code_cap_is_final_when_the_audit_reads_it():
-    from polisys.sources.intake import OnlinePolicyIntake
+    from polisys.sources.intake.online_intake import OnlinePolicyIntake
 
     from .test_guard_code import CHECK, ROWS
 

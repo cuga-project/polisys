@@ -131,7 +131,7 @@ def test_only_hosts_imports_an_agent_framework():
 
 def test_core_code_does_not_import_experimental_code():
     found = {
-        (a, b)
+        (component(a), b)  # the parts of one component count once
         for a, b in INSIDE
         if not a.startswith("experimental.") and b.startswith("experimental.") and a not in WIRING
     }
