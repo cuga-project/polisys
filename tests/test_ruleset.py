@@ -356,7 +356,7 @@ def test_when_star_means_the_argument_is_given():
 
 
 def test_two_iso_dates_are_compared_as_dates_for_each_operator():
-    from polisys.checks.rules import _condition
+    from polisys.values import _condition
 
     cases = [  # (record value, op, rule value, result)
         ("2025-12-31", "le", "2025-02-25", False),  # the first number says 2025 <= 2025
@@ -378,7 +378,7 @@ def test_two_iso_dates_are_compared_as_dates_for_each_operator():
 
 
 def test_numbers_and_other_forms_keep_the_first_number_reading():
-    from polisys.checks.rules import _condition
+    from polisys.values import _condition
 
     assert _condition(5, "gt", 3) and not _condition("5", "lt", "3") and _condition("1,200", "gt", 1000)
     assert _condition("02/25/2025", "lt", "03/01/2025")  # not ISO: the first number, 2 < 3, as before

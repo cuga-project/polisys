@@ -32,7 +32,8 @@ from typing import Any, Callable, Dict, List, Optional
 from polisys.hooks import AgentHooks, HookResult
 
 from polisys.llm import parse_json
-from polisys.checks.rules import canon, is_write_tool
+from polisys.values import canon
+from polisys.tool_kind import is_write_tool
 
 SYSTEM = "You list what a user request asks to be done, so that code can check it was done. Output JSON only."
 USER = """Tools that change something (name(argument=[allowed values], ...)):

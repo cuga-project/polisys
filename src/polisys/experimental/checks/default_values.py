@@ -255,7 +255,7 @@ class DefaultValueHooks(AgentHooks):
 
 
 def build(a: Assembly) -> Piece:
-    from polisys.checks.rules import is_write_tool
+    from polisys.tool_kind import is_write_tool
 
     cfg = a.cfg.checkers.default_values
     specs = a.run_tool_specs()

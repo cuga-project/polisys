@@ -18,7 +18,8 @@ from typing import Any, Dict, List, Tuple
 from polisys.compile.documents import LineSection as Section
 from polisys.compile.documents import clean as _clean
 from polisys.package.model import Rule, Statement
-from polisys.checks.rules import is_write_tool, norm
+from polisys.tool_kind import is_write_tool
+from polisys.values import norm
 
 ARROW = re.compile(r"[`'\"]?([\w-]+)[`'\"]?\s*(?:→|->)\s*(.+)$")
 

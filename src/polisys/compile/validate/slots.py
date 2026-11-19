@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from polisys.checks.rules import _iso_moment, _number
+from polisys.values import _iso_moment, _number
 from polisys.package.model import RULE_CLASSES, RULE_LEVELS, Rule
 from polisys.compile.validate.build import ValidationError
 

@@ -6,7 +6,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set,
 
 from polisys.hooks import AgentHooks, HookResult
 from polisys.package.model import Obligation
-from polisys.checks.rules import _when, is_write_tool
+from polisys.values import _when
+from polisys.tool_kind import is_write_tool
 from polisys.tool_kind import ID_ARG
 from polisys.runtime.trace import HOOK_FAILED, audited_failure, fresh
 from polisys.experimental.finish.ledger.constants import (

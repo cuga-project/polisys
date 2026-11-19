@@ -172,7 +172,7 @@ def check_notes(
     """The notes that pass the checks, and why each other one was dropped. ``conflicts``: the model's list of arguments
     whose policy list differs from the tool's own. ``is_write``: which tools change the system (default: ``ruleset``'s)."""
     if is_write is None:
-        from polisys.checks.rules import is_write_tool as is_write
+        from polisys.tool_kind import is_write_tool as is_write
     kept: List[Note] = []
     dropped: List[Dict[str, str]] = []
     specs = {s["name"]: s for s in tool_specs}

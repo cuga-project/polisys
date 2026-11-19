@@ -6,7 +6,7 @@ import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from polisys.compile.handlers.tables import _props
-from polisys.checks.rules import norm
+from polisys.values import norm
 from polisys.package.model import PolicyPackage, PolicySet, Rule
 from polisys.compile.validate.build import ValidationError, _cedar_error, _dangling, _ids, _rule_error
 from polisys.compile.validate.slots import (

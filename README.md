@@ -160,6 +160,8 @@ src/polisys/
   hosts/          glue for agent frameworks (cuga.py)
   hooks.py        the hook contract
   llm.py          small-model clients
+  tool_kind.py    which tools read and which write, from their names
+  values.py       how values are compared: folded text, numbers, dates, conditions
   skill/SKILL.md  the compile skill for an agent
   _aliases.py     old module paths of the flat layout; they still import
 tests/            the suite (offline; models are scripted)

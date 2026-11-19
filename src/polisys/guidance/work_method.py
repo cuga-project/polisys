@@ -383,7 +383,7 @@ class LiteralCoverageHooks(AgentHooks):
 
 
 def build(a: Assembly) -> Piece:
-    from polisys.checks.rules import is_write_tool
+    from polisys.tool_kind import is_write_tool
 
     names = list(a.cfg.notes.work_method)
     turns = [n for n in names if n in REPLY_TURNS]

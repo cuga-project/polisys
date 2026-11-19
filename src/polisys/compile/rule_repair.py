@@ -39,7 +39,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from polisys.llm import parse_json
 from polisys.package.model import CoverageItem, Rule, Statement
-from polisys.checks.rules import is_write_tool
+from polisys.tool_kind import is_write_tool
 
 VERBS = {
     "add",

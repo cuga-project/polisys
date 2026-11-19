@@ -22,11 +22,8 @@ from polisys.experimental.finish.ledger.obligation_ledger import ObligationLedge
 from polisys.package.files import from_build, obligations_from_package
 from polisys.runtime.profile import PolicyConfig, PolicyConfigError
 from polisys.checks.procedure_monitor import ProcedureMonitor
-from polisys.checks.rules import (
-    READ_VERBS,
-    is_write_tool,
-    obligations_from_duties,
-)
+from polisys.tool_kind import READ_VERBS, is_write_tool
+from polisys.checks.rules import obligations_from_duties
 from polisys.runtime.assembly import COMPONENTS, RunContext, RuntimeWiringError, build_runtime
 from polisys.experimental.checks.gate import StoreGate
 from polisys.tool_kind import READ_FIRST, acts

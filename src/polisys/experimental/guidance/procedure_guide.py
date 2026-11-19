@@ -163,7 +163,7 @@ class ProcedureGuide(AgentHooks):
         self.gate_on, self.templates_on = gate, templates
         self.model = model
         if is_write is None:
-            from polisys.checks.rules import is_write_tool as is_write
+            from polisys.tool_kind import is_write_tool as is_write
         self.is_write = is_write
         self.reads: List[str] = []
         self.evidence: Dict[str, int] = {}  # procedure id -> evidence stops so far

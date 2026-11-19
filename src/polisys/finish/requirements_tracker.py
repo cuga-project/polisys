@@ -20,7 +20,7 @@ from polisys.hooks import AgentHooks, HookResult
 
 from polisys.finish.followups import CHECK_HEADER, LOOK_HEADER, required_actions
 from polisys.finish.requirements import compile_requirements, gate
-from polisys.checks.rules import is_write_tool
+from polisys.tool_kind import is_write_tool
 from polisys.runtime.setting_types import Mode
 from polisys.runtime.context import Piece
 

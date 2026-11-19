@@ -31,17 +31,21 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from polisys.hooks import AgentHooks, HookResult
 
-from polisys.tool_kind import READ_FIRST, case_of
+from polisys._aliases import names_of
+from polisys.tool_kind import _name_tokens, case_of, is_write_tool
+from polisys.values import _condition, _joined, _number, _values, _walk, _when, canon, norm
 from polisys.runtime.trace import audited_failure, emit, fresh
 from polisys.runtime.context import Piece
 
 if TYPE_CHECKING:
     from polisys.runtime.assembly import Assembly
+
+# The helpers that moved to tool_kind.py and values.py (2026-11) are still names of this module, read on first use.
+__getattr__ = names_of(__name__, "polisys.tool_kind", "polisys.values")
 
 
 RULE_TYPES = (
@@ -62,65 +66,10 @@ RULE_TYPES = (
     "verify",
 )
 CHECKER = {"role_permission": "cedar", "duty": "monitor", "guidance": "brief"}
-WRITE_VERBS = {
-    "create", "update", "add", "delete", "link", "register", "remove", "send", "map", "set", "assign", "close",
-    "resolve", "publish", "approve", "reject", "cancel", "escalate", "attach", "submit", "post", "transfer",
-    "pay", "refund", "book", "reset", "move", "archive", "upload", "insert", "patch", "put", "write",
-    "schedule", "enroll", "invite", "notify", "reply", "share", "grant", "revoke", "release", "allocate", "purchase",
-    "edit", "modify", "save",
-}  # fmt: skip
 FREE_TEXT = re.compile(r"description|notes?$|comment|message|subject|body|text|summary|title|worknote", re.I)
 ID_VALUE = re.compile(r"^(?=.*\d)[A-Za-z]{2,}[A-Za-z0-9]*([_-][A-Za-z0-9]+)+$|^[A-Z]{2,}\d{3,}$")
 SCOPE_MIN = 0.35  # decision-model answer below which a code rule is taken as not applying to the call
 MAX_SAME_DENY = 3  # repeated-denial cap: the 4th identical denial is let through and recorded
-
-
-READ_VERBS = READ_FIRST  # one list for the whole layer (tool_kind.py)
-
-
-def _name_tokens(name: str) -> List[str]:
-    """Words of a tool name: snake_case, kebab-case and camelCase ("recruitee_candidateCreate" -> candidate, create)."""
-    spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name)
-    return [t for t in re.split(r"[_\-.\s]+", spaced.lower()) if t]
-
-
-def is_write_tool(name: str) -> bool:
-    """The first verb in the name decides: ``update_incident``, ``zoho_desk_update_ticket``, ``salesforce_case_create``
-    are writes; ``find_incident_by_id``, ``google_sheets_get_many_rows`` are reads."""
-    for token in _name_tokens(name):
-        if token in READ_VERBS:
-            return False
-        if token in WRITE_VERBS:
-            return True
-    return (
-        True  # no known verb: check it (a missed write skips every check; checking a read only costs a call)
-    )
-
-
-_DASHES = dict.fromkeys(map(ord, "\u2010\u2011\u2012\u2013\u2014\u2015\u2212\ufe58\ufe63\uff0d"), "-")
-_DASHES.update(dict.fromkeys(map(ord, "\u00a0\u202f\u2007"), " "))
-
-
-def canon(value: Any) -> str:
-    """Text as compared by checks: NFKC, Unicode dashes as '-', non-breaking spaces as spaces (policy text and
-    model output often differ only in these: 'product\u2011voc@' vs 'product-voc@')."""
-    import unicodedata
-
-    return unicodedata.normalize("NFKC", str(value)).translate(_DASHES)
-
-
-def norm(value: Any) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[_\-]", " ", canon(value).lower())).strip()
-
-
-def _walk(obj: Any) -> Iterable[Any]:
-    yield obj
-    if isinstance(obj, dict):
-        for v in obj.values():
-            yield from _walk(v)
-    elif isinstance(obj, list):
-        for v in obj:
-            yield from _walk(v)
 
 
 def _is_id_key(key: str) -> bool:
@@ -152,62 +101,6 @@ def _stem(word: str) -> str:
     return word
 
 
-def _number(value: Any) -> Optional[float]:
-    if isinstance(value, bool) or value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    m = re.search(r"-?\d[\d,]*(?:\.\d+)?", str(value))
-    return float(m.group(0).replace(",", "")) if m else None
-
-
-ISO_MOMENT = re.compile(
-    r"^\s*\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?\s*(?:Z|[+-]\d{2}:?\d{2})?)?\s*$"
-)
-
-
-def _iso_moment(value: Any) -> Optional[datetime]:
-    """An ISO 8601 date (``2025-02-25``) or date and time (``2025-02-25T12:08:00-05:00``) as a UTC moment, else None. Only
-    a whole string in that form counts: a date inside other text, ``02/25/2025`` and a number are not ISO dates. A date
-    with no time is midnight, and a time with no offset is read as UTC."""
-    if not isinstance(value, str) or not ISO_MOMENT.match(value):
-        return None
-    try:
-        moment = datetime.fromisoformat(value.strip().replace(" ", "T", 1).replace("Z", "+00:00"))
-    except ValueError:  # 2025-13-45
-        return None
-    return moment.replace(tzinfo=timezone.utc) if moment.tzinfo is None else moment.astimezone(timezone.utc)
-
-
-def _condition(actual: Any, op: str, value: Any) -> bool:
-    """The record-condition operators: contains, equals, in, gt, ge, lt, le, empty."""
-    if op == "empty":
-        return actual in (None, "", [], {})
-    if op == "contains":
-        return value is not None and str(value).lower() in str(actual or "").lower()
-    if op == "equals":
-        return norm(actual) == norm(value)
-    if op == "in":
-        return norm(actual) in {norm(v) for v in (value or [])}
-    when_a, when_v = _iso_moment(actual), _iso_moment(value)
-    if (
-        when_a is not None and when_v is not None
-    ):  # two ISO dates are compared as dates, not by their first number
-        return {
-            "gt": when_a > when_v,
-            "ge": when_a >= when_v,
-            "lt": when_a < when_v,
-            "le": when_a <= when_v,
-        }.get(op, False)
-    a, v = (
-        _number(actual),
-        _number(value),
-    )  # a number, or a value of another form: the first number, as before
-    if a is None or v is None:
-        return False
-    return {"gt": a > v, "ge": a >= v, "lt": a < v, "le": a <= v}.get(op, False)
-
-
 DUTY_VERBS = {
     "create",
     "update",
@@ -224,31 +117,6 @@ DUTY_VERBS = {
     "by",
     "incident",
 }
-
-
-def _values(slot: Any) -> Any:
-    """A rule slot that should hold a list. A model may write one value alone (``"when": {"is_read": true}``): it counts
-    as one value. Nothing counts as no value. A string stays as it is, so the text and checks of measured builds do not
-    change."""
-    if slot is None:
-        return []
-    return slot if isinstance(slot, (list, tuple, set, dict, str)) else [slot]
-
-
-def _joined(separator: str, slot: Any) -> str:
-    """The values of a rule slot as text. They need not be strings (``"allowed": [true]``)."""
-    return separator.join(str(v) for v in _values(slot))
-
-
-def _when(when: Optional[Dict[str, List[Any]]], args: Dict[str, Any]) -> bool:
-    if not when:
-        return True
-    return all(
-        (args.get(k) not in (None, ""))
-        if "*" in [str(v) for v in _values(vals)]
-        else norm(args.get(k)) in {norm(v) for v in _values(vals)}
-        for k, vals in when.items()
-    )
 
 
 def duty_tools(then: Dict[str, Any], specs: Dict[str, Any]) -> set:

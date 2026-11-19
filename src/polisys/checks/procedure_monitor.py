@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from polisys.hooks import AgentHooks, HookResult
 
 from polisys.package.model import Procedure, Step, step_text
-from polisys.checks.rules import is_write_tool
+from polisys.tool_kind import is_write_tool
 from polisys.runtime.trace import fresh
 from polisys.runtime.context import Piece
 

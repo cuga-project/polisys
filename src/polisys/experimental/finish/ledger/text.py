@@ -7,7 +7,7 @@ import json
 import re
 from typing import Any, Dict, Iterable, List, Tuple
 
-from polisys.checks.rules import canon
+from polisys.values import canon
 from polisys.finish.requirements_tracker import _failed
 from polisys.experimental.finish.ledger.constants import (
     MAX_VALUE_CHARS, MIN_EVIDENCE_CHARS, MIN_KEY_CHARS, REDACTED, SECRET_ARG, _QUOTES,
