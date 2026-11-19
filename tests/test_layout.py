@@ -73,7 +73,6 @@ PACKAGE_IMPORTS_THE_REST = {
 FRAMEWORK_OUTSIDE_HOSTS = {
     ("experimental.guidance.procedure_store", "langchain_core"),
     ("experimental.organizers.sop_navigator", "langchain_core"),
-    ("hooks", "langchain_core"),
 }
 CORE_IMPORTS_EXPERIMENTAL = {
     ("guidance.work_method", "experimental.guidance.work_method_notes"),

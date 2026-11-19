@@ -157,7 +157,7 @@ src/polisys/
                   trace.py (audit lines), dry_run.py (wiring description without a model)
   experimental/   components with no held-out gain yet, by role: the gate, procedures as tools and the guide,
                   the obligation ledger, tool notes, the SOP loop (docs/components.md has the list and the evidence)
-  hosts/          glue for agent frameworks (cuga.py)
+  hosts/          glue for agent frameworks (langchain.py, cuga.py)
   hooks.py        the hook contract
   llm.py          small-model clients
   tool_kind.py    which tools read and which write, from their names
