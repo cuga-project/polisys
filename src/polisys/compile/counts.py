@@ -11,7 +11,8 @@ from collections import Counter
 from typing import Any, Dict
 
 from polisys.package.model import PolicyPackage
-from polisys.compile.validate import OUTCOMES, statement_outcomes
+from polisys.compile.validate.slots import OUTCOMES
+from polisys.compile.validate.coverage import statement_outcomes
 
 
 def package_counts(pkg: PolicyPackage) -> Dict[str, Any]:

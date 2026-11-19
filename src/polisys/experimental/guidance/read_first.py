@@ -115,7 +115,7 @@ class ReadFirst(AgentHooks):
 
 
 def build(a: Assembly) -> Piece:
-    from polisys.checks.rules import is_write_tool
+    from polisys.tool_kind import is_write_tool
 
     if not a.ctx.tool_apps:
         raise a.fail("read_first", "notes.read_first needs RunContext.tool_apps (which app each tool belongs to)")

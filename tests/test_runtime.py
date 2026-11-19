@@ -159,7 +159,7 @@ def test_global_verify_rule_applies_to_every_write():
 
 
 def test_write_tools_include_camel_case_and_unknown_verbs():
-    from polisys.checks.rules import is_write_tool
+    from polisys.tool_kind import is_write_tool
 
     assert is_write_tool("recruitee_candidateCreate") and is_write_tool("xero_email_invoice")
     assert (

@@ -107,14 +107,14 @@ contain its statement, an unknown draft key or modality, or a test with no `tool
 writes the statements with no modality to `<output>.unmarked.txt`. `validate` (without `--legacy`) then decides whether the
 package is complete and whether it is the policy's own words.
 
-**What counts as the outcome of a `must` or `must_not` statement** (`compile/validate.py`, `_coverage_errors`): a rule that lists
+**What counts as the outcome of a `must` or `must_not` statement** (`compile/validate/coverage.py`, `_coverage_errors`): a rule that lists
 the statement in `statement_ids` (its `class` gives hard, judgment or guidance); a procedure step whose `id` is the
 statement id; a procedure `preconditions`, `exceptions`, `templates` or `escalations` item, or an obligation
 `source.quote`, that copies at least 4 words of it; a `global.definitions` item with `source.statement`; a policy
 question that lists it; or a `coverage` item `out_of_scope` with a reason. A procedure's `must_not` and `decisions` and
 everything under `global` are read at run time but do not count: the same statement also has a step or a rule.
 
-**Text the package must come from** (`compile/validate.py`, `_invented_errors`; `quote_not_verbatim`): an obligation
+**Text the package must come from** (`compile/validate/invented.py`, `_invented_errors`; `quote_not_verbatim`): an obligation
 `source.quote`, a part's `quote`, a step's `text` and every must-not are checked against the documents' text, whitespace and
 emphasis marks aside. A step `text` may join a statement with the one the converter split from it. A must-not is verbatim, or
 a condition and a prohibition of at least 3 words each, each verbatim. A role of a role rule must be named in the text.
@@ -145,7 +145,7 @@ answer gives `unknown`, not sent), preferably the id of a procedure decision. A 
 ["<obligation id>.<value name>"]`; only a `literal` named there is refused (`literal_open_question`). A value with no origin
 is not asserted. A skill package sets `origin: package`, `check: code`, `level: observe`.
 
-**Words the checks compare** (`compile/validate.py`): text is compared after folding spaces, emphasis marks, case, every dash to a
+**Words the checks compare** (`compile/validate/rule.py`): text is compared after folding spaces, emphasis marks, case, every dash to a
 hyphen and curly quotes to straight ones. `not_in_text` and `bare_must_not` are warnings: global rules, the `rule` of each decision, escalation
 and triage steps, definitions, notes and `applies_when` are verbatim or up to three runs of at least 3 verbatim words;
 template text, literal values (not on enum or boolean arguments) and the fixed parts of template values are verbatim; a

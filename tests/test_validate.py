@@ -26,7 +26,9 @@ from polisys.package.model import (
     to_json,
 )
 from polisys.package.files import save_package
-from polisys.compile.validate import diff_builds, resolve_conflicts, validate_build, validate_package
+from polisys.compile.validate.build import diff_builds, validate_build
+from polisys.compile.validate.conflicts import resolve_conflicts
+from polisys.compile.validate.whole_package import validate_package
 
 SPECS = [
     {
@@ -410,7 +412,7 @@ def test_rules_without_statements_cannot_show_coverage():
 
 
 def test_statement_outcomes_give_each_statement_the_outcomes_that_coverage_reads():
-    from polisys.compile.validate import statement_outcomes
+    from polisys.compile.validate.coverage import statement_outcomes
 
     pkg = _coverage_package(coverage=[CoverageItem("d:1:2", "out_of_scope", "not for the agent")])
     outcomes = statement_outcomes(pkg)
@@ -766,7 +768,7 @@ def test_cli_still_validates_a_build_and_needs_tools_for_it(tmp_path, capsys):
 
 from polisys.package.model import from_json  # noqa: E402
 from polisys.checks.rules import RuleSetHooks  # noqa: E402
-from polisys.compile.validate import RULE_SLOTS, _is_broken, _slot_findings, _trigger_tools  # noqa: E402
+from polisys.compile.validate.slots import RULE_SLOTS, _is_broken, _slot_findings, _trigger_tools  # noqa: E402
 from polisys.checks.verifier import Verifier  # noqa: E402
 
 

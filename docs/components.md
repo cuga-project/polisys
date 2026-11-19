@@ -39,7 +39,7 @@ styles; `compile/structure.py`) → classify statement types (`compile/classify.
 by code (`compile/handlers/tables.py`) → step graphs (`compile/handlers/procedures.py`) → rules from prose by a small model
 (`compile/handlers/prose.py`) → repair rejected rules → fold exceptions, drop superseded rules → repair the rule set
 (`compile/rule_repair.py`: tools for `verify` rules, typed rules for `verify` rules, role rules from grant tables at `remind`,
-`when` values as lists, guidance for a `verify` rule no write can trigger) → validate (`compile/validate.py`).
+`when` values as lists, guidance for a `verify` rule no write can trigger) → validate (`compile/validate/`).
 
 ## Run time
 
@@ -65,11 +65,11 @@ agent = MyAgent(tools=tools + parts.tools, hooks=parts.hooks)  # any host that r
 | `compile/documents.py`, `compile/structure.py` | Read documents; sections, statements, structure profiles |
 | `compile/classify.py` | Statement types (code for tables, a model for prose) |
 | `compile/handlers/` | Rules from tables and prose, links, procedures |
-| `compile/validate.py` | Rule and build checks; build-twice diff |
+| `compile/validate/` | Rule and build checks; build-twice diff |
 | `compile/builder.py` | The offline pipeline (and the older single-document `build`) |
 | `checks/rules.py` | Typed rules enforced at the hooks (code and Cedar checkers) |
 | `checks/procedure_monitor.py` | Step graphs during the run |
-| `experimental/finish/ledger.py` | The ledger: at the final reply, code checks what the policy requires against the calls that succeeded; one follow-up with known values, never for blocked work |
+| `experimental/finish/ledger/` | The ledger: at the final reply, code checks what the policy requires against the calls that succeeded; one follow-up with known values, never for blocked work |
 | `sources/intake.py`, `sources/detectors.py`, `checks/facts.py` | Online intake: detection (code, decision model), extraction, write verifier |
 | `llm.py` | Small-model clients (any OpenAI-compatible gateway) with usage counts |
 | `cli.py`, `skill/` | Command line and the harness-neutral policy compiler skill |
@@ -96,8 +96,8 @@ Profiles with a held-out gain:
 | Online intake, detectors, listing | `sources.data`, `sources.listing` | Core | In both AutomationBench profiles |
 | Verifier, write decisions | `checkers.verifier`, `decisions` | Core | In "Rules from data" |
 | Requirements tracker | `organizers.requirements_tracker` | Core | In "Rules from data". Alone it was neutral, and harmful when its items were wrong |
-| Read-back note | `notes.work_method: [readback]` | Core | Held-out gain on HR |
-| Other work-method notes (finish check, lookup retry, quoted values) | `notes.work_method` | Experimental | Tuning gain on 5 HR tasks; held-out gain not shown; no harm |
+| Read-back note (`guidance/work_method.py`) | `notes.work_method: [readback]` | Core | Held-out gain on HR |
+| Other work-method notes (finish check, lookup retry, quoted values; `experimental/guidance/work_method_notes.py`) | `notes.work_method` | Experimental | Tuning gain on 5 HR tasks; held-out gain not shown; no harm |
 | Gate | `checkers.gate` | Experimental | Gain only in-sample (3 tasks with written SOPs) |
 | Procedure guide, procedure tools, procedure push | `organizers.guide`, `organizers.procedure_tools`, `organizers.procedure_push` | Experimental | Guide: gain only in-sample. Tools alone: no gain |
 | Obligation ledger, request checklist | `obligations` | Experimental | Held-out gain not shown; no harm |

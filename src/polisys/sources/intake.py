@@ -35,7 +35,9 @@ from polisys.experimental.checks.guard_code import GuardCode, flatten_records
 from polisys.sources.references import ReferenceLedger
 from polisys.runtime.trace import audited_failure, emit, fresh
 from polisys.llm import today_line
-from polisys.checks.rules import RuleSetHooks, _walk, is_write_tool
+from polisys.checks.rules import RuleSetHooks
+from polisys.values import _walk
+from polisys.tool_kind import is_write_tool
 from polisys.runtime.context import Piece
 
 if TYPE_CHECKING:

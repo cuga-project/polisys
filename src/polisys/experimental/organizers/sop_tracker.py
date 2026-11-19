@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from polisys.llm import parse_json
-from polisys.compile.validate import quote_ok
+from polisys.compile.validate.rule import quote_ok
 from polisys.runtime.setting_types import Mode
 from polisys.runtime.context import Piece
 

@@ -20,7 +20,7 @@ from polisys.hooks import AgentHooks, HookResult
 
 from polisys.llm import parse_json
 from polisys.package.model import step_text
-from polisys.checks.rules import is_write_tool
+from polisys.tool_kind import is_write_tool
 
 READ_CHARS, DATA_CHARS, PROC_CHARS = 8_000, 60_000, 16_000
 REPLAN_AFTER_READS, MAX_PLANS = 3, 3

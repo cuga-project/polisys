@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from polisys.llm import parse_json, today_line
-from polisys.compile.validate import quote_ok
+from polisys.compile.validate.rule import quote_ok
 
 
 @dataclass

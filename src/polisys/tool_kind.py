@@ -2,7 +2,7 @@
 
 Two questions use this list, and they differ in one detail:
 
-- ``ruleset.is_write_tool(name)``: the first verb in the name that is known (a read verb or a write verb) decides, and a
+- ``is_write_tool(name)``: the first verb in the name that is known (a read verb or a write verb) decides, and a
   name with no known verb is a write (checking a read only costs a call; a missed write skips every check).
 - ``acts(tool)``: the first word of the name decides. ``mark_as_read`` is an action, because its first word is not a read
   verb. The procedure store's own tools (``policy__*``) do not act.
@@ -14,7 +14,7 @@ is read. ``count``, ``average`` and ``total`` are reads (a tool named ``count_in
 from __future__ import annotations
 
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 # An argument that names a record: ``ticket_id``, ``jobKey``, ``order_number``. One pattern for the whole layer.
 ID_ARG = re.compile(r"(?i:(^|_)(id|key|number))$|[a-z](?:Id|Key|Number)$")
@@ -61,3 +61,33 @@ def case_of(args: Dict[str, Any]) -> str:
         if ID_ARG.search(key) and isinstance(value, (str, int)) and not isinstance(value, bool) and str(value)
     ]
     return ",".join(parts)
+
+
+WRITE_VERBS = {
+    "create", "update", "add", "delete", "link", "register", "remove", "send", "map", "set", "assign", "close",
+    "resolve", "publish", "approve", "reject", "cancel", "escalate", "attach", "submit", "post", "transfer",
+    "pay", "refund", "book", "reset", "move", "archive", "upload", "insert", "patch", "put", "write",
+    "schedule", "enroll", "invite", "notify", "reply", "share", "grant", "revoke", "release", "allocate", "purchase",
+    "edit", "modify", "save",
+}  # fmt: skip
+
+READ_VERBS = READ_FIRST  # the name the rules use for the same list
+
+
+def _name_tokens(name: str) -> List[str]:
+    """Words of a tool name: snake_case, kebab-case and camelCase ("recruitee_candidateCreate" -> candidate, create)."""
+    spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", name)
+    return [t for t in re.split(r"[_\-.\s]+", spaced.lower()) if t]
+
+
+def is_write_tool(name: str) -> bool:
+    """The first verb in the name decides: ``update_incident``, ``zoho_desk_update_ticket``, ``salesforce_case_create``
+    are writes; ``find_incident_by_id``, ``google_sheets_get_many_rows`` are reads."""
+    for token in _name_tokens(name):
+        if token in READ_VERBS:
+            return False
+        if token in WRITE_VERBS:
+            return True
+    return (
+        True  # no known verb: check it (a missed write skips every check; checking a read only costs a call)
+    )

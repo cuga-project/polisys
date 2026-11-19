@@ -11,26 +11,15 @@ from langchain_core.tools import tool
 from polisys.hooks import AgentHooks, HookRegistry
 from polisys.runtime.dry_run import DryRunModelCall, RecordingModels, describe_parts
 from polisys.package.model import Document, Obligation, PolicyPackage, Procedure, Section, Statement
-from polisys.experimental.finish.ledger import (
-    BindingError,
-    Case,
-    ObligationLedger,
-    _call_text,
-    _failed_call,
-    _is_free_text,
-    arg_outcome,
-    bind_cases,
-    cards_of,
-    fact_id,
-    fold,
-    follow_up_text,
-    known_from_loop,
-    gaps_of,
-    match,
-    plan_of,
-    resolve_values,
-    stated_id,
+from polisys.experimental.finish.ledger.cases import (
+    BindingError, Case, bind_cases, cards_of, fact_id, known_from_loop, stated_id,
 )
+from polisys.experimental.finish.ledger.obligation_ledger import ObligationLedger
+from polisys.experimental.finish.ledger.text import _call_text, _failed_call, fold
+from polisys.experimental.finish.ledger.constants import _is_free_text
+from polisys.experimental.finish.ledger.call_check import arg_outcome, gaps_of, match
+from polisys.experimental.finish.ledger.follow_up import follow_up_text
+from polisys.experimental.finish.ledger.values import plan_of, resolve_values
 from polisys.runtime.profile import PolicyConfig
 from polisys.experimental.guidance.procedure_store import ProcedureStore
 from polisys.runtime.assembly import RunContext, RuntimeWiringError, build_runtime
@@ -752,7 +741,7 @@ def test_a_block_that_cannot_be_recorded_leaves_the_ledger_silent_for_the_run_wi
     def broken(args):
         raise RuntimeError("cannot read")
 
-    monkeypatch.setattr("polisys.experimental.finish.ledger._readable_call", broken)
+    monkeypatch.setattr("polisys.experimental.finish.ledger.obligation_ledger._readable_call", broken)
     assert reg.before_tool_call("create_ticket", {"summary": "x"})  # the block itself stands
     assert led.blocks == []
     assert led.before_reply("done").message is None  # no follow-up that asks for the stopped work
@@ -1847,7 +1836,7 @@ def test_item_level_says_the_level_of_every_item():
 
 
 def test_a_long_list_is_cut_and_says_so():
-    from polisys.experimental.finish.ledger import Item
+    from polisys.experimental.finish.ledger.follow_up import Item
 
     items = [Item(ob=ticket(id=f"o{n}"), case=Case(name="c")) for n in range(45)]
     text = follow_up_text(items)

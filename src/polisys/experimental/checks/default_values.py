@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 from polisys.experimental.guidance.tool_notes import _arguments, allowed_values, quoted_in, tool_lines
-from polisys.guidance.work_method import call_key
+from polisys.experimental.guidance.work_method_notes import call_key
 from polisys.llm import parse_json
 from polisys.runtime.context import Piece
 
@@ -255,7 +255,7 @@ class DefaultValueHooks(AgentHooks):
 
 
 def build(a: Assembly) -> Piece:
-    from polisys.checks.rules import is_write_tool
+    from polisys.tool_kind import is_write_tool
 
     cfg = a.cfg.checkers.default_values
     specs = a.run_tool_specs()

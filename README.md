@@ -147,7 +147,7 @@ the evaluation work, which is not part of this repository. The design the code w
 ```
 src/polisys/
   package/        the policy model (model.py) and the package file (files.py)
-  compile/        documents to a package, offline: documents.py, builder.py, handlers/, validate.py
+  compile/        documents to a package, offline: documents.py, builder.py, handlers/, validate/
   sources/        rules found in data during the run: intake.py, detectors.py, listing.py
   checks/         checks of a tool call: rules.py (typed rules, Cedar in cedar.py), verifier.py, decisions.py, router.py
   guidance/       notes the agent sees: work_method.py
@@ -160,6 +160,8 @@ src/polisys/
   hosts/          glue for agent frameworks (cuga.py)
   hooks.py        the hook contract
   llm.py          small-model clients
+  tool_kind.py    which tools read and which write, from their names
+  values.py       how values are compared: folded text, numbers, dates, conditions
   skill/SKILL.md  the compile skill for an agent
   _aliases.py     old module paths of the flat layout; they still import
 tests/            the suite (offline; models are scripted)

@@ -30,7 +30,7 @@ from polisys.hooks import AgentHooks, HookResult
 
 from polisys.llm import parse_json
 from polisys.package.model import step_text
-from polisys.checks.rules import is_write_tool
+from polisys.tool_kind import is_write_tool
 from polisys.runtime.trace import audited_failure, emit
 from polisys.runtime.setting_types import Mode
 from polisys.runtime.context import Piece
