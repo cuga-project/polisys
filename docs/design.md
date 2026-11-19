@@ -109,7 +109,7 @@ flowchart LR
 | Narrow questions | Kev-4B: record excluded, limit, rule change, rule applies | `checks/decisions.py`, `sources/detectors.py` | Built for online intake (`sources.data`) only. Not a stage of `WriteChecks`; not wired for package rules |
 | Judgment gate | One model check per acting call on scoped rules; block once with evidence | `experimental/checks/gate.py` | Built. The measured 139 of 153 (`handbook-gemini-graph-gate`, gate `f69ebbec8`) came from another grounding rule: `quoted_in` (change 108, commit `28c29b667`, after that commit) refuses a quote that is also in the rules in scope and accepts a quoted span, and was measured only in replay. The DECISION line also gained `; then: ...`, and the exact package bytes of those runs are unproven (Task 2.1 deferred). Re-baseline it: `STABILITY_REPORT.md`, "After the gate", item 2 |
 | Verifier | Model check on specific statements; reminds only | `checks/verifier.py` | Built; narrowed |
-| **Obligation ledger** | What must exist by the end; one follow-up path | `experimental/finish/ledger.py` | Built. Producers `package`, `request`, `duty`, all at level 1: none passes the replay rule, none was tested on a held-out set (`obligation_replay/REPORT.md`). On a profile with a producer, the older follow-ups turn off; the older modules stay (section 5) |
+| **Obligation ledger** | What must exist by the end; one follow-up path | `experimental/finish/ledger/` | Built. Producers `package`, `request`, `duty`, all at level 1: none passes the replay rule, none was tested on a held-out set (`obligation_replay/REPORT.md`). On a profile with a producer, the older follow-ups turn off; the older modules stay (section 5) |
 | Organizers | Guide, SOP loop, SOP tracker, navigator | `experimental/guidance/procedure_guide.py`, `experimental/organizers/sop_loop.py`, `experimental/organizers/sop_tracker.py`, `experimental/organizers/sop_navigator.py` | Built; routed by shape |
 | Effects | Allow, remind in the tool result, block once, skip after cap, hold, follow-up | `checks/rules.py`, `sources/intake.py` | Built per component; ordering across components is new (section 6) |
 | **Level switch** | Level 0–3 by model and risk | `runtime/levels.py` | Built (Task 5.1). The table is a hypothesis: no profile uses `auto` yet |
@@ -195,7 +195,7 @@ effect:
 values:
   last_name: {from: case_fact, field: employee_last_name}
   date: {from: computed, fn: today}
-check: code                # only code is built: experimental/finish/ledger.py gives `unknown` for a check of kev or model
+check: code                # only code is built: experimental/finish/ledger/ gives `unknown` for a check of kev or model
 level: follow_up           # observe | show (not built: it changes nothing, see the level table below) | follow_up
 source: {section: "12.1", quote: "Step 3: Create a Jira ticket ..."}
 ```
@@ -329,7 +329,7 @@ The follow-up lists each open item with its target and known values.
 | 0 | Ledger recorded in the trace only |
 | 1 | No follow-up. **Not built:** a checklist of open items. `ObligationLedger` has no `before_llm_call`, and the item level `show` changes nothing: only `follow_up` items can be sent, so level 1 behaves as level 0 |
 | 2 | One follow-up at the reply |
-| 3 | Up to 2 follow-ups (`FOLLOW_UPS_BY_LEVEL`). **Not built:** `model` checks for items with no code match: only code checks run (`experimental/finish/ledger.py` gives `unknown` for any other check) |
+| 3 | Up to 2 follow-ups (`FOLLOW_UPS_BY_LEVEL`). **Not built:** `model` checks for items with no code match: only code checks run (`experimental/finish/ledger/` gives `unknown` for any other check) |
 
 **Producers (Task 4.2, change 137).** A profile turns the ledger on by naming a producer in `obligations.producers`
 (`package`, `request`, `duty`; empty: no ledger). Each is one function that gives obligations:
@@ -372,7 +372,7 @@ requirements gate flagged 17–40% of passed checks). Item levels are never set 
 
 | Hook | What runs |
 |---|---|
-| `session_start` | Each hook object resets its own state (`session_start` in `checks/rules.py`, `sources/intake.py`, `experimental/finish/ledger.py`, `checks/procedure_monitor.py`). The package is loaded and checked, and the audit file is opened, in `build_runtime` before the run, not at this hook |
+| `session_start` | Each hook object resets its own state (`session_start` in `checks/rules.py`, `sources/intake.py`, `experimental/finish/ledger/`, `checks/procedure_monitor.py`). The package is loaded and checked, and the audit file is opened, in `build_runtime` before the run, not at this hook |
 | `on_user_message` | Request producer; discovery in data sources, or the listing (`sources.listing`); SOP tracker note (flow shape) |
 | `before_llm_call` | Brief and checklist, in the system prompt (measured: the newest-message option scored −4.2, change 111) |
 | `before_tool_call` | Write checks, in order below; guide stops (level 3) |

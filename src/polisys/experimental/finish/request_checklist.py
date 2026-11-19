@@ -340,8 +340,8 @@ def obligations_from_request(
     never compares. The items open at the user message. Raises what the model call or the parsing raises: the ledger writes
     that down and goes on with no request item (no checklist is better than a wrong one)."""
     from polisys.package.model import Obligation
-    from polisys.experimental.finish.ledger import _hay
-    from polisys.experimental.finish.ledger import _words as _owords
+    from polisys.experimental.finish.ledger.text import _hay
+    from polisys.experimental.finish.ledger.text import _words as _owords
 
     by_name = {t["name"]: t for t in specs if isinstance(t, dict) and t.get("name")}
     names = sorted(n for n in by_name if is_write(n))
