@@ -2,7 +2,8 @@
 
 import json
 
-from polisys.sources.intake import DISCOVERY_QUERIES, OnlinePolicyIntake, discovery_tools
+from polisys.sources.intake.prompts import DISCOVERY_QUERIES, discovery_tools
+from polisys.sources.intake.online_intake import OnlinePolicyIntake
 
 MAIL = [
     {"id": "m1", "subject": "Alert policy update", "body": "Policy: only alert on pages with CVR below 3%."},

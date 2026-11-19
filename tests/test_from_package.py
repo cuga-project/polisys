@@ -16,7 +16,7 @@ from polisys.package.files import (
 )
 from polisys.experimental.guidance.procedure_guide import ProcedureGuide
 from polisys.experimental.guidance.procedure_store import ProcedureStore
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.experimental.organizers.sop_loop import SopLoop, _proc_line
 from polisys.experimental.organizers.sop_navigator import SopNavigator
 from polisys.experimental.checks.gate import StoreGate

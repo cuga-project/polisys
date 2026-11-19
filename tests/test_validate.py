@@ -767,7 +767,7 @@ def test_cli_still_validates_a_build_and_needs_tools_for_it(tmp_path, capsys):
 # -- fix round 1 -------------------------------------------------------------------------------------------------------
 
 from polisys.package.model import from_json  # noqa: E402
-from polisys.checks.rules import RuleSetHooks  # noqa: E402
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks  # noqa: E402
 from polisys.compile.validate.slots import RULE_SLOTS, _is_broken, _slot_findings, _trigger_tools  # noqa: E402
 from polisys.checks.verifier import Verifier  # noqa: E402
 

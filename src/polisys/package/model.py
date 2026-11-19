@@ -172,7 +172,7 @@ class PolicySet:
 
 @dataclass
 class Rule:
-    """A checkable form of one or more statements. ``rule`` is the typed rule dict that ``checks/rules.py`` runs.
+    """A checkable form of one or more statements. ``rule`` is the typed rule dict that ``checks/rules/`` runs.
 
     ``cls`` (JSON key ``class``): hard, judgment or guidance. ``level``: observe, remind, block_once or deny. ``package/files.py``
     derives both for converted artifacts. ``RuleSetHooks`` reads ``level`` (see ``RuleSetHooks._level``); nothing at

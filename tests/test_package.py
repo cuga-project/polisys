@@ -29,7 +29,7 @@ from polisys.package.files import (
     to_store_graph,
 )
 from polisys.experimental.guidance.procedure_store import ProcedureStore
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 
 SOURCE = {"document": "policy-abc", "section": "4.2", "page": None, "line": 65}
 

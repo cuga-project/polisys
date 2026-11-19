@@ -3,8 +3,9 @@
 import json
 
 from polisys.checks.decisions import Decisions, has_limit
-from polisys.sources.intake import OnlinePolicyIntake
-from polisys.checks.rules import MAX_SAME_DENY, RuleSetHooks
+from polisys.sources.intake.online_intake import OnlinePolicyIntake
+from polisys.checks.rules.rule_types import MAX_SAME_DENY
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.runtime.trace import PolicyTrace
 
 RULES = {
@@ -155,7 +156,7 @@ def test_trace_records_llm_and_decision_calls():
 
 
 def test_record_signal_is_checked_even_without_rules():
-    from polisys.sources.intake import OnlinePolicyIntake as Intake
+    from polisys.sources.intake.online_intake import OnlinePolicyIntake as Intake
 
     ask = ask_with({"record_says_skip": 0.9})
     h = Intake(

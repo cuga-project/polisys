@@ -116,7 +116,7 @@ COMPONENT_IMPORTS_COMPONENT = {
 
 
 def test_the_scan_sees_the_source():
-    assert ("checks.rules", "package.model") in INSIDE and ("hosts.cuga", "cuga") in OUTSIDE
+    assert ("checks.rules.rule_set_hooks", "hooks") in INSIDE and ("hosts.cuga", "cuga") in OUTSIDE
 
 
 def test_package_imports_nothing_from_the_rest():
@@ -131,7 +131,7 @@ def test_only_hosts_imports_an_agent_framework():
 
 def test_core_code_does_not_import_experimental_code():
     found = {
-        (a, b)
+        (component(a), b)  # the parts of one component count once
         for a, b in INSIDE
         if not a.startswith("experimental.") and b.startswith("experimental.") and a not in WIRING
     }

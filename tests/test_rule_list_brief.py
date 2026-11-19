@@ -15,7 +15,7 @@ from polisys.package.model import PolicyPackage
 from polisys.package.files import exception_links, from_build
 from polisys.runtime.profile import PolicyConfig, PolicyConfigError
 from polisys.runtime.assembly import RunContext, RuntimeWiringError, build_runtime
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.compile.validate.whole_package import validate_package
 
 TOOL = "change_booking"

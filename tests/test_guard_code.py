@@ -57,7 +57,7 @@ def test_runaway_check_is_stopped():
 
 
 def test_intake_reminds_by_default_and_denies_in_deny_mode():
-    from polisys.sources.intake import OnlinePolicyIntake
+    from polisys.sources.intake.online_intake import OnlinePolicyIntake
 
     def model(system, user):
         if "Python check" in system:

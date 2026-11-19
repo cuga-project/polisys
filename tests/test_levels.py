@@ -32,7 +32,7 @@ from polisys.experimental.finish.ledger.obligation_ledger import ObligationLedge
 from polisys.package.files import from_build, from_store_graph
 from polisys.runtime.profile import PolicyConfig
 from polisys.runtime.assembly import RunContext, RuntimeWiringError, build_runtime
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.experimental.checks.gate import StoreGate
 from polisys.checks.verifier import Verifier
 from tests.cuga_agent_loop import load_agent_loop

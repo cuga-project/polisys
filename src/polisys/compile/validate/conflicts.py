@@ -9,7 +9,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
-from polisys.checks.rules import FREE_TEXT
+from polisys.checks.rules.rule_types import FREE_TEXT
 from polisys.values import _condition, canon, norm
 from polisys.package.model import (
     RULE_LEVELS, CoverageItem, LinkType, PolicyPackage, PolicySet, Rule, Statement, resolve_conflict,

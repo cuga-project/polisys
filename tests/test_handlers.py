@@ -6,7 +6,7 @@ from polisys.compile.documents import load_document, split_policy
 from polisys.compile.handlers.prose import prose_rules
 from polisys.compile.handlers.tables import code_rules, table_rules
 from polisys.package.model import StatementType
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 
 SPECS = [
     {

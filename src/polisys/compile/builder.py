@@ -1,4 +1,4 @@
-"""Offline builder: policy text + tool schemas → typed rule set (see ``checks/rules.py``) and a coverage report.
+"""Offline builder: policy text + tool schemas → typed rule set (see ``checks/rules/``) and a coverage report.
 
 Steps (policy-flow.html, "Graph methodology"):
 1. split    — sections by numbered headings; preamble kept; statements are bullets, paragraphs and table rows
@@ -37,7 +37,7 @@ from polisys.compile.handlers.tables import (  # noqa: F401 (moved; re-exported)
     tool_catalog,
 )
 
-from polisys.checks.rules import RULE_TYPES
+from polisys.checks.rules.rule_types import RULE_TYPES
 
 PROMPT_VERSION = "v2"
 HEADING = re.compile(r"^#{1,4}\s*\**\s*(\d+(?:\.\d+)*)\.?\s*(.*?)\**\s*$")

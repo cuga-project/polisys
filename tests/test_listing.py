@@ -4,7 +4,7 @@ import json
 import re
 
 from polisys.sources import listing as L
-from polisys.sources.intake import OnlinePolicyIntake
+from polisys.sources.intake.online_intake import OnlinePolicyIntake
 
 NOTE = {"id": "m1", "subject": "Refund handling", "body": "Refunds over 300 need a manager's approval."}
 CHAT = {"id": "m2", "subject": "Lunch", "body": "Pizza on Friday."}

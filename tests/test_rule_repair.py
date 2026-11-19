@@ -8,7 +8,7 @@ from polisys.compile.documents import load_document
 from polisys.package.model import PolicySet, to_json
 from polisys.package.files import from_build, to_build
 from polisys.compile.rule_repair import normalize_when, partial_update_overreach
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.compile.validate.whole_package import validate_package
 
 

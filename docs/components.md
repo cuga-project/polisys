@@ -67,10 +67,10 @@ agent = MyAgent(tools=tools + parts.tools, hooks=parts.hooks)  # any host that r
 | `compile/handlers/` | Rules from tables and prose, links, procedures |
 | `compile/validate/` | Rule and build checks; build-twice diff |
 | `compile/builder.py` | The offline pipeline (and the older single-document `build`) |
-| `checks/rules.py` | Typed rules enforced at the hooks (code and Cedar checkers) |
+| `checks/rules/` | Typed rules enforced at the hooks (code and Cedar checkers) |
 | `checks/procedure_monitor.py` | Step graphs during the run |
 | `experimental/finish/ledger/` | The ledger: at the final reply, code checks what the policy requires against the calls that succeeded; one follow-up with known values, never for blocked work |
-| `sources/intake.py`, `sources/detectors.py`, `checks/facts.py` | Online intake: detection (code, decision model), extraction, write verifier |
+| `sources/intake/`, `sources/detectors.py`, `checks/facts.py` | Online intake: detection (code, decision model), extraction, write verifier |
 | `llm.py` | Small-model clients (any OpenAI-compatible gateway) with usage counts |
 | `cli.py`, `skill/` | Command line and the harness-neutral policy compiler skill |
 

@@ -11,11 +11,11 @@ from polisys.experimental.checks import gate as store_gate
 from polisys.checks.decisions import Decisions
 from polisys.experimental.finish.request_checklist import DeliverablesHooks
 from polisys.runtime.dry_run import RecordingModels
-from polisys.sources.intake import OnlinePolicyIntake
+from polisys.sources.intake.online_intake import OnlinePolicyIntake
 from polisys.runtime.levels import Shadow, WriteChecks
 from polisys.package.files import from_build
 from polisys.checks.procedure_monitor import ProcedureMonitor
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.experimental.organizers.sop_planner import SopPlanner
 from polisys.runtime.assembly import Assembly, Models, build_runtime
 from polisys.experimental.organizers.sop_navigator import SopNavigator

@@ -6,7 +6,7 @@ import json
 import pytest
 
 from polisys.checks.facts import FactStore
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.checks.verifier import Verifier
 
 SPECS = [
