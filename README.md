@@ -144,6 +144,8 @@ the evaluation work, which is not part of this repository. The design the code w
 
 ## Repository layout
 
+New to the code? [docs/read-this-first.md](docs/read-this-first.md) follows one tool call through these folders.
+
 ```
 src/polisys/
   package/        the policy model (model.py) and the package file (files.py)
