@@ -105,13 +105,13 @@ flowchart LR
 | Listing (`sources.listing`) | At the request, read every record the host lists; a model keeps the records that state rules (tables always); those go to the online intake's extraction. Records the listing read skip the online intake later | `sources/listing.py`, `sources/intake.py` | Built, off by default. AutomationBench fresh3 (tuning set), 3 trials: gold rule records found 93.7% vs 28.6% with discovery; strict +11.4 on gpt-oss, no gain and no harm on Haiku 5.5. Notes in single table rows are often lost in extraction. The host gives the records (`RunContext.data_list`); a general crawler over any host's read tools is deferred (below) |
 | Procedure tools | The agent reads the SOP through `policy__` tools; what it opens scopes the gate | `experimental/guidance/procedure_store.py` | Built; the measured gate path |
 | Router | Which procedures apply: `agent_opened` (measured), `llm_cards`, `bm25_kev` | `checks/router.py` (registry); `checks/retrieval.py`, `experimental/organizers/sop_loop.py` | Built: `Router` and `Expander` by name. The gate reads `Scope`; the ledger has no retrieval scope. `bm25_kev` and `llm_cards` have not run against a real model through the registry |
-| Hard rules | Typed rules by code; roles by Cedar | `checks/rules.py`, `checks/cedar.py` | Built |
+| Hard rules | Typed rules by code; roles by Cedar | `checks/rules/`, `checks/cedar.py` | Built |
 | Narrow questions | Kev-4B: record excluded, limit, rule change, rule applies | `checks/decisions.py`, `sources/detectors.py` | Built for online intake (`sources.data`) only. Not a stage of `WriteChecks`; not wired for package rules |
 | Judgment gate | One model check per acting call on scoped rules; block once with evidence | `experimental/checks/gate.py` | Built. The measured 139 of 153 (`handbook-gemini-graph-gate`, gate `f69ebbec8`) came from another grounding rule: `quoted_in` (change 108, commit `28c29b667`, after that commit) refuses a quote that is also in the rules in scope and accepts a quoted span, and was measured only in replay. The DECISION line also gained `; then: ...`, and the exact package bytes of those runs are unproven (Task 2.1 deferred). Re-baseline it: `STABILITY_REPORT.md`, "After the gate", item 2 |
 | Verifier | Model check on specific statements; reminds only | `checks/verifier.py` | Built; narrowed |
 | **Obligation ledger** | What must exist by the end; one follow-up path | `experimental/finish/ledger/` | Built. Producers `package`, `request`, `duty`, all at level 1: none passes the replay rule, none was tested on a held-out set (`obligation_replay/REPORT.md`). On a profile with a producer, the older follow-ups turn off; the older modules stay (section 5) |
 | Organizers | Guide, SOP loop, SOP tracker, navigator | `experimental/guidance/procedure_guide.py`, `experimental/organizers/sop_loop.py`, `experimental/organizers/sop_tracker.py`, `experimental/organizers/sop_navigator.py` | Built; routed by shape |
-| Effects | Allow, remind in the tool result, block once, skip after cap, hold, follow-up | `checks/rules.py`, `sources/intake.py` | Built per component; ordering across components is new (section 6) |
+| Effects | Allow, remind in the tool result, block once, skip after cap, hold, follow-up | `checks/rules/`, `sources/intake.py` | Built per component; ordering across components is new (section 6) |
 | **Level switch** | Level 0–3 by model and risk | `runtime/levels.py` | Built (Task 5.1). The table is a hypothesis: no profile uses `auto` yet |
 | **Policy config** | One YAML; replaces 42 environment switches | `runtime/profile.py` | Built. The policy layer reads no policy switch from the environment (9 profiles; `authority.company_domains`, `authority.may_change_rules` are not read and `build_runtime` raises on them; `priority_classes` only writes audit notes) |
 | **Runtime assembly** | Config + package → hooks, tools, notes | `runtime/assembly.py` | Built; the four adapters of `harness/run.py` call it, and the old runners are in `launchers/archive/` |
@@ -357,7 +357,7 @@ holds), a `reply` (no tool call can show it done) or a read tool; a read call, o
 
 | Today | In the design |
 |---|---|
-| `duty` rules in `checks/rules.py`, `checks/procedure_monitor.py` | Producer `duty`; on a profile with a producer these two only record |
+| `duty` rules in `checks/rules/`, `checks/procedure_monitor.py` | Producer `duty`; on a profile with a producer these two only record |
 | `experimental/finish/request_checklist.py` | Producer `request`; the hook is no longer built (the class stays for replays) |
 | `finish/requirements.py` + `finish/requirements_tracker.py`, `sources/intake.py` reply check | Stay as they are in B4T-F, which sends its own follow-ups, until a re-baseline shows the ledger is not worse. On the package path only the ledger sends follow-ups |
 | `store_verifier.py` | Removed (Task 4.2). `_acts` and the read verbs moved to `tool_kind.py`, with `count`, `average` and `total` as reads |
@@ -372,7 +372,7 @@ requirements gate flagged 17–40% of passed checks). Item levels are never set 
 
 | Hook | What runs |
 |---|---|
-| `session_start` | Each hook object resets its own state (`session_start` in `checks/rules.py`, `sources/intake.py`, `experimental/finish/ledger/`, `checks/procedure_monitor.py`). The package is loaded and checked, and the audit file is opened, in `build_runtime` before the run, not at this hook |
+| `session_start` | Each hook object resets its own state (`session_start` in `checks/rules/`, `sources/intake.py`, `experimental/finish/ledger/`, `checks/procedure_monitor.py`). The package is loaded and checked, and the audit file is opened, in `build_runtime` before the run, not at this hook |
 | `on_user_message` | Request producer; discovery in data sources, or the listing (`sources.listing`); SOP tracker note (flow shape) |
 | `before_llm_call` | Brief and checklist, in the system prompt (measured: the newest-message option scored −4.2, change 111) |
 | `before_tool_call` | Write checks, in order below; guide stops (level 3) |

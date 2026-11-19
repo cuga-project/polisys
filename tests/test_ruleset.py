@@ -1,7 +1,7 @@
 """Typed rule set: builder code steps and RuleSetHooks checks, without a model."""
 
 from polisys.compile.builder import build, split_policy, validate
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 
 POLICY = """# Policy
 Never assume or fabricate IDs. The same is the case of optional or default arguments.
@@ -213,7 +213,7 @@ def test_duty_not_opened_when_its_tool_is_missing():
 
 
 def test_no_assumed_data_rules_are_observed_unless_measured():
-    from polisys.checks.rules import RuleSetHooks
+    from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 
     rules = [{"id": "g1", "type": "grounded_values", "source": "preamble"}]
     h = RuleSetHooks(rules, SPECS)
@@ -237,7 +237,7 @@ def test_no_assumed_data_rules_are_observed_unless_measured():
 
 
 def test_unicode_dashes_do_not_split_values_or_patterns():
-    from polisys.checks.rules import RuleSetHooks
+    from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 
     specs = [
         {"name": "gmail_send_email", "inputSchema": {"properties": {"to": {"type": "string"}}}},
@@ -281,7 +281,7 @@ def test_unicode_dashes_do_not_split_values_or_patterns():
 
 
 def test_policy_tool_conflict_is_observed_not_shown():
-    from polisys.checks.rules import RuleSetHooks
+    from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 
     rule = {
         "id": "c1",

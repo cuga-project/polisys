@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from polisys.compile.documents import clean as _clean
 from polisys.compile.handlers.tables import _props
-from polisys.checks.rules import RULE_TYPES
+from polisys.checks.rules.rule_types import RULE_TYPES
 from polisys.values import norm
 
 _FOLD = str.maketrans(

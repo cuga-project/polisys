@@ -4,7 +4,8 @@ import json
 
 from polisys.checks.decisions import Decisions, has_limit
 from polisys.sources.intake import OnlinePolicyIntake
-from polisys.checks.rules import MAX_SAME_DENY, RuleSetHooks
+from polisys.checks.rules.rule_types import MAX_SAME_DENY
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.runtime.trace import PolicyTrace
 
 RULES = {

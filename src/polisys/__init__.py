@@ -18,7 +18,8 @@ from polisys import _aliases
 from polisys.checks.cedar import CedarDecision, CedarEngine
 from polisys.compile.builder import BuildResult, build, openai_json_model, split_policy
 from polisys.sources.intake import OnlinePolicyIntake
-from polisys.checks.rules import RULE_TYPES, RuleSetHooks
+from polisys.checks.rules.rule_types import RULE_TYPES
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.tool_kind import is_write_tool
 
 _aliases.install()  # old module paths of the flat layout keep working

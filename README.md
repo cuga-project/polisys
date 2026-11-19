@@ -149,7 +149,7 @@ src/polisys/
   package/        the policy model (model.py) and the package file (files.py)
   compile/        documents to a package, offline: documents.py, builder.py, handlers/, validate/
   sources/        rules found in data during the run: intake.py, detectors.py, listing.py
-  checks/         checks of a tool call: rules.py (typed rules, Cedar in cedar.py), verifier.py, decisions.py, router.py
+  checks/         checks of a tool call: rules/ (typed rules, Cedar in cedar.py), verifier.py, decisions.py, router.py
   guidance/       notes the agent sees: work_method.py
   finish/         checks at the final reply: requirements_tracker.py, followups.py
   runtime/        profile.py (profiles), registry.py (the list of components), assembly.py (build_runtime),

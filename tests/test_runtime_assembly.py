@@ -788,7 +788,7 @@ def test_the_description_is_the_same_for_two_builds_and_differs_when_a_rule_chan
 
 def test_a_rule_from_a_package_is_described_like_the_same_rule_from_a_build():
     from polisys.runtime.dry_run import describe_wiring
-    from polisys.checks.rules import RuleSetHooks
+    from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 
     parts, models = build(
         config({"rules": "on"}, package="p.json"), from_build({"rules": [RULE], "procedures": []})

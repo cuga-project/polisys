@@ -32,7 +32,7 @@ flowchart LR
 | `Document` | One source: a file, a system prompt, an email, a sheet, a user message | `id`, `kind`, `title`, `trust`, `effective_date`, `authority_rank`, `sections`, `hash` |
 | `Section` | A numbered or titled part of a document | `id` (`4.2`, `preamble`), `title`, `page`, `parent`, `statements` |
 | `Statement` | One sentence, bullet or table row that says something | `id`, `text`, `types` (at most 2), `modality` |
-| `Rule` | A checkable form of statements | `type`, `rule` (the typed rule dict that `checks/rules.py` runs), `statement_ids`, `checker`, `may_deny` |
+| `Rule` | A checkable form of statements | `type`, `rule` (the typed rule dict that `checks/rules/` runs), `statement_ids`, `checker`, `may_deny` |
 | `Procedure` | An SOP as a step graph | `trigger`, `steps`, `edges` |
 | `Step` | One step of a procedure | `action` (tool name or `reply`), `required`, `condition` |
 | `Definition` | The meaning of a term | `term`, `meaning`, `used_by` |

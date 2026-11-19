@@ -65,7 +65,7 @@ def _cedar_error(rules: List[Rule]) -> Optional[ValidationError]:
     if not roles:
         return None
     try:
-        from polisys.checks.rules import RuleSetHooks
+        from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 
         RuleSetHooks._cedar(roles)
     except Exception as exc:  # cedar text that does not parse

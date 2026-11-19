@@ -10,7 +10,7 @@ import pytest
 from polisys.runtime.dry_run import RecordingModels, describe_parts
 from polisys.package.files import from_build
 from polisys.runtime.assembly import RunContext, build_runtime
-from polisys.checks.rules import RuleSetHooks
+from polisys.checks.rules.rule_set_hooks import RuleSetHooks
 from polisys.runtime.trace import AUDIT_FIELDS, EVIDENCE_CHARS, REDACTED, AuditLog, PolicyTrace, Records
 
 from .test_runtime_assembly import (

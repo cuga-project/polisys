@@ -176,7 +176,7 @@ GLOBAL_RULES = ("grounded_values", "id_provenance")  # apply to every write: a t
 _TRIGGER = {"tool": ("str", False), "when": _WHEN}
 _THEN = {"tool": ("str", True), "when": _WHEN}
 # What each type adds to ``COMMON_SLOTS``: name -> (kind, required). A nested table is an object with its own slots.
-# Types as in ``checks/rules.py``.
+# Types as in ``checks/rules/``.
 _OWN_SLOTS: Dict[str, Dict[str, Tuple[Any, bool]]] = {
     "required_args": {"args": ("strs", True)},
     "allowed_values": {"arg": ("str", True), "values": ("values", True)},

@@ -116,7 +116,7 @@ COMPONENT_IMPORTS_COMPONENT = {
 
 
 def test_the_scan_sees_the_source():
-    assert ("checks.rules", "package.model") in INSIDE and ("hosts.cuga", "cuga") in OUTSIDE
+    assert ("checks.rules.rule_set_hooks", "hooks") in INSIDE and ("hosts.cuga", "cuga") in OUTSIDE
 
 
 def test_package_imports_nothing_from_the_rest():

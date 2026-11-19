@@ -103,7 +103,7 @@ def build(a: Assembly) -> Piece:
     from polisys.experimental.finish.ledger.cases import cards_of
     from polisys.experimental.finish.request_checklist import obligations_from_request
     from polisys.package.files import obligations_from_package, runtime_rules
-    from polisys.checks.rules import obligations_from_duties
+    from polisys.checks.rules.duty_obligations import obligations_from_duties
 
     cfg = a.cfg.obligations
     producers = set(cfg.producers)
