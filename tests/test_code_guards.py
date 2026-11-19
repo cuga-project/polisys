@@ -3,7 +3,7 @@
 import json
 
 from polisys.experimental.checks.default_values import DefaultValueHooks, build_defaults, check_defaults
-from polisys.guidance.work_method import LiteralValueHooks, altered_quote, quoted_values
+from polisys.experimental.guidance.work_method_notes import LiteralValueHooks, altered_quote, quoted_values
 
 REQUEST = "Open a ticket for Ada's team. Use the title 'Pump 7: seal worn, replace before Friday' and add the note \"Parts are in bay 3.\""
 WRITE = lambda name: name.startswith(("create_", "update_", "add_"))  # noqa: E731
@@ -80,7 +80,7 @@ def test_a_call_without_the_argument_is_blocked_once_with_the_default_and_a_give
 
 
 from polisys.experimental.guidance.policy_lines import HEADER as LINES_HEADER, PolicyLines, build_lines, check_lines  # noqa: E402
-from polisys.guidance.work_method import FinishLedgerHooks, LiteralCoverageHooks, request_literals  # noqa: E402
+from polisys.experimental.guidance.work_method_notes import FinishLedgerHooks, LiteralCoverageHooks, request_literals  # noqa: E402
 
 
 def test_the_ledger_lists_each_write_with_its_outcome_and_counts_the_reads():

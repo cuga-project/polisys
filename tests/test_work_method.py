@@ -85,7 +85,7 @@ def _is_write(tool):
 
 
 def test_finish_check_is_sent_once_and_is_one_of_the_reply_turns():
-    from polisys.guidance.work_method import FINISH_CHECK, FinishCheckHooks
+    from polisys.experimental.guidance.work_method_notes import FINISH_CHECK, FinishCheckHooks
 
     h = FinishCheckHooks()
     assert h.before_reply("done").message == FINISH_CHECK
@@ -95,7 +95,7 @@ def test_finish_check_is_sent_once_and_is_one_of_the_reply_turns():
 
 
 def test_a_failed_lookup_of_a_name_the_request_gives_gets_one_note():
-    from polisys.guidance.work_method import LookupRetryHooks
+    from polisys.experimental.guidance.work_method_notes import LookupRetryHooks
 
     h = LookupRetryHooks("Add the staff of the Northern Depot Team to the roster.", _is_write)
     miss = {"error": {"detail": "not found"}}
@@ -106,7 +106,7 @@ def test_a_failed_lookup_of_a_name_the_request_gives_gets_one_note():
 
 
 def test_no_lookup_note_for_a_success_a_write_a_short_value_or_a_value_the_request_does_not_hold():
-    from polisys.guidance.work_method import LookupRetryHooks, named_in
+    from polisys.experimental.guidance.work_method_notes import LookupRetryHooks, named_in
 
     h = LookupRetryHooks("Add the staff of the Northern Depot Team to the roster.", _is_write)
     miss = {"error": "not found"}
@@ -119,7 +119,7 @@ def test_no_lookup_note_for_a_success_a_write_a_short_value_or_a_value_the_reque
 
 
 def test_the_lookup_notes_stop_at_the_limit():
-    from polisys.guidance.work_method import LookupRetryHooks
+    from polisys.experimental.guidance.work_method_notes import LookupRetryHooks
 
     h = LookupRetryHooks("Find Alpha Unit, Beta Unit, Gamma Unit and Delta Unit.", _is_write, max_notes=3)
     miss = {"error": "not found"}
@@ -128,7 +128,7 @@ def test_the_lookup_notes_stop_at_the_limit():
 
 
 def test_the_runtime_adds_the_two_new_hooks_only_when_listed():
-    from polisys.guidance.work_method import FinishCheckHooks, LookupRetryHooks
+    from polisys.experimental.guidance.work_method_notes import FinishCheckHooks, LookupRetryHooks
 
     parts, _ = build(config(notes={"work_method": ["lookup_retry", "finish_check"]}), ctx=CTX)
     kinds = {type(h) for h in parts.hooks}
@@ -138,7 +138,7 @@ def test_the_runtime_adds_the_two_new_hooks_only_when_listed():
 
 
 def test_the_finish_check_says_that_the_tools_list_is_in_force_only_when_the_deployment_says_so():
-    from polisys.guidance.work_method import FINISH_CHECK, FINISH_CHECK_TOOL_LISTS, FinishCheckHooks
+    from polisys.experimental.guidance.work_method_notes import FINISH_CHECK, FINISH_CHECK_TOOL_LISTS, FinishCheckHooks
 
     assert FinishCheckHooks().before_reply("done").message == FINISH_CHECK
     assert FinishCheckHooks("tool").before_reply("done").message == FINISH_CHECK + FINISH_CHECK_TOOL_LISTS

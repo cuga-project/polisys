@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Literal, Optional
 
 from polisys.hooks import AgentHooks, HookResult
 from polisys.experimental.guidance.tool_notes import _arguments, allowed_values, quoted_in, tool_lines
-from polisys.guidance.work_method import call_key
+from polisys.experimental.guidance.work_method_notes import call_key
 from polisys.llm import parse_json
 from polisys.runtime.context import Piece
 

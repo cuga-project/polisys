@@ -96,8 +96,8 @@ Profiles with a held-out gain:
 | Online intake, detectors, listing | `sources.data`, `sources.listing` | Core | In both AutomationBench profiles |
 | Verifier, write decisions | `checkers.verifier`, `decisions` | Core | In "Rules from data" |
 | Requirements tracker | `organizers.requirements_tracker` | Core | In "Rules from data". Alone it was neutral, and harmful when its items were wrong |
-| Read-back note | `notes.work_method: [readback]` | Core | Held-out gain on HR |
-| Other work-method notes (finish check, lookup retry, quoted values) | `notes.work_method` | Experimental | Tuning gain on 5 HR tasks; held-out gain not shown; no harm |
+| Read-back note (`guidance/work_method.py`) | `notes.work_method: [readback]` | Core | Held-out gain on HR |
+| Other work-method notes (finish check, lookup retry, quoted values; `experimental/guidance/work_method_notes.py`) | `notes.work_method` | Experimental | Tuning gain on 5 HR tasks; held-out gain not shown; no harm |
 | Gate | `checkers.gate` | Experimental | Gain only in-sample (3 tasks with written SOPs) |
 | Procedure guide, procedure tools, procedure push | `organizers.guide`, `organizers.procedure_tools`, `organizers.procedure_push` | Experimental | Guide: gain only in-sample. Tools alone: no gain |
 | Obligation ledger, request checklist | `obligations` | Experimental | Held-out gain not shown; no harm |
