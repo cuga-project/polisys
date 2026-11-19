@@ -80,6 +80,22 @@ def new_path(name: str) -> Optional[str]:
     return None
 
 
+def names_of(module: str, *homes: str):
+    """A ``__getattr__`` for ``module``: a name it does not hold is read from ``homes``, in order, on first use. For a
+    module that became a folder of parts (the homes are its parts) and for a module whose helpers moved."""
+
+    def __getattr__(name: str):
+        if not name.startswith("__"):
+            for home in homes:
+                try:
+                    return getattr(importlib.import_module(home), name)
+                except AttributeError:
+                    pass
+        raise AttributeError(f"module {module!r} has no attribute {name!r}")
+
+    return __getattr__
+
+
 class _OldPaths(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     def find_spec(self, name, path=None, target=None):
         return importlib.machinery.ModuleSpec(name, self) if new_path(name) else None

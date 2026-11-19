@@ -10,15 +10,8 @@
     from polisys.runtime import RunContext, build_runtime
 """
 
+from polisys._aliases import names_of
 
-def __getattr__(name: str):
-    """The names of ``assembly`` and ``settings_check``, read on first use: ``polisys.runtime`` was one module that held
-    both before the folders existed."""
-    import importlib
-
-    for module in ("assembly", "settings_check"):
-        try:
-            return getattr(importlib.import_module(f"polisys.runtime.{module}"), name)
-        except AttributeError:
-            pass
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+# The names of ``assembly`` and ``settings_check``, read on first use: ``polisys.runtime`` was one module that held both
+# before the folders existed.
+__getattr__ = names_of(__name__, "polisys.runtime.assembly", "polisys.runtime.settings_check")

@@ -73,6 +73,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, List, Literal, Optional
 
+from polisys._aliases import names_of
 from polisys.runtime.setting_types import Count
 from polisys.runtime.context import Piece
 
@@ -208,16 +209,8 @@ def build(a: Assembly) -> Piece:
         hooks=[ledger], after_reply=ledger.after_reply if run_type == CONVERSATION else None, target=ledger
     )
 
+
 _PARTS = ("constants", "text", "value_patterns", "cases", "values", "call_check", "follow_up", "obligation_ledger")
 
-
-def __getattr__(name: str):
-    """A name of one of the parts, read on first use: ``polisys.experimental.finish.ledger`` was one module before 2026-11."""
-    import importlib
-
-    for part in _PARTS:
-        try:
-            return getattr(importlib.import_module(f"{__name__}.{part}"), name)
-        except AttributeError:
-            pass
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+# A name of one of the parts, read on first use: ``polisys.experimental.finish.ledger`` was one module before 2026-11.
+__getattr__ = names_of(__name__, *(f"{__name__}.{part}" for part in _PARTS))

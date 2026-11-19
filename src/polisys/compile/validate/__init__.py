@@ -21,16 +21,9 @@ The parts, in the order they build on each other:
     from polisys.compile.validate import check_rule, validate_package
 """
 
+from polisys._aliases import names_of
+
 _PARTS = ("rule", "build", "slots", "fields", "obligations", "invented", "coverage", "conflicts", "whole_package")
 
-
-def __getattr__(name: str):
-    """A name of one of the parts, read on first use: ``polisys.compile.validate`` was one module before 2026-11."""
-    import importlib
-
-    for part in _PARTS:
-        try:
-            return getattr(importlib.import_module(f"{__name__}.{part}"), name)
-        except AttributeError:
-            pass
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+# A name of one of the parts, read on first use: ``polisys.compile.validate`` was one module before 2026-11.
+__getattr__ = names_of(__name__, *(f"{__name__}.{part}" for part in _PARTS))
