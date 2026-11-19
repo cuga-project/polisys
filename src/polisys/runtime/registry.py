@@ -48,3 +48,8 @@ COMPONENTS: Dict[str, Component] = {
     "navigator": Component(lambda cfg: cfg.organizers.navigator.mode == "on", sop_navigator.build),
     "obligations": Component(ledger_on, ledger.build),
 }
+
+
+def status(name: str) -> str:
+    """``core`` or ``experimental``, from where the code of the component is (docs/components.md has the evidence)."""
+    return "experimental" if ".experimental." in COMPONENTS[name].build.__module__ else "core"

@@ -34,7 +34,7 @@ import re
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Iterator, List, Optional
 
 from polisys.package.model import PACKAGE_SCHEMA, Modality, PolicyBuild, PolicyPackage, PolicySet, from_json, to_json
 
@@ -410,6 +410,44 @@ def cmd_counts(a: argparse.Namespace) -> int:
     return 0
 
 
+def _left_at_auto(value: Any, path: str = "") -> Iterator[str]:
+    if isinstance(value, dict):
+        for key, inner in value.items():
+            yield from _left_at_auto(inner, f"{path}.{key}" if path else key)
+    elif value == "auto":
+        yield path
+
+
+def cmd_explain(a: argparse.Namespace) -> int:
+    """What a profile turns on: each component of ``runtime/registry.py``, on or off, core or experimental, and the module
+    that holds it. It reads only the profile: no package, no tool schema, no model. A setting left at ``auto`` is decided
+    at the start of a run (``runtime/levels.py``), so its component counts as off here and the setting is named."""
+    from dataclasses import asdict
+
+    from polisys.runtime.profile import PolicyConfigError, load_config
+    from polisys.runtime.registry import COMPONENTS, status
+
+    try:
+        cfg = load_config(a.profile)
+    except PolicyConfigError as exc:
+        return _fail(str(exc))
+    rows = [
+        (name, "on" if component.enabled(cfg) else "off", status(name), component.build.__module__)
+        for name, component in COMPONENTS.items()
+    ]
+    width = max(len(name) for name, *_ in rows)
+    print(f"profile  {a.profile}\npackage  {cfg.package}\n")
+    print(f"{'component':<{width}}  state  status        code")
+    for name, state, kind, module in rows:
+        print(f"{name:<{width}}  {state:<5}  {kind:<12}  {module}")
+    on = [kind for _, state, kind, _ in rows if state == "on"]
+    print(f"\non: {len(on)} ({on.count('core')} core, {on.count('experimental')} experimental); off: {len(rows) - len(on)}")
+    auto = sorted(_left_at_auto(asdict(cfg)))
+    if auto:
+        print("left at auto (decided at the start of a run, counted as off here): " + ", ".join(auto))
+    return 0
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m polisys.cli")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -456,6 +494,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     cn = sub.add_parser("counts", help="what a policy package holds, in numbers")
     cn.add_argument("packages", nargs="+")
     cn.set_defaults(fn=cmd_counts)
+    ex = sub.add_parser("explain", help="what a profile turns on: components, core or experimental")
+    ex.add_argument("profile", help="a profile file (YAML)")
+    ex.set_defaults(fn=cmd_explain)
     a = ap.parse_args(argv)
     return a.fn(a)
 

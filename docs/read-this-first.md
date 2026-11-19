@@ -35,6 +35,8 @@ A **component** is one file or one folder. It holds its own `Settings` (its part
 `build(a)`, which returns what the component adds to the run: hook objects, tools, notes for the system prompt.
 `registry.py` is the list of all components, in the order their hooks run.
 
+`polisys explain <profile>` prints this list for a profile: each component, on or off, core or experimental.
+
 The result, `parts.hooks`, is a list of hook objects. For the `rules_only` profile there are two: the typed rules
 (`checks/rules/`) and the procedure monitor (`checks/procedure_monitor.py`).
 
