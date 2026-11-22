@@ -1,6 +1,6 @@
 """``OnlinePolicyIntake``: the settings of the intake and the state of one run. ``session_start`` lists that state, with a
-comment on each field; the parts of the class share it. The parts are in ``found_rules``, ``discovery``, ``write_checks``
-and ``reply``."""
+comment on each field; the parts of the class share it. The parts are in ``found_rules``, ``discovery``, ``write_checks``,
+``message_checks`` and ``reply``."""
 
 from __future__ import annotations
 
@@ -19,11 +19,12 @@ from polisys.tool_kind import is_write_tool
 from polisys.sources.intake.found_rules import _FoundRules
 from polisys.sources.intake.discovery import _Discovery
 from polisys.sources.intake.write_checks import _WriteChecks
-from polisys.sources.intake.reply import _Reply
+from polisys.sources.intake.message_checks import _MessageChecks
 from polisys.sources.intake.prompts import stated_today
+from polisys.sources.intake.reply import _Reply
 
 
-class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _Reply, AgentHooks):
+class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _MessageChecks, _Reply, AgentHooks):
     def __init__(
         self,
         model: Callable[[str, str], str],
@@ -52,6 +53,11 @@ class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _Reply, AgentHoo
         retry_effect: str = "allow",
         voice: str = "order",
         evidence: str = "off",
+        request_conditions: bool = False,
+        proven_only: bool = False,
+        unasked_report: str = "off",
+        own_message_undo: str = "off",
+        tool_docs: Optional[Dict[str, str]] = None,
     ):
         """``tool_specs``: when given, trusted policies are also compiled (code for rule tables, the model for prose)
         and enforced by code; statements that do not compile stay with the verifier. ``method_choice``: as in
@@ -95,6 +101,13 @@ class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _Reply, AgentHoo
         # A call stopped once and repeated unchanged: "allow" lets it through; "hold" checks it again and keeps it
         # stopped (the agent is told to skip it) when the same check flags it again.
         self.retry_effect = retry_effect
+        # Narrow write checks, each off by default. The first two change the verifier's call (write_checks.py): one more
+        # statement (act only on records that meet the request's conditions), and one more sentence (a statement is broken
+        # only when the data shown proves it). The other two are in message_checks.py: off | block_once | deny.
+        self.request_conditions, self.proven_only = request_conditions, proven_only
+        self.unasked_report, self.own_message_undo = unasked_report, own_message_undo
+        self.tool_docs = tool_docs  # tool name -> description, for the question whether a tool deletes or rewrites messages
+        self._undo_tools: Dict[str, Optional[bool]] = {}  # the answers to that question, kept for the life of the object
         self.today = today  # the run's date (benchmarks: the task's world time); else the request's "Today is", else now
         self.guard = GuardCode(model)
         self.is_write = is_write
@@ -129,6 +142,7 @@ class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _Reply, AgentHoo
         self._listed = False
         self.listed: Any = None  # listing.Listed: what the listing read; later reads of it skip the online intake
         self._blocked_once: set = set()  # calls already stopped once (model verdicts and decisions)
+        self.own_ids: set = set()  # values first shown by the result of a write that sent a long text (own_message_undo)
         self.enforcer = (
             RuleSetHooks(
                 [],

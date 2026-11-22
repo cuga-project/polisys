@@ -102,6 +102,7 @@ Profiles with a held-out gain:
 | Procedure guide, procedure tools, procedure push | `organizers.guide`, `organizers.procedure_tools`, `organizers.procedure_push` | Experimental | Guide: gain only in-sample. Tools alone: no gain |
 | Obligation ledger, request checklist | `obligations` | Experimental | Held-out gain not shown; no harm |
 | Tool notes, default values, policy lines, code guards | `notes.tool_notes`, `checkers.default_values`, `notes.policy_lines`, `checkers.guard_code` | Experimental | Held-out gain not shown; no harm |
+| Narrow write checks of the online intake: the request's conditions as a statement and proof from the data shown (verifier), a summary that names skipped items, a call that undoes a message of the run (`sources/intake/message_checks.py`) | `checkers.verifier.request_conditions`, `checkers.verifier.proven_only`, `checkers.unasked_report`, `checkers.own_message_undo` | Experimental | Recorded writes only (AutomationBench, DeepSeek-V4.1-Flash, 2026-11): on 20 selected writes 7 of 10 wrong writes flagged for the right reason and 0 of 8 correct ones; on 19 other writes 3 of 5 and 1 of 10 (own-message undo, so it stops a call once only). No live run yet |
 | Read-first note | `notes.read_first` | Experimental | In-sample: fewer guardrail breaks and a lower strict score |
 | SOP loop | `organizers.loop` | Experimental | Gain only in-sample; neutral or harmful on tasks without an SOP |
 | SOP tracker | `organizers.sop_tracker` | Experimental | τ² Telecom: +12 points, not significant (p 0.15); harm on the airline domain |

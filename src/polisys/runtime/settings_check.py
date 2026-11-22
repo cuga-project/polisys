@@ -236,6 +236,20 @@ def _every_setting_has_a_reader(a: Assembly) -> None:
         ("checkers.detector", bool(checkers.detector), data, "sources.data"),
         ("checkers.guard_code", checkers.guard_code != "off", data, "sources.data"),
         ("checkers.read_before_write", checkers.read_before_write != "off", data, "sources.data"),
+        ("checkers.unasked_report", checkers.unasked_report != "off", data, "sources.data"),
+        ("checkers.own_message_undo", checkers.own_message_undo != "off", data, "sources.data"),
+        (
+            "checkers.verifier.request_conditions",
+            checkers.verifier.request_conditions,
+            data and checkers.verifier.mode == "on",
+            "sources.data with checkers.verifier on",
+        ),
+        (
+            "checkers.verifier.proven_only",
+            checkers.verifier.proven_only,
+            data and checkers.verifier.mode == "on",
+            "sources.data with checkers.verifier on",
+        ),
         ("decisions.mode", cfg.decisions.mode == "on", data, "sources.data"),
         (
             "decisions.require_evidence",

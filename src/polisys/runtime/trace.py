@@ -726,7 +726,13 @@ def _intake(rec: Dict[str, Any], owner: Any) -> Union[Dict[str, Any], List[Dict[
     if "rule_id" in rec or rec.get("rule") == "deny_cap":
         return generic(rec, owner)
     rule = rec.get("rule")
-    named = {"decisions": "kev", "guard_code": "code", "read_before_write": "code"}
+    named = {
+        "decisions": "kev",
+        "guard_code": "code",
+        "read_before_write": "code",
+        "unasked_report": "model",
+        "own_message_undo": "code",
+    }
     base = generic(rec, owner)
     items = rec.get("violations") if "violations" in rec else rec.get("missing")
     base["checker"] = named.get(rule) or ("model" if items is not None else "")

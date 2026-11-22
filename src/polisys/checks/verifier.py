@@ -25,12 +25,20 @@ class Settings:
     ``scope``: ``all_statements`` sends every statement that did not become a typed rule (every trusted statement that
     did not compile, or every ``verify`` rule); ``specific_statements`` sends only those that name one tool and one
     argument (spec section 7, principle 8). The measured runs used ``all_statements``.
+
+    The last three are read only by the verifier of the online intake (``sources/intake/``). ``request_conditions`` adds one
+    statement to its list: the action is only for records that meet the conditions the request states. ``proven_only`` adds
+    one sentence to its prompt: a statement is broken only when the request and the data shown prove it. ``reply_check:
+    false`` leaves out the question at the reply (is a required action still missing), so the verifier checks writes only.
     """
 
     mode: Mode = "auto"
     model: Optional[str] = None
     scope: Literal["specific_statements", "all_statements"] = "specific_statements"
     may_deny: bool = False
+    request_conditions: bool = False
+    proven_only: bool = False
+    reply_check: bool = True
 
 
 SYSTEM = "You check one planned action against company policy statements. Output JSON only."

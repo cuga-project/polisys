@@ -131,6 +131,13 @@ class Checkers:
     verifier: Verifier = field(default_factory=Verifier)
     guard_code: Literal["off", "remind", "deny"] = "off"  # generated code checks per statement and write tool
     read_before_write: Literal["off", "remind", "block_once"] = "off"  # a referred policy source is unread
+    # Two narrow checks of the online intake before a write (sources/intake/message_checks.py). deny: the call is stopped
+    # with the reason until it changes (three times at most). block_once: stopped once, and the same call again goes through.
+    # unasked_report: a summary message that names skipped or excluded items, when neither the request nor a rule asks to
+    # report them. For agents whose instructions say to report only what was done.
+    unasked_report: Literal["off", "block_once", "deny"] = "off"
+    # own_message_undo: a call that deletes or rewrites a message that this run itself sent.
+    own_message_undo: Literal["off", "block_once"] = "off"
     method_choice: Optional[str] = None  # path of a file with the measured checker for each rule type
     # One hook that runs the write checks in order and stops at the first block (spec section 6): the typed rules, then the
     # gate, then the verifier. off: separate hooks, as measured. auto: on when two or more of the three are on and the level

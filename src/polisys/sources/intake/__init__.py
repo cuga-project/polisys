@@ -17,7 +17,8 @@ the data the agent read, whether a required action is still missing.
 
 - ``prompts``: prompt texts, limits, small helpers.
 - ``online_intake``: ``OnlinePolicyIntake``: settings and the state of a run.
-- ``found_rules``, ``discovery``, ``write_checks``, ``reply``: the other parts of ``OnlinePolicyIntake``.
+- ``found_rules``, ``discovery``, ``write_checks``, ``message_checks``, ``reply``: the other parts of
+  ``OnlinePolicyIntake``.
 """
 
 from __future__ import annotations
@@ -55,7 +56,15 @@ def build(a: Assembly) -> Piece:
     hook = OnlinePolicyIntake(
         a.model("intake", checkers.compile),
         verify_writes=verify,
-        check_reply=verify and not a.ledger_on,  # with a producer only the ledger sends follow-ups
+        # with a producer only the ledger sends follow-ups
+        check_reply=verify and checkers.verifier.reply_check and not a.ledger_on,
+        request_conditions=checkers.verifier.request_conditions,
+        proven_only=checkers.verifier.proven_only,
+        unasked_report=checkers.unasked_report,
+        own_message_undo=checkers.own_message_undo,
+        tool_docs={t["name"]: t.get("description") or "" for t in a.ctx.tool_specs or [] if t.get("name")}
+        if checkers.own_message_undo != "off"
+        else None,
         detector=detector,
         tool_specs=a.ctx.tool_specs if checkers.rules == "on" else None,
         method_choice=a.method_choice(),
@@ -81,7 +90,7 @@ def build(a: Assembly) -> Piece:
     )
     return Piece(hooks=[hook])
 
-_PARTS = ("prompts", "found_rules", "discovery", "write_checks", "reply", "online_intake")
+_PARTS = ("prompts", "found_rules", "discovery", "write_checks", "message_checks", "reply", "online_intake")
 
 # A name of one of the parts, read on first use: ``polisys.sources.intake`` was one module before 2026-11.
 __getattr__ = names_of(__name__, *(f"{__name__}.{part}" for part in _PARTS), "polisys.checks.facts")

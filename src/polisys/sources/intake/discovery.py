@@ -222,6 +222,7 @@ class _Discovery:
                 result = json.loads(result)
             except ValueError:
                 pass
+        seen_before = self.store.text
         self._remember(tool, result)
         self.called.append(tool)
         self.refs.observe(tool, args, result, self.is_write(tool))
@@ -230,6 +231,7 @@ class _Discovery:
         if self.is_write(tool):
             self.writes.append(f"{tool}({json.dumps(args, default=str)[:400]})")
             self.own_texts += [t for t in (_norm_text(v) for v in _strings(args)) if len(t) >= OWN_TEXT_CHARS]
+            self._note_own_write(args, result, seen_before)
         if self.enforcer is not None:
             self.enforcer.after_tool_call(tool, args, result)
         if self.is_write(tool):  # the result of the agent's own write is its output, not a rule source
