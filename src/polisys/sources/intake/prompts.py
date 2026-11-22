@@ -190,6 +190,37 @@ Does this action itself clearly break a statement? Judge only this action, not s
 Do not report a violation for something this tool has no argument or way to do.
 Return {{"violations": [{{"statement": <number>, "reason": "...", "fix": "what to do instead"}}]}}"""
 
+_MONTHS = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+_STATED = re.compile(
+    r"\btoday(?:'s date)? is (?:[A-Za-z]+day,? )?"
+    r"(?:(?P<iso>\d{4}-\d{2}-\d{2})"
+    r"|(?P<month>[A-Za-z]{3,9})\.? (?P<day>\d{1,2})(?:st|nd|rd|th)?,? (?P<year>\d{4})"
+    r"|(?P<day2>\d{1,2})(?:st|nd|rd|th)? (?P<month2>[A-Za-z]{3,9})\.?,? (?P<year2>\d{4}))",
+    re.IGNORECASE,
+)
+
+
+def stated_today(text: str) -> str:
+    """The date a text states as today, as YYYY-MM-DD: "today is 2026-03-03", "Today is March 3, 2026", "today's date is
+    Tuesday, 3 March 2026". "" when it states none, or one that is not a date."""
+    import datetime as _dt
+
+    m = _STATED.search(text or "")
+    if not m:
+        return ""
+    try:
+        if m.group("iso"):
+            return _dt.date.fromisoformat(m.group("iso")).isoformat()
+        month = (m.group("month") or m.group("month2")).lower()
+        number = next((i + 1 for i, name in enumerate(_MONTHS) if month.startswith(name)), 0)
+        full = _dt.date(2000, number, 1).strftime("%B").lower() if number else ""
+        if not full.startswith(month):  # "march" and "mar" are March; "marble" is not
+            return ""
+        return _dt.date(int(m.group("year") or m.group("year2")), number, int(m.group("day") or m.group("day2"))).isoformat()
+    except ValueError:
+        return ""
+
+
 DONE_USER = """User request: {request}
 
 Policy statements:

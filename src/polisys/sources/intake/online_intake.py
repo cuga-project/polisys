@@ -4,7 +4,6 @@ and ``reply``."""
 
 from __future__ import annotations
 
-import re
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
@@ -21,6 +20,7 @@ from polisys.sources.intake.found_rules import _FoundRules
 from polisys.sources.intake.discovery import _Discovery
 from polisys.sources.intake.write_checks import _WriteChecks
 from polisys.sources.intake.reply import _Reply
+from polisys.sources.intake.prompts import stated_today
 
 
 class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _Reply, AgentHooks):
@@ -156,10 +156,9 @@ class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _Reply, AgentHoo
         self.store.text = value
 
     def _task_date(self) -> str:
-        """The task's own date: the run's world time first, then "today is YYYY-MM-DD" in the request; "" when the
-        task gives none. Model checks get only this, never the clock: a world with its own dates and the real date
-        disagree, and a wrong date in the prompt is worse than none."""
+        """The task's own date: the run's world time first, then the date the request states as today ("today is
+        2026-03-03", "Today is March 3, 2026"); "" when the task gives none. Model checks get only this, never the clock:
+        a world with its own dates and the real date disagree, and a wrong date in the prompt is worse than none."""
         if self.today:
             return str(self.today)[:10]
-        m = re.search(r"\btoday is (\d{4}-\d{2}-\d{2})", self.request or "", re.IGNORECASE)
-        return m.group(1) if m else ""
+        return stated_today(self.request)
