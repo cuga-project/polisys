@@ -234,3 +234,29 @@ def test_the_checks_have_a_checker_in_the_audit():
     lines = {r["rule"]: _intake(r, h) for r in h.records if r.get("rule") in ("own_message_undo", "unasked_report")}
     assert lines["own_message_undo"]["checker"] == "code" and lines["own_message_undo"]["verdict"] == "block_once"
     assert lines["unasked_report"]["checker"] == "model" and lines["unasked_report"]["verdict"] == "deny"
+
+
+def test_a_message_check_stop_does_not_skip_the_write_checks_on_the_retry():
+    """A call that a message check stopped once, sent again unchanged, still goes through the write checks. The two
+    kinds of check keep their own "stopped once" sets: before, the retry looked like a retry of a decisions stop and
+    went through without a question."""
+    from polisys.checks.decisions import Decisions
+
+    asked = []
+
+    def ask(state, questions):
+        asked.append(sorted(questions))
+        return {n: (0.9 if n == "excluded" else 0.0) for n in questions}
+
+    h = _hooks(Model(), own_message_undo="block_once", tool_docs=DOCS, decisions=Decisions(ask))
+    h.after_tool_call(*SEND, {"id": "msg-8842cd", "thread": "thr-5520", "status": "sent"})
+    call = ("mail_trash_email", {"message_id": "msg-8842cd"})
+    first = h.before_tool_call(*call)
+    assert h.records[-1]["rule"] == "own_message_undo" and h.records[-1]["outcome"] == "block_once"
+    assert asked == []  # the message check stopped the call before any write check
+    retry = h.before_tool_call(*call)
+    undo = [r["outcome"] for r in h.records if r.get("rule") == "own_message_undo"]
+    assert undo == ["block_once", "allow_after_block"]
+    assert len(asked) == 1  # the decisions check was asked about the retry
+    assert h.records[-1]["rule"] == "decisions" and h.records[-1]["outcome"] == "block_once"
+    assert retry.message and retry.message != first.message

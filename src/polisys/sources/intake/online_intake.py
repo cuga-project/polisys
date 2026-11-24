@@ -147,6 +147,7 @@ class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _MessageChecks, 
         self._listed = False
         self.listed: Any = None  # listing.Listed: what the listing read; later reads of it skip the online intake
         self._blocked_once: set = set()  # calls already stopped once (model verdicts and decisions)
+        self._message_blocked: set = set()  # (check, call) pairs a message check stopped once; apart from the set above
         self.own_ids: set = set()  # values first shown by the result of a write that sent a long text (own_message_undo)
         self.enforcer = (
             RuleSetHooks(

@@ -84,10 +84,10 @@ class _MessageChecks:
             return None
         key = self._call_key(tool, args)
         rec = {"hook": "before_tool_call", "tool": tool, "rule": "own_message_undo", "own": own[:5]}
-        if key in self._blocked_once:
+        if ("own_message_undo", key) in self._message_blocked:
             self.records.append({**rec, "outcome": "allow_after_block"})
             return None
-        self._blocked_once.add(key)
+        self._message_blocked.add(("own_message_undo", key))
         rec["outcome"] = "block_once"
         self.records.append(rec)
         return HookResult(
@@ -105,7 +105,7 @@ class _MessageChecks:
             return None
         key = self._call_key(tool, args)
         rec: Dict[str, Any] = {"hook": "before_tool_call", "tool": tool, "rule": "unasked_report"}
-        if self.unasked_report == "block_once" and key in self._blocked_once:
+        if self.unasked_report == "block_once" and ("unasked_report", key) in self._message_blocked:
             self.records.append({**rec, "outcome": "allow_after_block"})
             return None
         self._drain(self.wait_s)  # the rules found so far say whether a report of skipped items is asked for
@@ -142,7 +142,7 @@ class _MessageChecks:
             return None
         rec["quotes"] = quotes[:6]
         if self.unasked_report == "block_once":
-            self._blocked_once.add(key)
+            self._message_blocked.add(("unasked_report", key))
             rec["outcome"] = "block_once"
         else:
             cap_key = tool + "|unasked_report"
