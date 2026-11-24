@@ -98,6 +98,48 @@ def flatten(by_source: Dict[str, List[Any]]) -> List[Tuple[str, Any]]:
     return out
 
 
+MAP_LINES, MAP_CHARS, MAP_PER_APP = 40, 3000, 6
+_LABEL_KEYS = ("title", "name", "subject", "summary", "Name", "Subject", "Title", "text")
+
+
+def _label(record: Dict[str, Any]) -> str:
+    """A few words that say which record this is: its first name-like value and its first ID."""
+    name = next((str(record[k]) for k in _LABEL_KEYS if isinstance(record.get(k), str) and record.get(k)), "")
+    rid = next((str(record[k]) for k in ID_KEYS if isinstance(record.get(k), (str, int)) and record.get(k) != ""), "")
+    return " ".join(x for x in (f"'{name[:50]}'" if name else "", f"({rid[:40]})" if rid else "") if x)
+
+
+def world_map(by_source: Dict[str, List[Any]]) -> List[str]:
+    """Where records exist (``sources.data_map``): per source, its tables with their size and columns, and the number of
+    its other records with a few of their names. Built by code from what the listing read."""
+    lines: List[str] = []
+    for source in sorted(by_source):
+        records = [r for r in by_source.get(source) or [] if isinstance(r, dict)]
+        if not records:
+            lines.append(f"- {source}: no records")
+            continue
+        tables = [r for r in records if is_table(r)]
+        others = [r for r in records if not is_table(r)]
+        for t in tables[:MAP_PER_APP]:
+            ids = [f"{k}={t[k]}" for k in t if k != "rows" and isinstance(t[k], (str, int)) and len(str(t[k])) <= 60][:4]
+            first = next((r for r in t["rows"] if isinstance(r, dict)), {})
+            cells = first.get("cells") if isinstance(first.get("cells"), dict) else first
+            cols = ", ".join(str(c) for c in list(cells)[:8])
+            lines.append(f"- {source}: table {', '.join(ids)}: {len(t['rows'])} rows" + (f"; columns: {cols}" if cols else ""))
+        if len(tables) > MAP_PER_APP:
+            lines.append(f"- {source}: {len(tables) - MAP_PER_APP} more tables")
+        if others:
+            names = [x for x in (_label(r) for r in others[:MAP_PER_APP]) if x]
+            lines.append(f"- {source}: {len(others)} records" + (": " + "; ".join(names) if names else "") + (" ..." if len(others) > MAP_PER_APP else ""))
+    out, size = [], 0
+    for line in lines[:MAP_LINES]:
+        size += len(line) + 1
+        if size > MAP_CHARS:
+            break
+        out.append(line)
+    return out
+
+
 # sources.listing_data: two more labels, so records that are data the work needs (not rules) reach the agent too.
 SORT_USER_DATA = SORT_USER.replace(
     '- "data": anything else',

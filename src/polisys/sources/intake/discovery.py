@@ -139,11 +139,16 @@ class _Discovery:
 
         t0 = time.monotonic()
         try:
-            items = L.flatten(self.listing() or {})
+            by_source = self.listing() or {}
+            items = L.flatten(by_source)
         except Exception as exc:  # the agent runs on without it
             self.records.append({"hook": "on_user_message", "outcome": "listing_error", "reason": str(exc)[:200]})
             return
         self.listed = L.Listed(items)
+        if self.data_map:
+            self.world_map = L.world_map(by_source)
+            self.records.append({"hook": "on_user_message", "outcome": "data_map", "lines": len(self.world_map),
+                                 "chars": sum(len(x) + 1 for x in self.world_map)})
         for _, r in items:  # the same records read later by the agent are not sent again
             self.seen.add(hashlib.sha256(json.dumps(r, sort_keys=True, default=str).encode()).hexdigest())
 

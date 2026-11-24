@@ -80,6 +80,9 @@ class Sources:
     discovery: bool = False  # the layer searches the message sources for rules at the start
     listing: bool = False  # the layer reads every record the host lists at the start (sources/listing.py)
     listing_data: bool = False  # the listing also keeps corrections and examples and shows them to the agent as data
+    # The brief also says where records exist: per app, the tables and the number of records the listing read
+    # (sources/listing.py, world_map). Built by code from the listing; no rule and no instruction.
+    data_map: bool = False
     request: bool = False  # the user's request is read as a source of requirements
 
 

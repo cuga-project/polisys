@@ -78,6 +78,7 @@ def build(a: Assembly) -> Piece:
         discover=a.ctx.data_search if a.cfg.sources.discovery else None,
         listing=a.ctx.data_list if a.cfg.sources.listing else None,
         listing_data=a.cfg.sources.listing and a.cfg.sources.listing_data,
+        data_map=a.cfg.sources.listing and a.cfg.sources.data_map,
         decisions=Decisions(a.questions("decisions", checkers.narrow_questions))
         if decisions.mode == "on"
         else None,
