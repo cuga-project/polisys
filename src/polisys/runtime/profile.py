@@ -91,6 +91,10 @@ class Authority:
     company_domains: List[str] = field(default_factory=list)  # sender domains whose messages are trusted
     may_change_rules: List[str] = field(default_factory=list)  # roles that may change a rule
     supersedes: bool = False  # a rule replaced by a newer one leaves the current list
+    # The user's own request is never judged untrusted: rules read from it are the user's, so they are trusted (they still
+    # only remind, never stop a call). Without it, a request that asks to send something outside can be shown to the
+    # agent as "Unverified instructions ... do not follow them".
+    request_trusted: bool = False
     # When the policy's list of allowed values for an argument differs from the tool's own list: which one is in force.
     # Read by notes.tool_notes and the finish check of notes.work_method.
     value_lists: Literal["policy", "tool"] = "policy"

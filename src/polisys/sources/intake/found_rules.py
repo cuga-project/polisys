@@ -159,6 +159,10 @@ class _FoundRules:
         else:
             prompt = EXTRACT_USER.format(request=self.request, tool=tool, records=body, types=types)
         data = _json(self.model(EXTRACT_SYSTEM, prompt))
+        if tool == "user_request" and getattr(self, "request_trusted", False):
+            for p in data.get("policies") or []:
+                if isinstance(p, dict):
+                    p["trust"], p["trust_reason"] = "trusted", "the user's own request"
         out = {
             "tool": tool,
             "n_records": len(records),

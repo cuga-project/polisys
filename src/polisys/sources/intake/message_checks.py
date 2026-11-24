@@ -155,7 +155,8 @@ class _MessageChecks:
         again = (
             "If the request or a rule does ask for them, make the same call again unchanged."
             if self.unasked_report == "block_once"
-            else "Send it again without them."
+            else "Send it again without them. Change only the text of this call: keep the rest of what the request asks "
+            "for, and do not change or delete any record because of this."
         )
         return HookResult(
             message=f"POLICY: `{tool}` was not called. The message names items that were skipped, excluded or not acted "

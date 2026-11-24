@@ -59,6 +59,7 @@ class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _MessageChecks, 
         own_message_undo: str = "off",
         tool_docs: Optional[Dict[str, str]] = None,
         data_map: bool = False,
+        request_trusted: bool = False,
     ):
         """``tool_specs``: when given, trusted policies are also compiled (code for rule tables, the model for prose)
         and enforced by code; statements that do not compile stay with the verifier. ``method_choice``: as in
@@ -87,6 +88,7 @@ class OnlinePolicyIntake(_FoundRules, _Discovery, _WriteChecks, _MessageChecks, 
         self.listing = listing
         self.listing_data = listing_data  # the listing also hands corrections and examples to the agent
         self.data_map = data_map  # the brief says where records exist (built from the listing by code)
+        self.request_trusted = request_trusted  # rules read from the user's request are trusted
         # Narrow decision-model questions (checks/decisions.py): rule changes without policy words, record exclusions and
         # limits before writes, and whether a code rule applies before it denies.
         self.decisions = decisions
