@@ -38,6 +38,9 @@ class _Reply:
                 "use the corrected values and follow the examples' form)"
             )
             lines += [f"- [{label}] ({src}) {text}" for label, src, text in self.data_notes[:12]]
+        if self.world_map:
+            lines.append("## Where records exist (the apps as they were at the start of this task)")
+            lines += self.world_map
         if self.superseded:
             lines.append("## Replaced rules (no longer current: do not apply them)")
             lines += [f"- {old} (replaced by: {by})" for old, by in list(self.superseded.items())[:20]]

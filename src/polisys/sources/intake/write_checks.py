@@ -11,13 +11,15 @@ from polisys.checks.decisions import action_text, has_limit
 from polisys.runtime.trace import audited_failure, emit
 from polisys.llm import today_line
 from polisys.sources.intake.prompts import (
-    MAX_SAME_DENY, RETRY_RULE, SKIP_AFTER_CAP, VERIFY_SYSTEM, VERIFY_USER, _json, _with_statements,
-)
+    MAX_SAME_DENY, PROVEN_ONLY, REQUEST_CONDITIONS, RETRY_RULE, SKIP_AFTER_CAP, VERIFY_SYSTEM, VERIFY_USER, _json,
+    _with_statements,
+)  # fmt: skip
 
 
 class _WriteChecks:
-    """Before a write: the pending intake is awaited, then guard code, the read-before-write reminder, the write decisions
-    and the verifier call on the trusted statements."""
+    """Before a write: the two message checks when a profile turns them on (message_checks.py); then the pending intake is
+    awaited, then guard code, the read-before-write reminder, the write decisions and the verifier call on the trusted
+    statements."""
 
     def _may_deny(self, types: List[str]) -> bool:
         """A statement may block only if none of its types is measured as remind-only (method_choice)."""
@@ -26,10 +28,11 @@ class _WriteChecks:
         choice = self.method_choice or {}
         return all(choice.get(t, {}).get("may_deny", True) is not False for t in types)
 
-    def _tool_args(self, tool: str) -> str:
+    def _tool_args(self, tool: str, args: Optional[Dict[str, Any]] = None) -> str:
+        """The argument names of the tool's spec. ``args``: with no spec, the names of this call's own arguments."""
         spec = next((t for t in self.tool_specs or [] if t.get("name") == tool), None)
         props = ((spec or {}).get("inputSchema") or {}).get("properties") or {}
-        return ", ".join(props) or "(unknown)"
+        return ", ".join(props) or ", ".join(args or {}) or "(unknown)"
 
     def _today(self) -> str:
         """For guard code, which needs a date: the task's date, else the clock."""
@@ -238,7 +241,12 @@ class _WriteChecks:
         return res
 
     def _before_tool_call(self, tool: str, args: Dict[str, Any]) -> HookResult:
-        if not self.is_write(tool) or not self.verify_writes:
+        if not self.is_write(tool):
+            return HookResult()
+        stop = self._message_checks(tool, args)
+        if stop is not None:
+            return stop
+        if not self.verify_writes:
             return HookResult()
         if self.read_before_write != "off":
             stop = self._read_before_write(tool)
@@ -259,6 +267,19 @@ class _WriteChecks:
                 if not any(d is k for k in kept):
                     emit(self, d)
         statements = self._statements(True)
+        # request_conditions: the verifier also checks the call against the request's own conditions, also with no rule found
+        extra = (
+            [
+                {
+                    "n": max([s["n"] for s in statements], default=0) + 1,
+                    "source": "user request",
+                    "text": REQUEST_CONDITIONS,
+                    "types": [],
+                }
+            ]
+            if self.request_conditions
+            else []
+        )
         if not statements:
             if (
                 self.decisions is not None and self.record_checks
@@ -266,18 +287,21 @@ class _WriteChecks:
                 stop = self._decide_write(tool, args, [])
                 if stop is not None:
                     return stop
-            return HookResult()
-        if self.decisions is not None:
+            if not extra:
+                return HookResult()
+        elif self.decisions is not None:
             stop = self._decide_write(tool, args, statements)
             if stop is not None:
                 return stop
-        if self.guard_mode != "off":
+        if statements and self.guard_mode != "off":
             blocked = self._guard_code(tool, args, statements)
             if blocked is not None:
                 return blocked
             statements = [s for s in statements if s["n"] not in self._guarded]
-            if not statements:  # every statement has a code check for this tool: no model verdict needed
+            if not statements and not extra:  # every statement has a code check for this tool: no model verdict needed
                 return HookResult()
+        statements = statements + extra
+        narrow = self.request_conditions or self.proven_only  # as tested: the call's own argument names when no spec is known
         data = _json(
             self.model(
                 VERIFY_SYSTEM,
@@ -288,8 +312,9 @@ class _WriteChecks:
                     facts=self._facts_for(args),
                     tool=tool,
                     args=json.dumps(args, default=str)[:3000],
-                    tool_args=self._tool_args(tool),
-                ),
+                    tool_args=self._tool_args(tool, args if narrow else None),
+                )
+                + (PROVEN_ONLY if self.proven_only else ""),
             )
         )
         found = [v for v in data.get("violations") or [] if isinstance(v, dict)]

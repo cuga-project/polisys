@@ -139,11 +139,16 @@ class _Discovery:
 
         t0 = time.monotonic()
         try:
-            items = L.flatten(self.listing() or {})
+            by_source = self.listing() or {}
+            items = L.flatten(by_source)
         except Exception as exc:  # the agent runs on without it
             self.records.append({"hook": "on_user_message", "outcome": "listing_error", "reason": str(exc)[:200]})
             return
         self.listed = L.Listed(items)
+        if self.data_map:
+            self.world_map = L.world_map(by_source)
+            self.records.append({"hook": "on_user_message", "outcome": "data_map", "lines": len(self.world_map),
+                                 "chars": sum(len(x) + 1 for x in self.world_map)})
         for _, r in items:  # the same records read later by the agent are not sent again
             self.seen.add(hashlib.sha256(json.dumps(r, sort_keys=True, default=str).encode()).hexdigest())
 
@@ -222,6 +227,7 @@ class _Discovery:
                 result = json.loads(result)
             except ValueError:
                 pass
+        seen_before = self.store.text
         self._remember(tool, result)
         self.called.append(tool)
         self.refs.observe(tool, args, result, self.is_write(tool))
@@ -230,6 +236,7 @@ class _Discovery:
         if self.is_write(tool):
             self.writes.append(f"{tool}({json.dumps(args, default=str)[:400]})")
             self.own_texts += [t for t in (_norm_text(v) for v in _strings(args)) if len(t) >= OWN_TEXT_CHARS]
+            self._note_own_write(args, result, seen_before)
         if self.enforcer is not None:
             self.enforcer.after_tool_call(tool, args, result)
         if self.is_write(tool):  # the result of the agent's own write is its output, not a rule source
